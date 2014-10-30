@@ -15,7 +15,7 @@ public class TableTest {
 		Exporter exporter = TestUtils.getTestExporter();
 		List<String> allTables = exporter.getAllTables();
 
-		String[] tableFiles = {"hivTables", "auditTables", "frameworkTables", "hivViews", "deprecatedTables", "peruTables", "warehouseTables"};
+		String[] tableFiles = {"hivTables", "auditTables", "frameworkTables", "hivViews", "notNeededTables", "peruTables", "warehouseTables"};
 		List<String> specifiedTables = new ArrayList<String>();
 		for (String tableFile : tableFiles) {
 			for (String table : Util.loadFromClasspath(tableFile + ".txt")) {
