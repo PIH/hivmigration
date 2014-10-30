@@ -11,7 +11,7 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.hivmigration.export;
+package org.pih.hivmigration.export;
 
 import oracle.jdbc.driver.OracleDriver;
 

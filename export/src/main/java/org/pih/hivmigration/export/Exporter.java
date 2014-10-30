@@ -1,9 +1,10 @@
-package org.openmrs.hivmigration.export;
+package org.pih.hivmigration.export;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.commons.dbutils.handlers.ColumnListHandler;
+import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 
 import java.sql.Connection;
@@ -11,6 +12,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 public class Exporter {
 
@@ -58,6 +60,10 @@ public class Exporter {
 
 	public <T> List<T> listResult(String sql, Class<T> type) {
 		return executeQuery(sql, new ColumnListHandler<T>());
+	}
+
+	public List<Map<String, Object>> tableResult(String sql) {
+		return executeQuery(sql, new MapListHandler());
 	}
 
 	public List<String> getAllTables() {

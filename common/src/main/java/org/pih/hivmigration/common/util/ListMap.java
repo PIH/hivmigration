@@ -11,7 +11,7 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.hivmigration.common.util;
+package org.pih.hivmigration.common.util;
 
 import java.util.ArrayList;
 import java.util.Collection;

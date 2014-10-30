@@ -11,11 +11,13 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.hivmigration.common.util;
+package org.pih.hivmigration.common.util;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -100,6 +102,22 @@ public class Util {
 			ret = FileUtils.readFileToString(new File(path), "UTF-8");
 		}
 		catch (Exception e) {}
+		return ret;
+	}
+
+	public static List<String> loadFromClasspath(String path) {
+		List<String> ret = new ArrayList<String>();
+		InputStream is = null;
+		try {
+			is = Util.class.getClassLoader().getResourceAsStream(path);
+			ret = IOUtils.readLines(is, "UTF-8");
+		}
+		catch (Exception e) {
+			throw new IllegalArgumentException("Unable to load from classpath: " + path, e);
+		}
+		finally {
+			IOUtils.closeQuietly(is);
+		}
 		return ret;
 	}
 
