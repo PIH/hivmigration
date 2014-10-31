@@ -3,9 +3,7 @@ package org.pih.hivmigration.export;
 import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.pih.hivmigration.common.User;
 import org.pih.hivmigration.common.util.Util;
 
 import java.math.BigDecimal;
@@ -122,14 +120,5 @@ public class DBTest {
 		}
 		Assert.assertEquals("cm", productUnits.getMinValue());
 		Assert.assertEquals("unspecified", productUnits.getMaxValue());
-	}
-
-	@Ignore
-	@Test
-	public void shouldGetAllUsers() throws Exception {
-		List<User> users = DB.getUsers();
-		for (User user : users) {
-			System.out.println(ExportUtil.toJson(user));
-		}
 	}
 }
