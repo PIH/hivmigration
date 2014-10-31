@@ -15,6 +15,7 @@ package org.pih.hivmigration.common.util;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.InputStream;
@@ -24,7 +25,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Util {
 
@@ -94,6 +97,31 @@ public class Util {
 	public static String formatDate(Date d, String format) {
 		SimpleDateFormat df = new SimpleDateFormat(format);
 		return df.format(d);
+	}
+
+	/**
+	 * @param toParse the string to parse into a Map<String, String>
+	 * @param keyValueSeparator the string that separates the entries for the Map, if null defaults to "="
+	 * @param entrySeparator the string that separates each key/value pair in the Map, if null defaults to ","
+	 * @return
+	 */
+	public static Map<String, String> toMap(String toParse, String keyValueSeparator, String entrySeparator) {
+		Map<String, String> ret = new LinkedHashMap<String, String>();
+		if (notEmpty(toParse)) {
+			for (String entry : StringUtils.splitByWholeSeparator(toParse, nvlStr(entrySeparator, ","))) {
+				String[] keyValue = StringUtils.splitByWholeSeparator(entry, nvlStr(keyValueSeparator, "="), 2);
+				ret.put(keyValue[0], keyValue[1]);
+			}
+		}
+		return ret;
+	}
+
+	/**
+	 * @param toParse the string to parse into a Map<String, String>. Expected format is key1=value1,key2=value2...
+	 * @return
+	 */
+	public static Map<String, String> toMap(String toParse) {
+		return toMap(toParse, "=", ",");
 	}
 
 	public static String loadFromFile(String path) {
