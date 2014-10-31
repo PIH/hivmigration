@@ -1,32 +1,47 @@
 package org.pih.hivmigration.export;
 
 import org.junit.Test;
+import org.pih.hivmigration.common.User;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.util.List;
-import java.util.Map;
 
 public class ExporterTest {
 
 	@Test
-	public void should_getAllTables() throws Exception {
+	public void shouldGetAllTables() throws Exception {
 
 		Exporter exporter = TestUtils.getTestExporter();
-
-		List<String> allTables = exporter.getAllTables();
-
-		System.out.println("All Tables");
-		for (String tableName : allTables) {
-			System.out.println(tableName);
+		try {
+			List<String> hivTables = ExportUtil.getTablesSpecifiedInResource("hivTables");
+			for (String table : hivTables) {
+				System.out.println(table);
+				System.out.println("=====================");
+				List<TableColumn> columns = exporter.getAllColumns(table);
+				for (TableColumn column : columns) {
+					BigDecimal numVals = exporter.getNumberOfNonNullValues(table, column.getColumnName());
+					System.out.println(column.getColumnName() + " => " + numVals);
+				}
+				System.out.println(" ");
+			}
 		}
+		finally {
+			exporter.destroy();
+		}
+	}
 
-		BigDecimal numPatients = exporter.uniqueResult("select count(*) from hiv_demographics", BigDecimal.class);
-		System.out.println("Found " + numPatients + " patients to export");
-
-		System.out.println("Sites");
-		List<Map<String ,Object>> sites = exporter.tableResult("select * from hiv_institutions");
-		for (Map<String, Object> row : sites) {
-			System.out.println(row);
+	@Test
+	public void shouldGetAllUsers() throws Exception {
+		Exporter exporter = TestUtils.getTestExporter();
+		try {
+			List<User> users = exporter.getUsers();
+			for (User user : users) {
+				System.out.println(ExportUtil.toJson(user));
+			}
+		}
+		finally {
+			exporter.destroy();
 		}
 	}
 }
