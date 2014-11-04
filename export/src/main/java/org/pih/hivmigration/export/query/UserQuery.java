@@ -13,7 +13,7 @@ public class UserQuery {
 		if (userCache == null) {
 			userCache = getUsers();
 		}
-		return userCache.get(userId.toString());
+		return userCache.get(Integer.valueOf(userId.toString()));
 	}
 
 	/**

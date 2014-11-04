@@ -23,7 +23,8 @@ public class Patient {
 	private Date patientCreatedDate;
 
 	private PamEnrollment pamEnrollment;
-	private List addresses;
+	private List<Address> addresses;
+	private List<Pregnancy> pregnancies;
 
 	public Patient() {}
 
@@ -155,18 +156,33 @@ public class Patient {
 		this.pamEnrollment = pamEnrollment;
 	}
 
-	public List getAddresses() {
+	public List<Address> getAddresses() {
 		if (addresses == null) {
 			addresses = new ArrayList<Address>();
 		}
 		return addresses;
 	}
 
-	public void setAddresses(List addresses) {
+	public void setAddresses(List<Address> addresses) {
 		this.addresses = addresses;
 	}
 
 	public void addAddress(Address address) {
 		getAddresses().add(address);
+	}
+
+	public List<Pregnancy> getPregnancies() {
+		if (pregnancies == null) {
+			pregnancies = new ArrayList<Pregnancy>();
+		}
+		return pregnancies;
+	}
+
+	public void setPregnancies(List<Pregnancy> pregnancies) {
+		this.pregnancies = pregnancies;
+	}
+
+	public void addPregnancy(Pregnancy pregnancy) {
+		getPregnancies().add(pregnancy);
 	}
 }

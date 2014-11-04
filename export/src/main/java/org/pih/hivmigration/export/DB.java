@@ -16,6 +16,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -56,18 +57,34 @@ public class DB {
 		}
 	}
 
-	public static <T> ListMap<Integer, T> listMapResult(StringBuilder sql, final Class<T> type) {
+	public static <T> ListMap<Integer, T> listMapResult(StringBuilder sql, final Class<T> type, final JoinData... joinData) {
+		return listMapResult(sql, type, Arrays.asList(joinData));
+	}
+
+	public static <T> ListMap<Integer, T> listMapResult(StringBuilder sql, final Class<T> type, final List<JoinData> joinData) {
 		return executeQuery(sql.toString(), new ResultSetHandler<ListMap<Integer, T>>() {
 			public ListMap<Integer, T> handle(ResultSet resultSet) throws SQLException {
 				ListMap<Integer, T> ret = new ListMap<Integer, T>();
 				ResultSetMetaData md = resultSet.getMetaData();
 				while (resultSet.next()) {
 					Map<String, Object> row = new HashMap<String, Object>();
+
+					// Add column data
 					for (int i=1; i<=md.getColumnCount(); i++) {
 						row.put(md.getColumnName(i), resultSet.getObject(i));
 					}
-					Integer key = ExportUtil.convertValue(resultSet.getObject(1), Integer.class);
+					// Add join data
+					if (joinData != null) {
+						for (JoinData jd : joinData) {
+							Integer foreignKey = ExportUtil.convertValue(resultSet.getObject(jd.getColumnName()), Integer.class);
+							Object joinedValue = jd.getPropertyValues().get(foreignKey);
+							row.put(jd.getPropertyName(), joinedValue);
+						}
+					}
+
 					T object = ExportUtil.toObject(type, row);
+					Integer key = ExportUtil.convertValue(resultSet.getObject(1), Integer.class);
+
 					ret.putInList(key, object);
 				}
 				return ret;
@@ -75,16 +92,31 @@ public class DB {
 		});
 	}
 
-	public static <T> Map<Integer, T> mapResult(StringBuilder sql, final Class<T> type) {
+	public static <T> Map<Integer, T> mapResult(StringBuilder sql, final Class<T> type, final JoinData... joinData) {
+		return mapResult(sql, type, Arrays.asList(joinData));
+	}
+
+	public static <T> Map<Integer, T> mapResult(StringBuilder sql, final Class<T> type, final List<JoinData> joinData) {
 		return executeQuery(sql.toString(), new ResultSetHandler<Map<Integer, T>>() {
 			public Map<Integer, T> handle(ResultSet resultSet) throws SQLException {
 				Map<Integer, T> ret = new LinkedHashMap<Integer, T>();
 				ResultSetMetaData md = resultSet.getMetaData();
 				while (resultSet.next()) {
 					Map<String, Object> row = new HashMap<String, Object>();
+
+					// Add column data
 					for (int i=1; i<=md.getColumnCount(); i++) {
 						row.put(md.getColumnName(i), resultSet.getObject(i));
 					}
+					// Add join data
+					if (joinData != null) {
+						for (JoinData jd : joinData) {
+							Integer foreignKey = ExportUtil.convertValue(resultSet.getObject(jd.getColumnName()), Integer.class);
+							Object joinedValue = jd.getPropertyValues().get(foreignKey);
+							row.put(jd.getPropertyName(), joinedValue);
+						}
+					}
+
 					Integer key = ExportUtil.convertValue(resultSet.getObject(1), Integer.class);
 					T object = ExportUtil.toObject(type, row);
 					ret.put(key, object);

@@ -3,9 +3,14 @@ package org.pih.hivmigration.export.query;
 import org.pih.hivmigration.common.Address;
 import org.pih.hivmigration.common.PamEnrollment;
 import org.pih.hivmigration.common.Patient;
+import org.pih.hivmigration.common.PostnatalEncounter;
+import org.pih.hivmigration.common.Pregnancy;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.export.DB;
+import org.pih.hivmigration.export.JoinData;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class PatientQuery {
@@ -30,9 +35,22 @@ public class PatientQuery {
 		query.append("			d.gender, d.birth_date, d.birth_date_exact_p as birthdateEstimated, d.phone_number, ");
 		query.append("			d.birth_place, d.agent as accompagnateur, d.patient_created_by, d.patient_created_date ");
 		query.append("from		hiv_demographics d ");
-		return DB.mapResult(query, Patient.class);
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+		joinData.add(new JoinData("patient_id", "addresses", getAddresses()));
+		joinData.add(new JoinData("patient_id", "pamEnrollment", getPamEnrollments()));
+		joinData.add(new JoinData("patient_id", "pregnancies", getPregnancies()));
+
+		return DB.mapResult(query, Patient.class, joinData);
 	}
 
+	/**
+	 * @return Map from patientId -> List of Addresses, with the first element of each List representing the current known address
+	 *
+	 * Rather than including "type" in the returned data, we are simply sorting by it, along with entry_date.  The nature of the triggers set up in the
+	 * database, and our exclusive usage of entering "current" addresses means that we should just be able to sort by entry date desc and use the first record
+	 * as the current address, but we add in the "type" of current vs. previous for good measure.
+	 */
 	public static ListMap<Integer, Address> getAddresses() {
 		StringBuilder query = new StringBuilder();
 		query.append("select	a.patient_id, a.entry_date, a.address, nvl(l.department, a.department) as department, ");
@@ -44,6 +62,8 @@ public class PatientQuery {
 	}
 
 	/**
+	 * @return Map from patientId -> PamEnrollment for all patients who have had an enrollment in this program
+	 *
 	 * There are a handful of patients that have more than one entry in this table, but upon investigation they are duplicates on all fields, so we can safely do a 1:1 mapping to patient
 	 */
 	public static Map<Integer, PamEnrollment> getPamEnrollments() {
@@ -51,5 +71,29 @@ public class PatientQuery {
 		query.append("select	patient_id, patient_tx_id as identifier, start_date, end_date ");
 		query.append("from		hiv_course_of_tx ");
 		return DB.mapResult(query, PamEnrollment.class);
+	}
+
+	/**
+	 * @return Map from patientId -> List of Pregnancies for a given patient
+	 *
+	 * This includes all data from the hiv_pregnancy, hiv_pregnancy_exam tables.
+	 * It also includes all data from hiv_encounters where type = 'infant_followup'
+	 * The PostnatalEncounter Data may not be useful for import as there are only a handful recorded, almost all of them during a single week of October in 2007
+	 */
+	public static ListMap<Integer, Pregnancy> getPregnancies() {
+
+		StringBuilder examQuery = new StringBuilder();
+		examQuery.append("select	x.pregnancy_id, e.encounter_date, 'Unspecified' as location, e.entered_by, e.entry_date, ");
+		examQuery.append("			x.child_serostatus_test as childHivTestType, x.child_serostatus_result as childHivTestResult, x.child_status ");
+		examQuery.append("from		hiv_pregnancy_exam x, hiv_encounters e ");
+		examQuery.append("where		x.encounter_id = e.encounter_id ");
+		ListMap<Integer, PostnatalEncounter> postnatalEncounters = DB.listMapResult(examQuery, PostnatalEncounter.class);
+
+		StringBuilder pregnancyQuery = new StringBuilder();
+		pregnancyQuery.append("select	patient_id, pregnancy_id, last_period_date, expected_delivery_date, gravidity, parity, num_abortions, num_living_children, ");
+		pregnancyQuery.append("			family_planning_method, post_outcome_family_planning, comments, outcome, outcome_date, outcome_location, outcome_method ");
+		pregnancyQuery.append("from		hiv_pregnancy ");
+
+		return DB.listMapResult(pregnancyQuery, Pregnancy.class, new JoinData("pregnancy_id", "postnatalEncounters", postnatalEncounters));
 	}
 }

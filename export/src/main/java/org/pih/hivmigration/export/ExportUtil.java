@@ -10,8 +10,10 @@ import java.beans.PropertyDescriptor;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ExportUtil {
 
@@ -81,6 +83,16 @@ public class ExportUtil {
 		catch (Exception e) {
 			throw new IllegalArgumentException("Unable to populate " + type + " with " + values, e);
 		}
+	}
+
+	public static Set<String> getWriteableProperties(Object o) {
+		Set<String> ret = new HashSet<String>();
+		for (PropertyDescriptor pd : PropertyUtils.getPropertyDescriptors(o.getClass())) {
+			if (PropertyUtils.isWriteable(o, pd.getName())) {
+				ret.add(pd.getName());
+			}
+		}
+		return ret;
 	}
 
 	public static String toJson(Object o) {

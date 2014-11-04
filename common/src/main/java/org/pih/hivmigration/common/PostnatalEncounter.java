@@ -1,0 +1,34 @@
+package org.pih.hivmigration.common;
+
+public class PostnatalEncounter extends Encounter {
+
+	private String childHivTestType;
+	private String childHivTestResult;
+	private String childStatus;
+
+	public PostnatalEncounter() {}
+
+	public String getChildHivTestType() {
+		return childHivTestType;
+	}
+
+	public void setChildHivTestType(String childHivTestType) {
+		this.childHivTestType = childHivTestType;
+	}
+
+	public String getChildHivTestResult() {
+		return childHivTestResult;
+	}
+
+	public void setChildHivTestResult(String childHivTestResult) {
+		this.childHivTestResult = childHivTestResult;
+	}
+
+	public String getChildStatus() {
+		return childStatus;
+	}
+
+	public void setChildStatus(String childStatus) {
+		this.childStatus = childStatus;
+	}
+}
