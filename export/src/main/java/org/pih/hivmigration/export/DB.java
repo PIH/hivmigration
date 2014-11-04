@@ -1,8 +1,6 @@
 package org.pih.hivmigration.export;
 
-import org.apache.commons.dbutils.BasicRowProcessor;
 import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.dbutils.GenerousBeanProcessor;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.commons.dbutils.handlers.BeanHandler;
@@ -10,13 +8,15 @@ import org.apache.commons.dbutils.handlers.BeanListHandler;
 import org.apache.commons.dbutils.handlers.ColumnListHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
-import org.pih.hivmigration.common.User;
+import org.pih.hivmigration.common.util.ListMap;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +54,44 @@ public class DB {
 		catch (Exception e) {
 			throw new RuntimeException("Unable to execute query: " + sql, e);
 		}
+	}
+
+	public static <T> ListMap<Integer, T> listMapResult(StringBuilder sql, final Class<T> type) {
+		return executeQuery(sql.toString(), new ResultSetHandler<ListMap<Integer, T>>() {
+			public ListMap<Integer, T> handle(ResultSet resultSet) throws SQLException {
+				ListMap<Integer, T> ret = new ListMap<Integer, T>();
+				ResultSetMetaData md = resultSet.getMetaData();
+				while (resultSet.next()) {
+					Map<String, Object> row = new HashMap<String, Object>();
+					for (int i=1; i<=md.getColumnCount(); i++) {
+						row.put(md.getColumnName(i), resultSet.getObject(i));
+					}
+					Integer key = ExportUtil.convertValue(resultSet.getObject(1), Integer.class);
+					T object = ExportUtil.toObject(type, row);
+					ret.putInList(key, object);
+				}
+				return ret;
+			}
+		});
+	}
+
+	public static <T> Map<Integer, T> mapResult(StringBuilder sql, final Class<T> type) {
+		return executeQuery(sql.toString(), new ResultSetHandler<Map<Integer, T>>() {
+			public Map<Integer, T> handle(ResultSet resultSet) throws SQLException {
+				Map<Integer, T> ret = new LinkedHashMap<Integer, T>();
+				ResultSetMetaData md = resultSet.getMetaData();
+				while (resultSet.next()) {
+					Map<String, Object> row = new HashMap<String, Object>();
+					for (int i=1; i<=md.getColumnCount(); i++) {
+						row.put(md.getColumnName(i), resultSet.getObject(i));
+					}
+					Integer key = ExportUtil.convertValue(resultSet.getObject(1), Integer.class);
+					T object = ExportUtil.toObject(type, row);
+					ret.put(key, object);
+				}
+				return ret;
+			}
+		});
 	}
 
 	public static <T> T uniqueResult(String sql, Class<T> type) {
@@ -137,15 +175,5 @@ public class DB {
 		b.setMinValue(getMinValue(table, column));
 		b.setMaxValue(getMaxValue(table, column));
 		return b;
-	}
-
-
-	public static List<User> getUsers() {
-		StringBuilder query = new StringBuilder();
-		query.append("select	u.user_id as userId, p.email, n.first_names as firstName, n.last_name as lastName, u.password, u.salt ");
-		query.append("from		users u, parties p, persons n ");
-		query.append("where		u.user_id = p.party_id ");
-		query.append("and		u.user_id = n.person_id ");
-		return executeQuery(query.toString(), new BeanListHandler<User>(User.class, new BasicRowProcessor(new GenerousBeanProcessor())));
 	}
 }
