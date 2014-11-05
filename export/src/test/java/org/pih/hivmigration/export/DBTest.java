@@ -121,4 +121,16 @@ public class DBTest {
 		Assert.assertEquals("cm", productUnits.getMinValue());
 		Assert.assertEquals("unspecified", productUnits.getMaxValue());
 	}
+
+	@Test
+	public void shouldGetForeignKeyReferencesForTable() throws Exception {
+		List<String> rows = DB.getForeignKeysToTable("hiv_encounters");
+		Assert.assertEquals(22, rows.size());
+	}
+
+	@Test
+	public void shouldGetForeignKeyReferencesForTableAndColumn() throws Exception {
+		List<Map<String, Object>> rows = DB.getForeignKeysToTable("hiv_encounters", "encounter_id");
+		Assert.assertEquals(23, rows.size());
+	}
 }

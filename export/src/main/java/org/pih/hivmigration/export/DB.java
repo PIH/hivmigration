@@ -126,16 +126,17 @@ public class DB {
 		});
 	}
 
-	public static <T> T uniqueResult(String sql, Class<T> type) {
-		return executeQuery(sql, new ScalarHandler<T>());
+	public static <T> T uniqueResult(String sql, Class<T> type, Object... arguments) {
+		Object result = executeQuery(sql, new ScalarHandler<Object>(), arguments);
+		return ExportUtil.convertValue(result, type);
 	}
 
-	public static <T> List<T> listResult(String sql, Class<T> type) {
-		return executeQuery(sql, new ColumnListHandler<T>());
+	public static <T> List<T> listResult(String sql, Class<T> type, Object... arguments) {
+		return executeQuery(sql, new ColumnListHandler<T>(), arguments);
 	}
 
-	public static List<Map<String, Object>> tableResult(String sql) {
-		return executeQuery(sql, new MapListHandler());
+	public static List<Map<String, Object>> tableResult(String sql, Object... arguments) {
+		return executeQuery(sql, new MapListHandler(), arguments);
 	}
 
 	public static List<String> getAllTables() {
@@ -207,5 +208,32 @@ public class DB {
 		b.setMinValue(getMinValue(table, column));
 		b.setMaxValue(getMaxValue(table, column));
 		return b;
+	}
+
+	public static List<Map<String, Object>> getForeignKeysToTable(String tableName, String columnName) {
+		StringBuilder query = new StringBuilder();
+		query.append("select 	cons.table_name as tableName, cols.column_name as columnName ");
+		query.append("from		user_constraints cons, user_cons_columns cols, user_constraints cons_r, user_cons_columns cols_r ");
+		query.append("where		cons.constraint_name = cols.constraint_name ");
+		query.append("and		cons.r_constraint_name = cons_r.constraint_name(+) ");
+		query.append("and		cons.r_constraint_name = cols_r.constraint_name(+) ");
+		query.append("and		cons.constraint_type = 'R' ");
+		query.append("and		upper(cons_r.table_name) = ? ");
+		query.append("and		upper(cols_r.column_name) = ? ");
+		query.append("order by	cons.table_name, cols.column_name");
+		return tableResult(query.toString(), tableName.toUpperCase(), columnName.toUpperCase());
+	}
+
+	public static List<String> getForeignKeysToTable(String tableName) {
+		StringBuilder query = new StringBuilder();
+		query.append("select 	distinct cons.table_name ");
+		query.append("from		user_constraints cons, user_cons_columns cols, user_constraints cons_r, user_cons_columns cols_r ");
+		query.append("where		cons.constraint_name = cols.constraint_name ");
+		query.append("and		cons.r_constraint_name = cons_r.constraint_name(+) ");
+		query.append("and		cons.r_constraint_name = cols_r.constraint_name(+) ");
+		query.append("and		cons.constraint_type = 'R' ");
+		query.append("and		upper(cons_r.table_name) = ? ");
+		query.append("order by	cons.table_name");
+		return listResult(query.toString(), String.class, tableName.toUpperCase());
 	}
 }

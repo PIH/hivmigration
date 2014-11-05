@@ -84,6 +84,9 @@ public class ExportUtil {
 
 	public static <T> T toObject(Class<T> type, Map<String, Object> values) {
 		try {
+			if (Map.class.isAssignableFrom(type)) {
+				return (T)values;
+			}
 			T o = type.newInstance();
 			for (PropertyDescriptor descriptor : PropertyUtils.getPropertyDescriptors(type)) {
 				if (PropertyUtils.isWriteable(o, descriptor.getName())) {
