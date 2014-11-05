@@ -1,10 +1,16 @@
 package org.pih.hivmigration.export.query;
 
 import org.pih.hivmigration.common.Address;
+import org.pih.hivmigration.common.Allergy;
+import org.pih.hivmigration.common.Contact;
+import org.pih.hivmigration.common.Diagnosis;
+import org.pih.hivmigration.common.IntakeEncounter;
 import org.pih.hivmigration.common.PamEnrollment;
 import org.pih.hivmigration.common.Patient;
 import org.pih.hivmigration.common.PostnatalEncounter;
 import org.pih.hivmigration.common.Pregnancy;
+import org.pih.hivmigration.common.PreviousTreatment;
+import org.pih.hivmigration.common.SocioeconomicData;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.export.DB;
 import org.pih.hivmigration.export.JoinData;
@@ -40,6 +46,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("patient_id", "addresses", getAddresses()));
 		joinData.add(new JoinData("patient_id", "pamEnrollment", getPamEnrollments()));
 		joinData.add(new JoinData("patient_id", "pregnancies", getPregnancies()));
+		joinData.add(new JoinData("patient_id", "postnatalEncounters", getPostnatalEncounters()));
 
 		return DB.mapResult(query, Patient.class, joinData);
 	}
@@ -81,19 +88,109 @@ public class PatientQuery {
 	 * The PostnatalEncounter Data may not be useful for import as there are only a handful recorded, almost all of them during a single week of October in 2007
 	 */
 	public static ListMap<Integer, Pregnancy> getPregnancies() {
-
-		StringBuilder examQuery = new StringBuilder();
-		examQuery.append("select	x.pregnancy_id, e.encounter_date, 'Unspecified' as location, e.entered_by, e.entry_date, ");
-		examQuery.append("			x.child_serostatus_test as childHivTestType, x.child_serostatus_result as childHivTestResult, x.child_status ");
-		examQuery.append("from		hiv_pregnancy_exam x, hiv_encounters e ");
-		examQuery.append("where		x.encounter_id = e.encounter_id ");
-		ListMap<Integer, PostnatalEncounter> postnatalEncounters = DB.listMapResult(examQuery, PostnatalEncounter.class);
-
 		StringBuilder pregnancyQuery = new StringBuilder();
 		pregnancyQuery.append("select	patient_id, pregnancy_id, last_period_date, expected_delivery_date, gravidity, parity, num_abortions, num_living_children, ");
 		pregnancyQuery.append("			family_planning_method, post_outcome_family_planning, comments, outcome, outcome_date, outcome_location, outcome_method ");
 		pregnancyQuery.append("from		hiv_pregnancy ");
+		return DB.listMapResult(pregnancyQuery, Pregnancy.class);
+	}
 
-		return DB.listMapResult(pregnancyQuery, Pregnancy.class, new JoinData("pregnancy_id", "postnatalEncounters", postnatalEncounters));
+	/**
+	 * @return Map from patientId -> List of PostnatalEncounters for a given patient
+	 *
+	 * This includes all data from hiv_pregnancy_exam and hiv_encounters where type = 'infant_followup'
+	 * The PostnatalEncounter Data may not be useful for import as there are only a handful recorded, almost all of them during a single week of October in 2007
+	 */
+	public static ListMap<Integer, PostnatalEncounter> getPostnatalEncounters() {
+		StringBuilder examQuery = new StringBuilder();
+		examQuery.append("select	e.patient_id, e.encounter_date, 'Unspecified' as location, e.entered_by, e.entry_date, ");
+		examQuery.append("			x.pregnancy_id, x.child_serostatus_test as childHivTestType, x.child_serostatus_result as childHivTestResult, x.child_status ");
+		examQuery.append("from		hiv_encounters e, hiv_pregnancy_exam x ");
+		examQuery.append("where		e.encounter_id = x.encounter_id(+) ");
+		examQuery.append("and		e.type = 'infant_followup' ");
+		return DB.listMapResult(examQuery, PostnatalEncounter.class);
+	}
+
+	/**
+	 * @return Map from patientId to a List of IntakeEncounters, including all data that is entered on intake forms
+	 *
+	 * There are 29 examples (as of 11/4/14) of patients who have more than one intake encounter, so for now I'm making this a ListMap and we can figure it out as we go
+	 */
+	public static ListMap<Integer, IntakeEncounter> getIntakeEncounters() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments ");
+		query.append("from		hiv_encounters e ");
+		query.append("where		e.type = 'intake'");
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+		joinData.add(new JoinData("patient_id", "allergies", getAllergies()));
+		joinData.add(new JoinData("patient_id", "contacts", getContacts()));
+		joinData.add(new JoinData("patient_id", "diagnoses", getDiagnoses()));
+		joinData.add(new JoinData("patient_id", "previousTreatments", getPreviousTreatments()));
+		joinData.add(new JoinData("patient_id", "socioeconomicData", getSocioeconomicData()));
+
+		return DB.listMapResult(query, IntakeEncounter.class, joinData);
+	}
+
+	/**
+	 * @return Map from patientId to a List of Allergies.  Note, many of these Allergies simply have an allergen of "aucun", which we'll need to interpret as no known allergies
+	 */
+	public static ListMap<Integer, Allergy> getAllergies() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	patient_id, nvl(inn, other_reason) as allergen, allergy_date, type_of_reaction ");
+		query.append("from		hiv_allergies ");
+		return DB.listMapResult(query, Allergy.class);
+	}
+
+	/**
+	 * @return Map from patientId to a List of Contacts.
+	 */
+	public static ListMap<Integer, Contact> getContacts() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	patient_id, contact_name, relationship, birth_date, age, hiv_status, ");
+		query.append("			clinic_p as followedInAClinicForHivCare, clinic_name as nameOfClinic, ");
+		query.append("			referred_tr_p as referredForHivTest, referred_clinic as nameOfReferralClinic, deceased_p as deceased ");
+		query.append("from		hiv_contacts ");
+		return DB.listMapResult(query, Contact.class);
+	}
+
+	/**
+	 * @return Map from patientId to a List of Diagnosis.  Note, these indicate both diagnoses that are present and absent depending on the modifier
+	 */
+	public static ListMap<Integer, Diagnosis> getDiagnoses() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	p.patient_id,  d.diagnosis_eng as diagnosisCoded, diagnosis_other as diagnosisNonCoded, ");
+		query.append("			p.present_p as present, p.diagnosis_date, p.diagnosis_comments ");
+		query.append("from		hiv_patient_diagnoses p, hiv_diagnoses d ");
+		query.append("where		p.diagnosis_id = d.diagnosis_id(+) ");
+		return DB.listMapResult(query, Diagnosis.class);
+	}
+
+	/**
+	 * @return Map from patientId to a List of PreviousTreatments
+	 */
+	public static ListMap<Integer, PreviousTreatment> getPreviousTreatments() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	patient_id, inn as treatmentCoded, treatment_other as treatmentNonCoded, ");
+		query.append("			start_date, end_date, treatment_outcome as outcome ");
+		query.append("from		hiv_previous_exposures ");
+		return DB.listMapResult(query, PreviousTreatment.class);
+	}
+
+	/**
+	 * @return Map from patientId to the socioeconomic data recorded on the intake form
+	 */
+	public static Map<Integer, SocioeconomicData> getSocioeconomicData() {
+		StringBuilder query = new StringBuilder();
+		query.append("select 	s.patient_id, s.civil_status, s.other_sexual_partners_p as has_other_sexual_partners, s.other_sexual_partners, ");
+		query.append("			s.partners_same_town_p as partnersInSameTown, s.partners_other_town, ");
+		query.append("			s.residences, s.primary_activity, s.nutritional_evaluation, s.num_people_in_house, s.num_rooms_in_house, ");
+		query.append("			s.type_of_roof, s.type_of_floor, s.latrine_p as latrinePresent, s.radio_p as radioPresent, s.education, ");
+		query.append("			x.education_years, x.method_of_transport, x.time_of_transport, x.walking_time_to_clinic, x.smokes_p as smokes, ");
+		query.append("			x.smoking_years, x.num_cigarretes_per_day, x.num_days_alcohol_per_week, x.wine_per_day, x.beer_per_day, x.drinks_per_day, ");
+		query.append("			x.arrival_method_other as arrivalOtherMethod ");
+		query.append("from		hiv_socioeconomics s, hiv_socioeconomics_extra x ");
+		query.append("where		s.patient_id = x.patient_id(+) ");
+		return DB.mapResult(query, SocioeconomicData.class);
 	}
 }

@@ -1,12 +1,10 @@
 package org.pih.hivmigration.common;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class Pregnancy {
 
-	private Integer pregnancyId;
+	private Integer pregnancyId; // Legacy id for later re-association with PostnatalEncounters if needed
 	private Date lastPeriodDate;
 	private Date expectedDeliveryDate;
 	private Integer gravidity;
@@ -20,8 +18,6 @@ public class Pregnancy {
 	private Date outcomeDate;
 	private String outcomeLocation;
 	private String outcomeMethod;
-
-	private List<PostnatalEncounter> postnatalEncounters;
 
 	public Pregnancy() {}
 
@@ -135,20 +131,5 @@ public class Pregnancy {
 
 	public void setOutcomeMethod(String outcomeMethod) {
 		this.outcomeMethod = outcomeMethod;
-	}
-
-	public List<PostnatalEncounter> getPostnatalEncounters() {
-		if (postnatalEncounters == null) {
-			postnatalEncounters = new ArrayList<PostnatalEncounter>();
-		}
-		return postnatalEncounters;
-	}
-
-	public void setPostnatalEncounters(List<PostnatalEncounter> postnatalEncounters) {
-		this.postnatalEncounters = postnatalEncounters;
-	}
-
-	public void addPostnatalEncounter(PostnatalEncounter encounter) {
-		getPostnatalEncounters().add(encounter);
 	}
 }

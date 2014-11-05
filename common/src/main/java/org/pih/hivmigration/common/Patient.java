@@ -25,6 +25,7 @@ public class Patient {
 	private PamEnrollment pamEnrollment;
 	private List<Address> addresses;
 	private List<Pregnancy> pregnancies;
+	private List<PostnatalEncounter> postnatalEncounters;
 
 	public Patient() {}
 
@@ -184,5 +185,20 @@ public class Patient {
 
 	public void addPregnancy(Pregnancy pregnancy) {
 		getPregnancies().add(pregnancy);
+	}
+
+	public List<PostnatalEncounter> getPostnatalEncounters() {
+		if (postnatalEncounters == null) {
+			postnatalEncounters = new ArrayList<PostnatalEncounter>();
+		}
+		return postnatalEncounters;
+	}
+
+	public void setPostnatalEncounters(List<PostnatalEncounter> postnatalEncounters) {
+		this.postnatalEncounters = postnatalEncounters;
+	}
+
+	public void addPostnatalEncounter(PostnatalEncounter encounter) {
+		getPostnatalEncounters().add(encounter);
 	}
 }

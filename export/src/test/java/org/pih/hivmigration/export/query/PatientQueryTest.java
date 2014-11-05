@@ -47,4 +47,53 @@ public class PatientQueryTest {
 		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_pregnancy");
 		TestUtils.assertAllPropertiesArePopulated(c);
 	}
+
+	@Test
+	public void shouldTestPostnatalEncounterQuery() throws Exception {
+		Collection c = PatientQuery.getPostnatalEncounters().values();
+		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'infant_followup'");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestIntakeEncounters() throws Exception {
+		Collection c = PatientQuery.getIntakeEncounters().values();
+		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'intake'");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestAllergies() throws Exception {
+		Collection c = PatientQuery.getAllergies().values();
+		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_allergies");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestContacts() throws Exception {
+		Collection c = PatientQuery.getContacts().values();
+		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_contacts");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestDiagnoses() throws Exception {
+		Collection c = PatientQuery.getDiagnoses().values();
+		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_patient_diagnoses");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestPreviousTreatments() throws Exception {
+		Collection c = PatientQuery.getPreviousTreatments().values();
+		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_previous_exposures");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestSocioeconomicData() throws Exception {
+		Collection c = PatientQuery.getSocioeconomicData().values();
+		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_socioeconomics");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
 }
