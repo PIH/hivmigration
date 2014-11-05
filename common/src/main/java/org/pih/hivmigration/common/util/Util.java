@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 public class Util {
 
@@ -175,5 +176,23 @@ public class Util {
 		return buf.toString();
 	}
 
+	/**
+	 * @return a Properties object based on a properties file at the specified location
+	 */
+	public static Properties loadPropertiesFromFile(File file) {
+		Properties ret = new Properties();
+		InputStream is = null;
+		try {
+			is = FileUtils.openInputStream(file);
+			ret.load(is);
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Unable to load properties from file at " + file.getAbsolutePath(), e);
+		}
+		finally {
+			IOUtils.closeQuietly(is);
+		}
+		return ret;
+	}
 }
 

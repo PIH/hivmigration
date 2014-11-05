@@ -1,5 +1,6 @@
 package org.pih.hivmigration.common;
 
+import java.util.Date;
 import java.util.List;
 
 public class IntakeEncounter extends Encounter {
@@ -11,6 +12,7 @@ public class IntakeEncounter extends Encounter {
 	private List<Diagnosis> diagnoses;
 	private List<PreviousTreatment> previousTreatments;
 	private SocioeconomicData socioeconomicData;
+	private HivStatusData hivStatusData;
 
 	public IntakeEncounter() {}
 
@@ -60,5 +62,13 @@ public class IntakeEncounter extends Encounter {
 
 	public void setSocioeconomicData(SocioeconomicData socioeconomicData) {
 		this.socioeconomicData = socioeconomicData;
+	}
+
+	public HivStatusData getHivStatusData() {
+		return hivStatusData;
+	}
+
+	public void setHivStatusData(HivStatusData hivStatusData) {
+		this.hivStatusData = hivStatusData;
 	}
 }

@@ -4,6 +4,7 @@ import org.pih.hivmigration.common.Address;
 import org.pih.hivmigration.common.Allergy;
 import org.pih.hivmigration.common.Contact;
 import org.pih.hivmigration.common.Diagnosis;
+import org.pih.hivmigration.common.HivStatusData;
 import org.pih.hivmigration.common.IntakeEncounter;
 import org.pih.hivmigration.common.PamEnrollment;
 import org.pih.hivmigration.common.Patient;
@@ -128,6 +129,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("patient_id", "diagnoses", getDiagnoses()));
 		joinData.add(new JoinData("patient_id", "previousTreatments", getPreviousTreatments()));
 		joinData.add(new JoinData("patient_id", "socioeconomicData", getSocioeconomicData()));
+		joinData.add(new JoinData("patient_id", "hivStatusData", getHivStatusData()));
 
 		return DB.listMapResult(query, IntakeEncounter.class, joinData);
 	}
@@ -192,5 +194,22 @@ public class PatientQuery {
 		query.append("from		hiv_socioeconomics s, hiv_socioeconomics_extra x ");
 		query.append("where		s.patient_id = x.patient_id(+) ");
 		return DB.mapResult(query, SocioeconomicData.class);
+	}
+
+	/**
+	 * @return Map from patientId to hiv status data recorded on the intake form
+	 *
+	 * HIV_HIV_STATUS HAS LINKS TO BOTH ENCOUNTER AND PATIENT, BUT ALL LINKED ENCOUNTERS ARE INTAKE, AND NO ENCOUNTER IMPLIES INTAKE
+	 * IT'S USAGE IS SUCH THAT ANY EDIT TO THESE FIELDS ON THE INTAKE FORM WILL "AUDIT" THE OLDER VALUE, BY SETTING THE "TYPE" TO "PREVIOUS"
+	 * THE PLAN IS TO MIGRATE ONLY THE MOST RECENT ENTRY FOR EACH DISTINCT PATIENT IN THIS TABLE,
+	 * WHICH SHOULD REPRESENT THE LATEST INTAKE FORM UPDATE AND THE MOST ACCURATE INFORMATION, WHETHER ENTERED ORIGINALLY OR IN A CHART REVIEW, ETC
+	 */
+	public static Map<Integer, HivStatusData> getHivStatusData() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	patient_id, hiv_positive_p as status, status_date, date_unknown_p as dateUnknown, ");
+		query.append("			test_location as testLocationCoded, test_location_other as testLocationNonCoded, entered_date as entryDate, entered_by ");
+		query.append("from		hiv_hiv_status ");
+		query.append("order by	entered_date asc");
+		return DB.mapResult(query, HivStatusData.class);
 	}
 }

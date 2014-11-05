@@ -1,10 +1,16 @@
 package org.pih.hivmigration.export;
 
+import org.apache.commons.dbutils.handlers.MapHandler;
+import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.pih.hivmigration.common.util.Util;
+import org.pih.hivmigration.export.query.PatientQuery;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class MigrationTest {
@@ -47,6 +53,50 @@ public class MigrationTest {
 					}
 				}
 			}
+		}
+	}
+
+	@Test
+	public void shouldReturnColumnsWithData() throws Exception {
+		String table = "";
+		if (Util.notEmpty(table)) {
+			System.out.println("*********************");
+			System.out.println(table);
+			System.out.println("*********************");
+			for (TableColumn column : DB.getAllColumns(table)) {
+				TableColumnBreakdown breakdown = DB.getColumnBreakdown(table, column.getColumnName());
+				if (breakdown.getNumNotNullValues() > 0) {
+					System.out.println(column.getColumnName().toLowerCase());
+				}
+			}
+		}
+	}
+
+	@Test
+	public void shouldReturnEncounterTypeBreakdown() throws Exception {
+		String table = "";
+		if (Util.notEmpty(table)) {
+			StringBuilder query = new StringBuilder();
+			query.append("select e.type, count(*) as num ");
+			query.append("from " + table + " t, hiv_encounters e ");
+			query.append("where t.encounter_id = e.encounter_id(+) ");
+			query.append("group by e.type ");
+			query.append("order by num desc");
+			List<Map<String, Object>> results = DB.executeQuery(query.toString(), new MapListHandler());
+			for (Map<String, Object> row : results) {
+				System.out.println(row.get("TYPE") + ": " + row.get("NUM"));
+			}
+		}
+	}
+
+	@Test
+	@Ignore
+	public void shouldReturnObjectsAsJson() throws Exception {
+		List l = new ArrayList(PatientQuery.getHivStatusData().values());
+		System.out.println("Found: " + l.size() + " objects");
+		for (int i=0; i<10; i++) {
+			int index = (int)(Math.random() * l.size());
+			System.out.println(index + ": " + ExportUtil.toJson(l.get(index)));
 		}
 	}
 }

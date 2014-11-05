@@ -1,12 +1,17 @@
 package org.pih.hivmigration.export.query;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.pih.hivmigration.common.HivStatusData;
+import org.pih.hivmigration.common.code.HivStatus;
 import org.pih.hivmigration.export.DB;
 import org.pih.hivmigration.export.TestUtils;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class PatientQueryTest {
 
@@ -95,5 +100,24 @@ public class PatientQueryTest {
 		Collection c = PatientQuery.getSocioeconomicData().values();
 		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_socioeconomics");
 		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestHivStatusData() throws Exception {
+		Collection c = PatientQuery.getHivStatusData().values();
+		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(distinct(patient_id)) from hiv_hiv_status");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldNotReturnAnyHivNegativeStatusesIncorrectly() throws Exception {
+		List<Integer> positivePats = DB.listResult("select distinct patient_id from hiv_hiv_status where hiv_positive_p = 't'", Integer.class);
+		Map<Integer, HivStatusData> data = PatientQuery.getHivStatusData();
+		for (Integer pId : data.keySet()) {
+			HivStatusData d = data.get(pId);
+			if (d.getStatus() == HivStatus.NEGATIVE || d.getStatus() == HivStatus.UNKNOWN) {
+				Assert.assertFalse("Patient " + pId + " has a historical positive HIV status, but this is not in the export", positivePats.contains(pId));
+			}
+		}
 	}
 }

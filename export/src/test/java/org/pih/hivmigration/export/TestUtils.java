@@ -2,18 +2,23 @@ package org.pih.hivmigration.export;
 
 import junit.framework.Assert;
 import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.io.FileUtils;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.common.util.Util;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.Set;
 
 public class TestUtils {
 
 	public static DatabaseCredentials getDatabaseCredentials() {
-		return new DatabaseCredentials("jdbc:oracle:thin:@localhost:1521:XE", "hiv", "hiv");
+		String homeDirectory = System.getProperty("user.home");
+		Properties p = Util.loadPropertiesFromFile(new File(homeDirectory, "hivmigration.properties"));
+		return new DatabaseCredentials(p.getProperty("connection.url"), p.getProperty("connection.username"), p.getProperty("connection.password"));
 	}
 
 	public static void assertCollectionSizeMatchesNumber(Collection toCheck, int expected) {

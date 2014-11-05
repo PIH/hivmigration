@@ -2,6 +2,7 @@ package org.pih.hivmigration.export;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.pih.hivmigration.common.code.CodedValue;
 import org.pih.hivmigration.common.User;
 import org.pih.hivmigration.common.util.Util;
 import org.pih.hivmigration.export.query.UserQuery;
@@ -65,6 +66,17 @@ public class ExportUtil {
 			}
 			else if (type == User.class) {
 				ret = UserQuery.getUser(value);
+			}
+			else if (CodedValue.class.isAssignableFrom(type) && type.isEnum()) {
+				for (Object o : type.getEnumConstants()) {
+					CodedValue cv = (CodedValue)o;
+					if (cv.getValue().equalsIgnoreCase(value.toString())) {
+						ret = o;
+					}
+				}
+			}
+			else {
+				throw new IllegalArgumentException("Unknown type for converting: " + type);
 			}
 		}
 		return (T)ret;
