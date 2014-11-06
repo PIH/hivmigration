@@ -1,5 +1,8 @@
 package org.pih.hivmigration.common;
 
+/**
+ * Represents the commonality between an intake and a followup encounter.
+ */
 public class ClinicalEncounter extends Encounter {
 
 	private String examiningDoctor;

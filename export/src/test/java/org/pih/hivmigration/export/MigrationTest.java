@@ -59,6 +59,24 @@ public class MigrationTest {
 	}
 
 	@Test
+	public void shouldReturnEnumValuesForColumn() {
+		String table = "";
+		String column = "";
+		if (Util.notEmpty(table) && Util.notEmpty(column)) {
+			List<String> ret = DB.listResult("select distinct " + column + " from " + table + " order by " + column, String.class);
+			for (String s : ret) {
+				System.out.println(s);
+			}
+			System.out.println("");
+			System.out.println("As Enum Code");
+			System.out.println("");
+			for (String s : ret) {
+				System.out.println("\t"+s.toUpperCase()+",");
+			}
+		}
+	}
+
+	@Test
 	public void shouldReturnColumnsWithData() throws Exception {
 		String table = "";
 		if (Util.notEmpty(table)) {

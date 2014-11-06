@@ -139,6 +139,20 @@ public class DB {
 		return executeQuery(sql, new MapListHandler(), arguments);
 	}
 
+	public static <T extends Enum> ListMap<Integer, T> enumResult(StringBuilder sql, final Class<T> type, Object...arguments) {
+		return executeQuery(sql.toString(), new ResultSetHandler<ListMap<Integer, T>>() {
+			public ListMap<Integer, T> handle(ResultSet resultSet) throws SQLException {
+				ListMap<Integer, T> ret = new ListMap<Integer, T>();
+				while (resultSet.next()) {
+					Integer key = ExportUtil.convertValue(resultSet.getObject(1), Integer.class);
+					T value = ExportUtil.convertValue(resultSet.getObject(2), type);
+					ret.putInList(key, value);
+				}
+				return ret;
+			}
+		}, arguments);
+	}
+
 	public static List<String> getAllTables() {
 		String sql = "select distinct(upper(table_name)) from user_tab_columns order by upper(table_name) asc";
 		return listResult(sql, String.class);

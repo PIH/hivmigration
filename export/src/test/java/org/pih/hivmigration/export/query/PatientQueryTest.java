@@ -136,6 +136,13 @@ public class PatientQueryTest {
 	}
 
 	@Test
+	public void shouldTestWhoStagingCriteria() throws Exception {
+		Collection c = PatientQuery.getWhoStagingCriteria().values();
+		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_exam_who_staging_criteria");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
 	public void shouldIncludeOnlySpecifiedTablesForIntakeEncounters() throws Exception {
 		TestUtils.assertEncounterDataOnlyIn("intake",
 				"HIV_DATA_AUDIT_ENTRY", "HIV_EXAMS", "HIV_EXAM_EXTRA", "HIV_EXAM_LAB_RESULTS", "HIV_EXAM_OIS",

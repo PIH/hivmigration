@@ -1,5 +1,7 @@
 package org.pih.hivmigration.common;
 
+import org.pih.hivmigration.common.code.WhoStagingCriteria;
+
 import java.util.Date;
 import java.util.List;
 
@@ -15,6 +17,7 @@ public class IntakeEncounter extends ClinicalEncounter {
 	private SocioeconomicData socioeconomicData;
 	private HivStatusData hivStatusData;
 	private List<SystemStatus> systemStatuses;
+	private List<WhoStagingCriteria> whoStagingCriteria;
 
 	public IntakeEncounter() {}
 
@@ -88,5 +91,13 @@ public class IntakeEncounter extends ClinicalEncounter {
 
 	public void setSystemStatuses(List<SystemStatus> systemStatuses) {
 		this.systemStatuses = systemStatuses;
+	}
+
+	public List<WhoStagingCriteria> getWhoStagingCriteria() {
+		return whoStagingCriteria;
+	}
+
+	public void setWhoStagingCriteria(List<WhoStagingCriteria> whoStagingCriteria) {
+		this.whoStagingCriteria = whoStagingCriteria;
 	}
 }

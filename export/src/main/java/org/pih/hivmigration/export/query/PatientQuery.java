@@ -14,6 +14,7 @@ import org.pih.hivmigration.common.Pregnancy;
 import org.pih.hivmigration.common.PreviousTreatment;
 import org.pih.hivmigration.common.SocioeconomicData;
 import org.pih.hivmigration.common.SystemStatus;
+import org.pih.hivmigration.common.code.WhoStagingCriteria;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.export.DB;
 import org.pih.hivmigration.export.JoinData;
@@ -136,6 +137,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("patient_id", "socioeconomicData", getSocioeconomicData()));
 		joinData.add(new JoinData("patient_id", "hivStatusData", getHivStatusData()));
 		joinData.add(new JoinData("encounter_id", "systemStatuses", getSystemStatuses()));
+		joinData.add(new JoinData("encounter_id", "whoStagingCriteria", getWhoStagingCriteria()));
 
 		return DB.listMapResult(query, IntakeEncounter.class, joinData);
 	}
@@ -244,5 +246,15 @@ public class PatientQuery {
 		query.append("select	encounter_id, system, condition ");
 		query.append("from		hiv_exam_system_status ");
 		return DB.listMapResult(query, SystemStatus.class);
+	}
+
+	/**
+	 * @return Map from encounterId to a List of WhoStagingCriteria
+	 */
+	public static ListMap<Integer, WhoStagingCriteria> getWhoStagingCriteria() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	encounter_id, criterium ");
+		query.append("from		hiv_exam_who_staging_criteria ");
+		return DB.enumResult(query, WhoStagingCriteria.class);
 	}
 }
