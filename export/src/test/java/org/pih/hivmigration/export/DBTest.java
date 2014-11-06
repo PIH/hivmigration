@@ -26,7 +26,7 @@ public class DBTest {
 	@Test
 	public void shouldGetAllTables() throws Exception {
 		List<String> hivTables = DB.getAllTables();
-		int actual = DB.uniqueResult("select count(distinct table_name) from user_tab_columns", BigDecimal.class).intValue();
+		int actual = DB.uniqueResult("select count(distinct table_name) from user_tab_columns", Integer.class);
 		Assert.assertEquals(actual, hivTables.size());
 	}
 

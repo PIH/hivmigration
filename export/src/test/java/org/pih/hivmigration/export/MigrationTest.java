@@ -1,6 +1,5 @@
 package org.pih.hivmigration.export;
 
-import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.junit.After;
 import org.junit.Before;
@@ -9,6 +8,7 @@ import org.junit.Test;
 import org.pih.hivmigration.common.util.Util;
 import org.pih.hivmigration.export.query.PatientQuery;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +85,49 @@ public class MigrationTest {
 			List<Map<String, Object>> results = DB.executeQuery(query.toString(), new MapListHandler());
 			for (Map<String, Object> row : results) {
 				System.out.println(row.get("TYPE") + ": " + row.get("NUM"));
+			}
+		}
+	}
+
+	@Test
+	public void shouldReturnAllTablesWithDataForEncounterType() throws Exception {
+		boolean enabled = true;
+		if (enabled) {
+			System.out.println("Analyzing which tables have data for each encounter type");
+			List<String> encounterTypes = DB.listResult("select distinct type from hiv_encounters order by type", String.class);
+			for (String encounterType : encounterTypes) {
+				System.out.println("");
+				System.out.println(" ***** " + encounterType + " ***** ");
+				List<Map<String, Object>> rows = DB.getForeignKeysToTable("hiv_encounters", "encounter_id");
+				for (Map<String, Object> row : rows) {
+					String tableName = (String) row.get("tableName");
+					String columnName = (String) row.get("columnName");
+
+					StringBuilder query = new StringBuilder();
+					query.append("select 	count(*) ");
+					query.append("from 		").append(tableName).append(" t, hiv_encounters e ");
+					query.append("where		t.").append(columnName).append(" = e.encounter_id ");
+					query.append("and		e.type = ? ");
+
+					Integer numFound = DB.uniqueResult(query.toString(), Integer.class, encounterType);
+					if (numFound > 0) {
+						System.out.println(tableName + "." + columnName + ": " + numFound);
+
+						for (TableColumn column : DB.getAllColumns(tableName)) {
+							StringBuilder q = new StringBuilder();
+							q.append("select 	count(*) ");
+							q.append("from 		").append(tableName).append(" t, hiv_encounters e ");
+							q.append("where		t.").append(columnName).append(" = e.encounter_id ");
+							q.append("and		e.type = ? ");
+							q.append("and		t.").append(column.getColumnName().toLowerCase()).append(" is not null");
+							Integer numColValues = DB.uniqueResult(q.toString(), Integer.class, encounterType);
+							if (numColValues > 0) {
+								System.out.println(" >>>>> " + column.getColumnName() + ": " + numColValues);
+							}
+						}
+					}
+				}
+				System.out.println("");
 			}
 		}
 	}

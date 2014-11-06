@@ -75,9 +75,6 @@ public class ExportUtil {
 					}
 				}
 			}
-			else {
-				throw new IllegalArgumentException("Unknown type for converting: " + type);
-			}
 		}
 		return (T)ret;
 	}

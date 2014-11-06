@@ -9,6 +9,7 @@ import org.pih.hivmigration.common.code.HivStatus;
 import org.pih.hivmigration.export.DB;
 import org.pih.hivmigration.export.TestUtils;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +119,18 @@ public class PatientQueryTest {
 			if (d.getStatus() == HivStatus.NEGATIVE || d.getStatus() == HivStatus.UNKNOWN) {
 				Assert.assertFalse("Patient " + pId + " has a historical positive HIV status, but this is not in the export", positivePats.contains(pId));
 			}
+		}
+	}
+
+	// TODO: Fill out this unit test to validate assumptions around which tables contain data for which encounter types
+	@Test
+	public void shouldIncludeOnlySpecifiedTablesForEncounters() throws Exception {
+		List<String> queries = new ArrayList<String>();
+		queries.add("select count(*) from hiv_followup_forms where encounter_id in (select encounter_id from hiv_encounters where type <> 'followup')");
+		queries.add("select count(*) from hiv_intake_forms where encounter_id in (select encounter_id from hiv_encounters where type <> 'intake')");
+
+		for (String query : queries) {
+			Assert.assertEquals(0, DB.uniqueResult(query, Integer.class).intValue());
 		}
 	}
 }

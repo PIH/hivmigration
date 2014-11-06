@@ -2,12 +2,10 @@ package org.pih.hivmigration.export;
 
 import junit.framework.Assert;
 import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.commons.io.FileUtils;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.common.util.Util;
 
 import java.io.File;
-import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Properties;
@@ -34,12 +32,12 @@ public class TestUtils {
 	}
 
 	public static void assertCollectionSizeMatchesBaseTableSize(Collection toCheck, String table) {
-		int numInTable = DB.uniqueResult("select count(*) from " + table, BigDecimal.class).intValue();
+		int numInTable = DB.uniqueResult("select count(*) from " + table, Integer.class);
 		assertCollectionSizeMatchesNumber(toCheck, numInTable);
 	}
 
 	public static void assertCollectionSizeMatchesQuerySize(Collection toCheck, String query) {
-		int numInQuery = DB.uniqueResult(query, BigDecimal.class).intValue();
+		int numInQuery = DB.uniqueResult(query, Integer.class);
 		assertCollectionSizeMatchesNumber(toCheck, numInQuery);
 	}
 

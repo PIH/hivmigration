@@ -156,17 +156,17 @@ public class DB {
 
 	public static int getNumberOfNonNullValues(String table, String column) {
 		String sql = "select count(*) from " + table + " where " + column + " is not null";
-		return uniqueResult(sql, BigDecimal.class).intValue();
+		return uniqueResult(sql, Integer.class);
 	}
 
 	public static int getNumberOfNullValues(String table, String column) {
 		String sql = "select count(*) from " + table + " where " + column + " is null";
-		return uniqueResult(sql, BigDecimal.class).intValue();
+		return uniqueResult(sql, Integer.class);
 	}
 
 	public static int getNumberOfDistinctNonNullValues(String table, String column) {
 		String sql = "select count(distinct("+column+")) from " + table;
-		return uniqueResult(sql, BigDecimal.class).intValue();
+		return uniqueResult(sql, Integer.class);
 	}
 
 	public static Map<Object, Integer> getValueBreakdown(String table, String column) {
