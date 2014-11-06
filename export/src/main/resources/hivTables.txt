@@ -27,11 +27,6 @@ HIV_REPORT_REQUEST
 
 
 ###### USER TABLES ######
-#
-# Not including url, screen_name, priv_name, priv_email, email_verified_p, email_bouncing_p, no_alerts_until, last_visit,
-# second_to_last_visit, n_sessions, password_question, password_answer.  Password question and answer were considered, but
-# since they aren't encrypted in the database and aren't needed (users can regenerate their own in the new system), chose not to
-#
 
 PARTIES
 PERSONS
@@ -83,30 +78,6 @@ HIV_DATA_AUDIT_TRACKING_FORMS
 
 ###### ENCOUNTER TABLES ######
 
-# WE SHOULD TO BREAK THESE UP BY TYPE AND LINK APPROPRIATE OBS IN BASED ON TYPE
-
-#infant_followup - Part of hiv_pregnancy_exam, above
-
-#accompagnateur
-#anlap_lab_result
-#anlap_vital_signs
-#cervical_cancer
-#followup
-#food_study
-#food_support
-#hop_abstraction
-
-#intake
-#lab_result
-#not_specified
-#note
-#observation
-#patient_contact
-#pregnancy
-#regime
-
-# INFANT_FOLLOWUP:  HANDLED ABOVE WITHIN PREGNANCY_EXAM
-
 HIV_ENCOUNTERS
 
 # DATA COLLECTED ONLY ON INTAKE FORM
@@ -117,14 +88,16 @@ HIV_PREVIOUS_EXPOSURES
 HIV_SOCIOECONOMICS
 HIV_SOCIOECONOMICS_EXTRA
 HIV_HIV_STATUS
-
+HIV_INTAKE_FORMS
+HIV_EXAM_SYSTEM_STATUS
+HIV_EXAM_WHO_STAGING_CRITERIA
 
 # LINKED TO BOTH ENCOUNTER AND PATIENT.  WHEN ONLY PATIENT LINK EXISTS, IMPLIED TO BE FROM INTAKE
 HIV_TB_STATUS
 
 # ONE-TO-ONE WITH ADDITIONAL DATA
 HIV_EXAMS
-HIV_INTAKE_FORMS
+
 HIV_INTAKE_EXTRA
 HIV_FOLLOWUP_FORMS
 HIV_EXAM_EXTRA
@@ -133,9 +106,8 @@ HIV_EXAM_EXTRA
 HIV_EXAM_LAB_RESULTS
 HIV_EXAM_OIS
 HIV_EXAM_SYMPTOMS
-HIV_EXAM_SYSTEM_STATUS
+
 HIV_EXAM_VITAL_SIGNS
-HIV_EXAM_WHO_STAGING_CRITERIA
 HIV_LAB_RESULTS
 HIV_OBSERVATIONS
 HIV_ORDERED_LAB_TESTS

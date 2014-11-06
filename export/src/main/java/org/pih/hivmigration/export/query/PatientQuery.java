@@ -4,6 +4,7 @@ import org.pih.hivmigration.common.Address;
 import org.pih.hivmigration.common.Allergy;
 import org.pih.hivmigration.common.Contact;
 import org.pih.hivmigration.common.Diagnosis;
+import org.pih.hivmigration.common.FollowupEncounter;
 import org.pih.hivmigration.common.HivStatusData;
 import org.pih.hivmigration.common.IntakeEncounter;
 import org.pih.hivmigration.common.PamEnrollment;
@@ -12,6 +13,7 @@ import org.pih.hivmigration.common.PostnatalEncounter;
 import org.pih.hivmigration.common.Pregnancy;
 import org.pih.hivmigration.common.PreviousTreatment;
 import org.pih.hivmigration.common.SocioeconomicData;
+import org.pih.hivmigration.common.SystemStatus;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.export.DB;
 import org.pih.hivmigration.export.JoinData;
@@ -119,9 +121,12 @@ public class PatientQuery {
 	 */
 	public static ListMap<Integer, IntakeEncounter> getIntakeEncounters() {
 		StringBuilder query = new StringBuilder();
-		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments ");
-		query.append("from		hiv_encounters e ");
-		query.append("where		e.type = 'intake'");
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments, ");
+		query.append("			f.address, f.examining_doctor, f.recommendation as recommendations, f.previous_diagnoses, f.financial_aid_p as startFinancialAid, ");
+		query.append("			f.continue_financial_aid_p as continueFinancialAid, f.nutritional_aid_p as startNutritionalAid, f.form_version ");
+		query.append("from		hiv_encounters e, hiv_intake_forms f ");
+		query.append("where		e.encounter_id = f.encounter_id(+) ");
+		query.append("and		e.type = 'intake'");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
 		joinData.add(new JoinData("patient_id", "allergies", getAllergies()));
@@ -130,8 +135,26 @@ public class PatientQuery {
 		joinData.add(new JoinData("patient_id", "previousTreatments", getPreviousTreatments()));
 		joinData.add(new JoinData("patient_id", "socioeconomicData", getSocioeconomicData()));
 		joinData.add(new JoinData("patient_id", "hivStatusData", getHivStatusData()));
+		joinData.add(new JoinData("encounter_id", "systemStatuses", getSystemStatuses()));
 
 		return DB.listMapResult(query, IntakeEncounter.class, joinData);
+	}
+
+	/**
+	 * @return Map from patientId to a List of FollowupEncounter, including all data that is entered on intake forms
+	 */
+	public static ListMap<Integer, FollowupEncounter> getFollowupEncounters() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments, ");
+		query.append("			f.examining_doctor, f.recommendations, f.progress, f.well_followed_p as wellFollowed, f.financial_aid_p as startFinancialAid, ");
+		query.append("			f.continue_financial_aid_p as continueFinancialAid, f.med_toxicity_p as med_toxicity, f.med_toxicity_comments, f.form_version ");
+		query.append("from		hiv_encounters e, hiv_followup_forms f ");
+		query.append("where		e.encounter_id = f.encounter_id(+) ");
+		query.append("and		e.type = 'followup'");
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+
+		return DB.listMapResult(query, FollowupEncounter.class, joinData);
 	}
 
 	/**
@@ -211,5 +234,15 @@ public class PatientQuery {
 		query.append("from		hiv_hiv_status ");
 		query.append("order by	entered_date asc");
 		return DB.mapResult(query, HivStatusData.class);
+	}
+
+	/**
+	 * @return Map from encounterId to a List of SystemStatus which represent an evaluation of body systems at intake
+	 */
+	public static ListMap<Integer, SystemStatus> getSystemStatuses() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	encounter_id, system, condition ");
+		query.append("from		hiv_exam_system_status ");
+		return DB.listMapResult(query, SystemStatus.class);
 	}
 }

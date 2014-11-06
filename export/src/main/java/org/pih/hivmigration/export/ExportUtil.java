@@ -68,11 +68,16 @@ public class ExportUtil {
 				ret = UserQuery.getUser(value);
 			}
 			else if (CodedValue.class.isAssignableFrom(type) && type.isEnum()) {
+				boolean found = false;
 				for (Object o : type.getEnumConstants()) {
 					CodedValue cv = (CodedValue)o;
 					if (cv.getValue().equalsIgnoreCase(value.toString())) {
 						ret = o;
+						found = true;
 					}
+				}
+				if (!found) {
+					throw new IllegalArgumentException("Unable to convert " + value + " to an enum of type: " + type);
 				}
 			}
 		}

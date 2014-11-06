@@ -3,9 +3,10 @@ package org.pih.hivmigration.common;
 import java.util.Date;
 import java.util.List;
 
-public class IntakeEncounter extends Encounter {
+public class IntakeEncounter extends ClinicalEncounter {
 
-	private String comments; // From hiv_encounters.comments
+	private String address;
+	private String previousDiagnoses;
 
 	private List<Allergy> allergies;
 	private List<Contact> contacts;
@@ -13,15 +14,24 @@ public class IntakeEncounter extends Encounter {
 	private List<PreviousTreatment> previousTreatments;
 	private SocioeconomicData socioeconomicData;
 	private HivStatusData hivStatusData;
+	private List<SystemStatus> systemStatuses;
 
 	public IntakeEncounter() {}
 
-	public String getComments() {
-		return comments;
+	public String getAddress() {
+		return address;
 	}
 
-	public void setComments(String comments) {
-		this.comments = comments;
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public String getPreviousDiagnoses() {
+		return previousDiagnoses;
+	}
+
+	public void setPreviousDiagnoses(String previousDiagnoses) {
+		this.previousDiagnoses = previousDiagnoses;
 	}
 
 	public List<Allergy> getAllergies() {
@@ -70,5 +80,13 @@ public class IntakeEncounter extends Encounter {
 
 	public void setHivStatusData(HivStatusData hivStatusData) {
 		this.hivStatusData = hivStatusData;
+	}
+
+	public List<SystemStatus> getSystemStatuses() {
+		return systemStatuses;
+	}
+
+	public void setSystemStatuses(List<SystemStatus> systemStatuses) {
+		this.systemStatuses = systemStatuses;
 	}
 }

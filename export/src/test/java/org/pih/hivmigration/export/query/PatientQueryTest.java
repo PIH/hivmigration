@@ -9,7 +9,6 @@ import org.pih.hivmigration.common.code.HivStatus;
 import org.pih.hivmigration.export.DB;
 import org.pih.hivmigration.export.TestUtils;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +68,13 @@ public class PatientQueryTest {
 	}
 
 	@Test
+	public void shouldTestFollowupEncounters() throws Exception {
+		Collection c = PatientQuery.getFollowupEncounters().values();
+		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'followup'");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
 	public void shouldTestAllergies() throws Exception {
 		Collection c = PatientQuery.getAllergies().values();
 		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_allergies");
@@ -117,20 +123,33 @@ public class PatientQueryTest {
 		for (Integer pId : data.keySet()) {
 			HivStatusData d = data.get(pId);
 			if (d.getStatus() == HivStatus.NEGATIVE || d.getStatus() == HivStatus.UNKNOWN) {
-				Assert.assertFalse("Patient " + pId + " has a historical positive HIV status, but this is not in the export", positivePats.contains(pId));
+				Assert.assertFalse("Patient " + pId + " has a historical positive HIV status but this is not in the export", positivePats.contains(pId));
 			}
 		}
 	}
 
-	// TODO: Fill out this unit test to validate assumptions around which tables contain data for which encounter types
 	@Test
-	public void shouldIncludeOnlySpecifiedTablesForEncounters() throws Exception {
-		List<String> queries = new ArrayList<String>();
-		queries.add("select count(*) from hiv_followup_forms where encounter_id in (select encounter_id from hiv_encounters where type <> 'followup')");
-		queries.add("select count(*) from hiv_intake_forms where encounter_id in (select encounter_id from hiv_encounters where type <> 'intake')");
+	public void shouldTestSystemStatusData() throws Exception {
+		Collection c = PatientQuery.getSystemStatuses().values();
+		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_exam_system_status");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
 
-		for (String query : queries) {
-			Assert.assertEquals(0, DB.uniqueResult(query, Integer.class).intValue());
-		}
+	@Test
+	public void shouldIncludeOnlySpecifiedTablesForIntakeEncounters() throws Exception {
+		TestUtils.assertEncounterDataOnlyIn("intake",
+				"HIV_DATA_AUDIT_ENTRY", "HIV_EXAMS", "HIV_EXAM_EXTRA", "HIV_EXAM_LAB_RESULTS", "HIV_EXAM_OIS",
+				"HIV_EXAM_SYMPTOMS", "HIV_EXAM_SYSTEM_STATUS", "HIV_EXAM_VITAL_SIGNS", "HIV_EXAM_WHO_STAGING_CRITERIA",
+				"HIV_HIV_STATUS", "HIV_INTAKE_EXTRA", "HIV_INTAKE_FORMS", "HIV_OBSERVATIONS", "HIV_ORDERED_LAB_TESTS",
+				"HIV_ORDERED_OTHER", "HIV_REGIMES", "HIV_TB_STATUS");
+	}
+
+	@Test
+	public void shouldIncludeOnlySpecifiedTablesForFollowupEncounters() throws Exception {
+		TestUtils.assertEncounterDataOnlyIn("followup",
+				"HIV_DATA_AUDIT_ENTRY", "HIV_EXAMS", "HIV_EXAM_EXTRA", "HIV_EXAM_LAB_RESULTS", "HIV_EXAM_OIS",
+				"HIV_EXAM_SYMPTOMS", "HIV_EXAM_VITAL_SIGNS", "HIV_FOLLOWUP_FORMS", "HIV_INTAKE_EXTRA", "HIV_OBSERVATIONS",
+				"HIV_ORDERED_LAB_TESTS", "HIV_ORDERED_OTHER", "HIV_TB_STATUS", "HIV_ENCOUNTERS"
+		);
 	}
 }

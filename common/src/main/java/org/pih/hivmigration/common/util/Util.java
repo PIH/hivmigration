@@ -33,10 +33,14 @@ import java.util.Properties;
 public class Util {
 
 	public static String toString(Collection<?> c) {
+		return toString(c, ",");
+	}
+
+	public static String toString(Collection<?> c, String separator) {
 		StringBuilder ret = new StringBuilder();
 		if (c != null) {
 			for (Object o : c) {
-				ret.append(ret.length() == 0 ? "" : ",").append(o);
+				ret.append(ret.length() == 0 ? "" : separator).append(o);
 			}
 		}
 		return ret.toString();
@@ -45,6 +49,13 @@ public class Util {
 	public static String toString(Object[] c) {
 		if (c != null) {
 			return toString(Arrays.asList(c));
+		}
+		return "";
+	}
+
+	public static String toString(Object[] c, String separator) {
+		if (c != null) {
+			return toString(Arrays.asList(c), separator);
 		}
 		return "";
 	}

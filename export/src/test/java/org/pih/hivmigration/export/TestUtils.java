@@ -7,7 +7,10 @@ import org.pih.hivmigration.common.util.Util;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -72,5 +75,40 @@ public class TestUtils {
 		}
 
 		Assert.assertEquals("Properties with no data on " + representativeObject.getClass().getSimpleName() + ": " + writeableProperties, 0, writeableProperties.size());
+	}
+
+	public static void assertEncounterDataOnlyIn(String type, String...tableNames) {
+		List<Map<String, Object>> foreignKeys = DB.getForeignKeysToTable("hiv_encounters", "encounter_id");
+
+		Set<String> tablesExpected = new HashSet<String>();
+		for (String table : tableNames) {
+			tablesExpected.add(table.toUpperCase());
+		}
+
+		Set<String> tablesFound = new HashSet<String>();
+		for (Map<String, Object> m : foreignKeys) {
+			String tableName = (String) m.get("tableName");
+			String columnName = (String) m.get("columnName");
+
+			StringBuilder query = new StringBuilder();
+			query.append("select count(*) ");
+			query.append("from hiv_encounters e, ").append(tableName).append(" t ");
+			query.append("where e.encounter_id = t.").append(columnName);
+
+			int numWithType = DB.uniqueResult(query.toString() + " and e.type = ?", Integer.class, type);
+			if (numWithType > 0) {
+				tablesFound.add(tableName.toUpperCase());
+			}
+		}
+
+		Set<String> expectedButNotFound = new HashSet<String>(tablesExpected);
+		expectedButNotFound.removeAll(tablesFound);
+
+		Assert.assertTrue("Expected to find " + type + " encounters in " + expectedButNotFound + " but did not", expectedButNotFound.isEmpty());
+
+		Set<String> foundButNotExpected = new HashSet<String>(tablesFound);
+		foundButNotExpected.removeAll(tablesExpected);
+
+		Assert.assertTrue("Expected to not find " + type + " encounters in " + foundButNotExpected + " but did", foundButNotExpected.isEmpty());
 	}
 }

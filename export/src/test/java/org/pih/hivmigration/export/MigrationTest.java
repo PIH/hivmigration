@@ -8,10 +8,12 @@ import org.junit.Test;
 import org.pih.hivmigration.common.util.Util;
 import org.pih.hivmigration.export.query.PatientQuery;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MigrationTest {
 
@@ -93,11 +95,13 @@ public class MigrationTest {
 	public void shouldReturnAllTablesWithDataForEncounterType() throws Exception {
 		boolean enabled = true;
 		if (enabled) {
-			System.out.println("Analyzing which tables have data for each encounter type");
+			Map<String, Map<String, Integer>> typeToTableMap = new LinkedHashMap<String, Map<String, Integer>>();
+			Map<String, Set<String>> tableToTypeMap = new LinkedHashMap<String, Set<String>>();
+
 			List<String> encounterTypes = DB.listResult("select distinct type from hiv_encounters order by type", String.class);
 			for (String encounterType : encounterTypes) {
-				System.out.println("");
-				System.out.println(" ***** " + encounterType + " ***** ");
+				Map<String, Integer> tableCounts = new LinkedHashMap<String, Integer>();
+				typeToTableMap.put(encounterType, tableCounts);
 				List<Map<String, Object>> rows = DB.getForeignKeysToTable("hiv_encounters", "encounter_id");
 				for (Map<String, Object> row : rows) {
 					String tableName = (String) row.get("tableName");
@@ -111,8 +115,6 @@ public class MigrationTest {
 
 					Integer numFound = DB.uniqueResult(query.toString(), Integer.class, encounterType);
 					if (numFound > 0) {
-						System.out.println(tableName + "." + columnName + ": " + numFound);
-
 						for (TableColumn column : DB.getAllColumns(tableName)) {
 							StringBuilder q = new StringBuilder();
 							q.append("select 	count(*) ");
@@ -121,13 +123,37 @@ public class MigrationTest {
 							q.append("and		e.type = ? ");
 							q.append("and		t.").append(column.getColumnName().toLowerCase()).append(" is not null");
 							Integer numColValues = DB.uniqueResult(q.toString(), Integer.class, encounterType);
+
 							if (numColValues > 0) {
-								System.out.println(" >>>>> " + column.getColumnName() + ": " + numColValues);
+								Set<String> typeSet = tableToTypeMap.get(tableName);
+								if (typeSet == null) {
+									typeSet = new LinkedHashSet<String>();
+									tableToTypeMap.put(tableName, typeSet);
+								}
+
+								tableCounts.put(tableName + "." + column.getColumnName(), numColValues);
+								typeSet.add(encounterType);
 							}
 						}
 					}
 				}
+			}
+
+			System.out.println("Tables with data for each encounter type");
+			for (String encounterType : typeToTableMap.keySet()) {
 				System.out.println("");
+				System.out.println(" ***** " + encounterType + " ***** ");
+				Map<String, Integer> tableCounts = typeToTableMap.get(encounterType);
+				for (String tabCol : tableCounts.keySet()) {
+					System.out.println(tabCol + ": " + tableCounts.get(tabCol));
+				}
+				System.out.println("");
+			}
+			System.out.println("");
+
+			System.out.println("Encounter types with data for each table");
+			for (String table : tableToTypeMap.keySet()) {
+				System.out.println(table + ": " + tableToTypeMap.get(table));
 			}
 		}
 	}
@@ -135,9 +161,9 @@ public class MigrationTest {
 	@Test
 	@Ignore
 	public void shouldReturnObjectsAsJson() throws Exception {
-		List l = new ArrayList(PatientQuery.getHivStatusData().values());
+		List l = new ArrayList(PatientQuery.getIntakeEncounters().values());
 		System.out.println("Found: " + l.size() + " objects");
-		for (int i=0; i<10; i++) {
+		for (int i=0; i<5; i++) {
 			int index = (int)(Math.random() * l.size());
 			System.out.println(index + ": " + ExportUtil.toJson(l.get(index)));
 		}
