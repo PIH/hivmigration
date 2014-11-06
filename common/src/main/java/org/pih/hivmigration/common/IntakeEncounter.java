@@ -9,6 +9,7 @@ public class IntakeEncounter extends ClinicalEncounter {
 
 	private String address;
 	private String previousDiagnoses;
+	private Boolean hospitalizedAtDiagnosis;
 
 	private List<Allergy> allergies;
 	private List<Contact> contacts;
@@ -35,6 +36,14 @@ public class IntakeEncounter extends ClinicalEncounter {
 
 	public void setPreviousDiagnoses(String previousDiagnoses) {
 		this.previousDiagnoses = previousDiagnoses;
+	}
+
+	public Boolean getHospitalizedAtDiagnosis() {
+		return hospitalizedAtDiagnosis;
+	}
+
+	public void setHospitalizedAtDiagnosis(Boolean hospitalizedAtDiagnosis) {
+		this.hospitalizedAtDiagnosis = hospitalizedAtDiagnosis;
 	}
 
 	public List<Allergy> getAllergies() {

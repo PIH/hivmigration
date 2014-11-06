@@ -34,6 +34,23 @@ public class TestUtils {
 		Assert.assertEquals(expected, numInCollection);
 	}
 
+	public static int getNonNullPropertiesFoundInCollection(Collection<? extends Collection> toCheck, String propertyName) {
+		int numFound = 0;
+		try {
+			for (Collection c : toCheck) {
+				for (Object o : c) {
+					if (PropertyUtils.getProperty(o, propertyName) != null) {
+						numFound++;
+					}
+				}
+			}
+		}
+		catch (Exception e) {
+			throw new IllegalArgumentException("Error trying to get non null properties found in collection", e);
+		}
+		return numFound;
+	}
+
 	public static void assertCollectionSizeMatchesBaseTableSize(Collection toCheck, String table) {
 		int numInTable = DB.uniqueResult("select count(*) from " + table, Integer.class);
 		assertCollectionSizeMatchesNumber(toCheck, numInTable);

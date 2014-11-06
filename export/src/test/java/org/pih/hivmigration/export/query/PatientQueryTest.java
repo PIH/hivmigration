@@ -4,7 +4,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.pih.hivmigration.common.FollowupEncounter;
 import org.pih.hivmigration.common.HivStatusData;
+import org.pih.hivmigration.common.IntakeEncounter;
 import org.pih.hivmigration.common.code.HivStatus;
 import org.pih.hivmigration.export.DB;
 import org.pih.hivmigration.export.TestUtils;
@@ -143,19 +145,43 @@ public class PatientQueryTest {
 	}
 
 	@Test
+	public void shouldTestHivIntakeExtraData() throws Exception {
+		Collection<List<IntakeEncounter>> intakes = PatientQuery.getIntakeEncounters().values();
+		Collection<List<FollowupEncounter>> followups = PatientQuery.getFollowupEncounters().values();
+		{
+			int numResponsibleFoundOnIntake = TestUtils.getNonNullPropertiesFoundInCollection(intakes, "responsiblePerson");
+			int numResponsibleFoundOnFollowup = TestUtils.getNonNullPropertiesFoundInCollection(followups, "responsiblePerson");
+			StringBuilder q = new StringBuilder();
+			q.append("select count(*) from hiv_intake_extra where responsible_first_name is not null or responsible_first_name2 is not null ");
+			q.append("or responsible_last_name is not null or responsible_pih_id is not null or responsible_relation is not null ");
+			Assert.assertEquals(DB.uniqueResult(q.toString(), Integer.class).intValue(), numResponsibleFoundOnIntake + numResponsibleFoundOnFollowup);
+		}
+		{
+			int numFound = TestUtils.getNonNullPropertiesFoundInCollection(intakes, "hospitalizedAtDiagnosis");
+			String q ="select count(*) from hiv_intake_extra where hospitalized_at_diagnosis_p is not null ";
+			Assert.assertEquals(DB.uniqueResult(q, Integer.class).intValue(), numFound);
+
+		}
+	}
+
+	@Test
 	public void shouldIncludeOnlySpecifiedTablesForIntakeEncounters() throws Exception {
 		TestUtils.assertEncounterDataOnlyIn("intake",
+				"HIV_HIV_STATUS", "HIV_INTAKE_FORMS", "HIV_INTAKE_EXTRA", "HIV_EXAM_SYSTEM_STATUS",
+				"HIV_EXAM_WHO_STAGING_CRITERIA",
+
 				"HIV_DATA_AUDIT_ENTRY", "HIV_EXAMS", "HIV_EXAM_EXTRA", "HIV_EXAM_LAB_RESULTS", "HIV_EXAM_OIS",
-				"HIV_EXAM_SYMPTOMS", "HIV_EXAM_SYSTEM_STATUS", "HIV_EXAM_VITAL_SIGNS", "HIV_EXAM_WHO_STAGING_CRITERIA",
-				"HIV_HIV_STATUS", "HIV_INTAKE_EXTRA", "HIV_INTAKE_FORMS", "HIV_OBSERVATIONS", "HIV_ORDERED_LAB_TESTS",
+				"HIV_EXAM_SYMPTOMS",  "HIV_EXAM_VITAL_SIGNS", "HIV_OBSERVATIONS", "HIV_ORDERED_LAB_TESTS",
 				"HIV_ORDERED_OTHER", "HIV_REGIMES", "HIV_TB_STATUS");
 	}
 
 	@Test
 	public void shouldIncludeOnlySpecifiedTablesForFollowupEncounters() throws Exception {
 		TestUtils.assertEncounterDataOnlyIn("followup",
+				"HIV_FOLLOWUP_FORMS", "HIV_INTAKE_EXTRA",
+
 				"HIV_DATA_AUDIT_ENTRY", "HIV_EXAMS", "HIV_EXAM_EXTRA", "HIV_EXAM_LAB_RESULTS", "HIV_EXAM_OIS",
-				"HIV_EXAM_SYMPTOMS", "HIV_EXAM_VITAL_SIGNS", "HIV_FOLLOWUP_FORMS", "HIV_INTAKE_EXTRA", "HIV_OBSERVATIONS",
+				"HIV_EXAM_SYMPTOMS", "HIV_EXAM_VITAL_SIGNS", "HIV_OBSERVATIONS",
 				"HIV_ORDERED_LAB_TESTS", "HIV_ORDERED_OTHER", "HIV_TB_STATUS", "HIV_ENCOUNTERS"
 		);
 	}

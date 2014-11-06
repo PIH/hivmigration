@@ -11,6 +11,7 @@ public class ClinicalEncounter extends Encounter {
 	private Boolean startFinancialAid;
 	private Boolean continueFinancialAid;
 	private String formVersion;
+	private ResponsiblePerson responsiblePerson;
 
 	public ClinicalEncounter() {}
 
@@ -60,5 +61,13 @@ public class ClinicalEncounter extends Encounter {
 
 	public void setFormVersion(String formVersion) {
 		this.formVersion = formVersion;
+	}
+
+	public ResponsiblePerson getResponsiblePerson() {
+		return responsiblePerson;
+	}
+
+	public void setResponsiblePerson(ResponsiblePerson responsiblePerson) {
+		this.responsiblePerson = responsiblePerson;
 	}
 }

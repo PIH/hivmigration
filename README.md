@@ -67,13 +67,8 @@ HIV_DATA_AUDIT_TRACKING_FORMS
 
 HIV_ENCOUNTERS
 
-# INTAKE
-
-HIV_EXAM_WHO_STAGING_CRITERIA
-
 # INTAKE AND FOLLOWUP
 
-"HIV_INTAKE_EXTRA", "followup", "intake" # this is accurate.  followup v2 stores responsible first name & last name here
 "HIV_EXAMS", "followup", "intake"
 "HIV_EXAM_OIS", "followup", "intake"
 "HIV_EXAM_SYMPTOMS", "followup", "intake"

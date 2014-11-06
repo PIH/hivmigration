@@ -12,6 +12,7 @@ import org.pih.hivmigration.common.Patient;
 import org.pih.hivmigration.common.PostnatalEncounter;
 import org.pih.hivmigration.common.Pregnancy;
 import org.pih.hivmigration.common.PreviousTreatment;
+import org.pih.hivmigration.common.ResponsiblePerson;
 import org.pih.hivmigration.common.SocioeconomicData;
 import org.pih.hivmigration.common.SystemStatus;
 import org.pih.hivmigration.common.code.WhoStagingCriteria;
@@ -124,9 +125,11 @@ public class PatientQuery {
 		StringBuilder query = new StringBuilder();
 		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments, ");
 		query.append("			f.address, f.examining_doctor, f.recommendation as recommendations, f.previous_diagnoses, f.financial_aid_p as startFinancialAid, ");
-		query.append("			f.continue_financial_aid_p as continueFinancialAid, f.nutritional_aid_p as startNutritionalAid, f.form_version ");
-		query.append("from		hiv_encounters e, hiv_intake_forms f ");
+		query.append("			f.continue_financial_aid_p as continueFinancialAid, f.nutritional_aid_p as startNutritionalAid, f.form_version, ");
+		query.append("			x.hospitalized_at_diagnosis_p as hospitalizedAtDiagnosis ");
+		query.append("from		hiv_encounters e, hiv_intake_forms f, hiv_intake_extra x ");
 		query.append("where		e.encounter_id = f.encounter_id(+) ");
+		query.append("and		e.encounter_id = x.encounter_id(+) ");
 		query.append("and		e.type = 'intake'");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
@@ -138,6 +141,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("patient_id", "hivStatusData", getHivStatusData()));
 		joinData.add(new JoinData("encounter_id", "systemStatuses", getSystemStatuses()));
 		joinData.add(new JoinData("encounter_id", "whoStagingCriteria", getWhoStagingCriteria()));
+		joinData.add(new JoinData("encounter_id", "responsiblePerson", getResponsiblePersonData()));
 
 		return DB.listMapResult(query, IntakeEncounter.class, joinData);
 	}
@@ -155,6 +159,7 @@ public class PatientQuery {
 		query.append("and		e.type = 'followup'");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
+		joinData.add(new JoinData("encounter_id", "responsiblePerson", getResponsiblePersonData()));
 
 		return DB.listMapResult(query, FollowupEncounter.class, joinData);
 	}
@@ -256,5 +261,18 @@ public class PatientQuery {
 		query.append("select	encounter_id, criterium ");
 		query.append("from		hiv_exam_who_staging_criteria ");
 		return DB.enumResult(query, WhoStagingCriteria.class);
+	}
+
+	/**
+	 * @return Map from encounterId to a ResponsiblePerson
+	 */
+	public static Map<Integer, ResponsiblePerson> getResponsiblePersonData() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	encounter_id, (responsible_first_name || decode(responsible_first_name2, null, '', (' ' || responsible_first_name2))) as firstName, ");
+		query.append(" 			responsible_last_name as lastName, responsible_pih_id as pihId, responsible_relation as relationship ");
+		query.append("from		hiv_intake_extra ");
+		query.append("where		(responsible_first_name is not null or responsible_first_name2 is not null or responsible_last_name is not null ");
+		query.append("or		responsible_pih_id is not null or responsible_relation is not null) ");
+		return DB.mapResult(query, ResponsiblePerson.class);
 	}
 }
