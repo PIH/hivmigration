@@ -1,13 +1,17 @@
 package org.pih.hivmigration.export.query;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pih.hivmigration.common.FollowupEncounter;
 import org.pih.hivmigration.common.HivStatusData;
 import org.pih.hivmigration.common.IntakeEncounter;
+import org.pih.hivmigration.common.Patient;
 import org.pih.hivmigration.common.code.HivStatus;
+import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.export.DB;
 import org.pih.hivmigration.export.TestUtils;
 
@@ -16,6 +20,10 @@ import java.util.List;
 import java.util.Map;
 
 public class PatientQueryTest {
+
+	private static Map<Integer, Patient> patients;
+	private static ListMap<Integer, IntakeEncounter> intakeEncounters;
+	private static ListMap<Integer, FollowupEncounter> followupEncounters;
 
 	@Before
 	public void beforeTest() throws Exception {
@@ -27,9 +35,37 @@ public class PatientQueryTest {
 		DB.closeConnection();
 	}
 
+	@AfterClass
+	public static void clearCaches() {
+		patients = null;
+		intakeEncounters = null;
+		followupEncounters = null;
+	}
+
+	protected Collection<Patient> getPatients() {
+		if (patients == null) {
+			patients = PatientQuery.getPatients();
+		}
+		return patients.values();
+	}
+
+	protected ListMap<Integer, IntakeEncounter> getIntakeEncounters() {
+		if (intakeEncounters == null) {
+			intakeEncounters = PatientQuery.getIntakeEncounters();
+		}
+		return intakeEncounters;
+	}
+
+	protected ListMap<Integer, FollowupEncounter> getFollowupEncounters() {
+		if (followupEncounters == null) {
+			followupEncounters = PatientQuery.getFollowupEncounters();
+		}
+		return followupEncounters;
+	}
+
 	@Test
 	public void shouldTestPatientQuery() throws Exception {
-		Collection c = PatientQuery.getPatients().values();
+		Collection c = getPatients();
 		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_demographics");
 		TestUtils.assertAllPropertiesArePopulated(c);
 	}
@@ -64,14 +100,14 @@ public class PatientQueryTest {
 
 	@Test
 	public void shouldTestIntakeEncounters() throws Exception {
-		Collection c = PatientQuery.getIntakeEncounters().values();
+		Collection c = getIntakeEncounters().values();
 		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'intake'");
 		TestUtils.assertAllPropertiesArePopulated(c);
 	}
 
 	@Test
 	public void shouldTestFollowupEncounters() throws Exception {
-		Collection c = PatientQuery.getFollowupEncounters().values();
+		Collection c = getFollowupEncounters().values();
 		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'followup'");
 		TestUtils.assertAllPropertiesArePopulated(c);
 	}
@@ -146,8 +182,8 @@ public class PatientQueryTest {
 
 	@Test
 	public void shouldTestHivIntakeExtraData() throws Exception {
-		Collection<List<IntakeEncounter>> intakes = PatientQuery.getIntakeEncounters().values();
-		Collection<List<FollowupEncounter>> followups = PatientQuery.getFollowupEncounters().values();
+		Collection<List<IntakeEncounter>> intakes = getIntakeEncounters().values();
+		Collection<List<FollowupEncounter>> followups = getFollowupEncounters().values();
 		{
 			int numResponsibleFoundOnIntake = TestUtils.getNonNullPropertiesFoundInCollection(intakes, "responsiblePerson");
 			int numResponsibleFoundOnFollowup = TestUtils.getNonNullPropertiesFoundInCollection(followups, "responsiblePerson");
@@ -162,6 +198,38 @@ public class PatientQueryTest {
 			Assert.assertEquals(DB.uniqueResult(q, Integer.class).intValue(), numFound);
 
 		}
+	}
+
+	@Test
+	public void shouldTestHivExamData() throws Exception {
+		Collection<List<IntakeEncounter>> intakes = getIntakeEncounters().values();
+		Collection<List<FollowupEncounter>> followups = getFollowupEncounters().values();
+		{
+			int found = TestUtils.getNonNullPropertiesFoundInCollection(intakes, "presentingComplaint") + TestUtils.getNonNullPropertiesFoundInCollection(followups, "presentingComplaint");
+			int expected = DB.uniqueResult("select count(*) from hiv_exams where presenting_history is not null", Integer.class);
+			Assert.assertEquals(expected, found);
+		}
+		{
+			int found = TestUtils.getNonNullPropertiesFoundInCollection(intakes, "physicalExamComments") + TestUtils.getNonNullPropertiesFoundInCollection(followups, "physicalExamComments");
+			int expected = DB.uniqueResult("select count(*) from hiv_exams where comments is not null", Integer.class);
+			Assert.assertEquals(expected, found);
+		}
+		{
+			int found = TestUtils.getNonNullPropertiesFoundInCollection(intakes, "differentialDiagnosis");
+			int expected = DB.uniqueResult("select count(*) from hiv_exams where diagnosis is not null", Integer.class);
+			Assert.assertEquals(expected, found);
+		}
+		{
+			int found = DB.uniqueResult("select count(*) from hiv_exams where presenting_complaint is not null", Integer.class);
+			Assert.assertEquals(0, found);
+		}
+	}
+
+	@Test
+	public void shouldTestOpportunisticInfections() throws Exception {
+		Collection c = PatientQuery.getOpportunisticInfections().values();
+		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_exam_ois");
+		TestUtils.assertAllPropertiesArePopulated(c);
 	}
 
 	@Test

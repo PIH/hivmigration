@@ -7,6 +7,7 @@ import org.pih.hivmigration.common.Diagnosis;
 import org.pih.hivmigration.common.FollowupEncounter;
 import org.pih.hivmigration.common.HivStatusData;
 import org.pih.hivmigration.common.IntakeEncounter;
+import org.pih.hivmigration.common.OpportunisticInfection;
 import org.pih.hivmigration.common.PamEnrollment;
 import org.pih.hivmigration.common.Patient;
 import org.pih.hivmigration.common.PostnatalEncounter;
@@ -126,10 +127,12 @@ public class PatientQuery {
 		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments, ");
 		query.append("			f.address, f.examining_doctor, f.recommendation as recommendations, f.previous_diagnoses, f.financial_aid_p as startFinancialAid, ");
 		query.append("			f.continue_financial_aid_p as continueFinancialAid, f.nutritional_aid_p as startNutritionalAid, f.form_version, ");
-		query.append("			x.hospitalized_at_diagnosis_p as hospitalizedAtDiagnosis ");
-		query.append("from		hiv_encounters e, hiv_intake_forms f, hiv_intake_extra x ");
+		query.append("			x.hospitalized_at_diagnosis_p as hospitalizedAtDiagnosis, exam.presenting_history as presentingComplaint, ");
+		query.append("			exam.diagnosis as differentialDiagnosis, exam.comments as physicalExamComments ");
+		query.append("from		hiv_encounters e, hiv_intake_forms f, hiv_intake_extra x, hiv_exams exam ");
 		query.append("where		e.encounter_id = f.encounter_id(+) ");
 		query.append("and		e.encounter_id = x.encounter_id(+) ");
+		query.append("and		e.encounter_id = exam.encounter_id(+) ");
 		query.append("and		e.type = 'intake'");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
@@ -142,6 +145,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "systemStatuses", getSystemStatuses()));
 		joinData.add(new JoinData("encounter_id", "whoStagingCriteria", getWhoStagingCriteria()));
 		joinData.add(new JoinData("encounter_id", "responsiblePerson", getResponsiblePersonData()));
+		joinData.add(new JoinData("encounter_id", "opportunisticInfections", getOpportunisticInfections()));
 
 		return DB.listMapResult(query, IntakeEncounter.class, joinData);
 	}
@@ -153,13 +157,16 @@ public class PatientQuery {
 		StringBuilder query = new StringBuilder();
 		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments, ");
 		query.append("			f.examining_doctor, f.recommendations, f.progress, f.well_followed_p as wellFollowed, f.financial_aid_p as startFinancialAid, ");
-		query.append("			f.continue_financial_aid_p as continueFinancialAid, f.med_toxicity_p as med_toxicity, f.med_toxicity_comments, f.form_version ");
-		query.append("from		hiv_encounters e, hiv_followup_forms f ");
+		query.append("			f.continue_financial_aid_p as continueFinancialAid, f.med_toxicity_p as med_toxicity, f.med_toxicity_comments, f.form_version, ");
+		query.append("			exam.presenting_history as presentingComplaint, exam.comments as physicalExamComments ");
+		query.append("from		hiv_encounters e, hiv_followup_forms f, hiv_exams exam ");
 		query.append("where		e.encounter_id = f.encounter_id(+) ");
+		query.append("and		e.encounter_id = exam.encounter_id(+) ");
 		query.append("and		e.type = 'followup'");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
 		joinData.add(new JoinData("encounter_id", "responsiblePerson", getResponsiblePersonData()));
+		joinData.add(new JoinData("encounter_id", "opportunisticInfections", getOpportunisticInfections()));
 
 		return DB.listMapResult(query, FollowupEncounter.class, joinData);
 	}
@@ -251,6 +258,16 @@ public class PatientQuery {
 		query.append("select	encounter_id, system, condition ");
 		query.append("from		hiv_exam_system_status ");
 		return DB.listMapResult(query, SystemStatus.class);
+	}
+
+	/**
+	 * @return Map from encounterId to a List of OpportunisticInfections
+	 */
+	public static ListMap<Integer, OpportunisticInfection> getOpportunisticInfections() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	encounter_id, oi, comments ");
+		query.append("from		hiv_exam_ois ");
+		return DB.listMapResult(query, OpportunisticInfection.class);
 	}
 
 	/**

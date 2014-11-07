@@ -1,5 +1,7 @@
 package org.pih.hivmigration.common;
 
+import java.util.List;
+
 /**
  * Represents the commonality between an intake and a followup encounter.
  */
@@ -12,6 +14,9 @@ public class ClinicalEncounter extends Encounter {
 	private Boolean continueFinancialAid;
 	private String formVersion;
 	private ResponsiblePerson responsiblePerson;
+	private String presentingComplaint;
+	private String physicalExamComments;
+	private List<OpportunisticInfection> opportunisticInfections;
 
 	public ClinicalEncounter() {}
 
@@ -69,5 +74,29 @@ public class ClinicalEncounter extends Encounter {
 
 	public void setResponsiblePerson(ResponsiblePerson responsiblePerson) {
 		this.responsiblePerson = responsiblePerson;
+	}
+
+	public String getPresentingComplaint() {
+		return presentingComplaint;
+	}
+
+	public void setPresentingComplaint(String presentingComplaint) {
+		this.presentingComplaint = presentingComplaint;
+	}
+
+	public String getPhysicalExamComments() {
+		return physicalExamComments;
+	}
+
+	public void setPhysicalExamComments(String physicalExamComments) {
+		this.physicalExamComments = physicalExamComments;
+	}
+
+	public List<OpportunisticInfection> getOpportunisticInfections() {
+		return opportunisticInfections;
+	}
+
+	public void setOpportunisticInfections(List<OpportunisticInfection> opportunisticInfections) {
+		this.opportunisticInfections = opportunisticInfections;
 	}
 }
