@@ -17,6 +17,7 @@ public class ClinicalEncounter extends Encounter {
 	private String presentingComplaint;
 	private String physicalExamComments;
 	private List<OpportunisticInfection> opportunisticInfections;
+	private List<SymptomGroup> symptomGroups;
 
 	public ClinicalEncounter() {}
 
@@ -98,5 +99,13 @@ public class ClinicalEncounter extends Encounter {
 
 	public void setOpportunisticInfections(List<OpportunisticInfection> opportunisticInfections) {
 		this.opportunisticInfections = opportunisticInfections;
+	}
+
+	public List<SymptomGroup> getSymptomGroups() {
+		return symptomGroups;
+	}
+
+	public void setSymptomGroups(List<SymptomGroup> symptomGroups) {
+		this.symptomGroups = symptomGroups;
 	}
 }

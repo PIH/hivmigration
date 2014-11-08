@@ -15,6 +15,7 @@ import org.pih.hivmigration.common.Pregnancy;
 import org.pih.hivmigration.common.PreviousTreatment;
 import org.pih.hivmigration.common.ResponsiblePerson;
 import org.pih.hivmigration.common.SocioeconomicData;
+import org.pih.hivmigration.common.SymptomGroup;
 import org.pih.hivmigration.common.SystemStatus;
 import org.pih.hivmigration.common.code.WhoStagingCriteria;
 import org.pih.hivmigration.common.util.ListMap;
@@ -146,6 +147,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "whoStagingCriteria", getWhoStagingCriteria()));
 		joinData.add(new JoinData("encounter_id", "responsiblePerson", getResponsiblePersonData()));
 		joinData.add(new JoinData("encounter_id", "opportunisticInfections", getOpportunisticInfections()));
+		joinData.add(new JoinData("encounter_id", "symptomGroups", getSymptomGroups()));
 
 		return DB.listMapResult(query, IntakeEncounter.class, joinData);
 	}
@@ -167,6 +169,7 @@ public class PatientQuery {
 		List<JoinData> joinData = new ArrayList<JoinData>();
 		joinData.add(new JoinData("encounter_id", "responsiblePerson", getResponsiblePersonData()));
 		joinData.add(new JoinData("encounter_id", "opportunisticInfections", getOpportunisticInfections()));
+		joinData.add(new JoinData("encounter_id", "symptomGroups", getSymptomGroups()));
 
 		return DB.listMapResult(query, FollowupEncounter.class, joinData);
 	}
@@ -291,5 +294,15 @@ public class PatientQuery {
 		query.append("where		(responsible_first_name is not null or responsible_first_name2 is not null or responsible_last_name is not null ");
 		query.append("or		responsible_pih_id is not null or responsible_relation is not null) ");
 		return DB.mapResult(query, ResponsiblePerson.class);
+	}
+
+	/**
+	 * @return Map from encounterId to a List of SymptomGroups
+	 */
+	public static ListMap<Integer, SymptomGroup> getSymptomGroups() {
+		StringBuilder query = new StringBuilder();
+		query.append("select 	encounter_id, symptom, result as symptomPresent, symptom_date, duration, duration_unit, symptom_comment ");
+		query.append("from		hiv_exam_symptoms ");
+		return DB.listMapResult(query, SymptomGroup.class);
 	}
 }

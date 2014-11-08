@@ -40,12 +40,6 @@ HIV_LABORATORIES
 HIV_LAB_TESTS
 HIV_PRODUCTS
 HIV_PRODUCT_CATEGORY
-HIV_REPORT_FREQUENCY
-HIV_REPORT_GROUP
-HIV_REPORT_GROUP_TEMPLATE
-HIV_REPORT_INDICATOR
-HIV_REPORT_INDICATOR_GROUP
-HIV_SOCIAL_SUPPORT_TYPE
 HIV_STANDARD_REGIMES
 HIV_STANDARD_REGIME_DRUGS
 
@@ -81,7 +75,6 @@ HIV_ORDERED_OTHER
 "food_study", "HIV_EXAM_LAB_RESULTS", "HIV_EXAM_VITAL_SIGNS", "HIV_OBSERVATIONS"
 "food_support", "HIV_EXAM_LAB_RESULTS", "HIV_OBSERVATIONS"
 "hop_abstraction", "HIV_OBSERVATIONS", "HIV_TB_STATUS"
-"infant_followup", "HIV_PREGNANCY_EXAM"
 "lab_result", "HIV_DATA_AUDIT_ENTRY", "HIV_EXAM_LAB_RESULTS", "HIV_LAB_RESULTS"
 "not_specified", "HIV_EXAM_VITAL_SIGNS"
 "note", "HIV_EXAM_LAB_RESULTS"
@@ -90,8 +83,6 @@ HIV_ORDERED_OTHER
 "pregnancy", "HIV_EXAM_EXTRA", "HIV_OBSERVATIONS"
 "regime", "HIV_EXAM_LAB_RESULTS", "HIV_OBSERVATIONS", "HIV_REGIMES"
 
-
-
 "HIV_DATA_AUDIT_ENTRY", "accompagnateur", "followup", "intake", "lab_result", "patient_contact"
 "HIV_EXAM_LAB_RESULTS", "accompagnateur", "cervical_cancer", "followup", "food_study", "food_support", "intake", "lab_result", "note", "patient_contact", "regime"
 "HIV_OBSERVATIONS", "accompagnateur", "cervical_cancer", "followup", "food_study", "food_support", "hop_abstraction", "intake", "pregnancy", "regime"
@@ -99,9 +90,7 @@ HIV_ORDERED_OTHER
 "HIV_EXAM_VITAL_SIGNS", "anlap_vital_signs", "followup", "food_study", "intake", "not_specified", "observation", "patient_contact"
 "HIV_EXAM_EXTRA", "cervical_cancer", "followup", "intake", "pregnancy"
 "HIV_ENCOUNTERS", "followup", "lab_result", "note"
-
 "HIV_TB_STATUS", "followup", "hop_abstraction", "intake"
-"HIV_PREGNANCY_EXAM", "infant_followup"
 "HIV_REGIMES", "intake", "regime"
 
 
@@ -134,11 +123,16 @@ HIV_LAB_TRACKING
 HIV_PCR_TESTS
 HIV_PCR_TRACKING
 HIV_SOCIAL_SUPPORT
-
+HIV_SOCIAL_SUPPORT_TYPE
 
 ###### REPORTING AGGREGATE DATA ######
 HIV_REPORT_INDICATOR_VALUE
 
+HIV_REPORT_FREQUENCY
+HIV_REPORT_GROUP
+HIV_REPORT_GROUP_TEMPLATE
+HIV_REPORT_INDICATOR
+HIV_REPORT_INDICATOR_GROUP
 
 ###### SURVEILLANCE ######
 HIV_SURVEILLANCE_LOG

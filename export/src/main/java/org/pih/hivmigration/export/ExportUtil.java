@@ -2,8 +2,9 @@ package org.pih.hivmigration.export;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.pih.hivmigration.common.code.CodedValue;
+import org.pih.hivmigration.common.CodedOrNonCoded;
 import org.pih.hivmigration.common.User;
+import org.pih.hivmigration.common.code.CodedValue;
 import org.pih.hivmigration.common.util.Util;
 import org.pih.hivmigration.export.query.UserQuery;
 
@@ -68,20 +69,36 @@ public class ExportUtil {
 				ret = UserQuery.getUser(value);
 			}
 			else if (CodedValue.class.isAssignableFrom(type) && type.isEnum()) {
-				boolean found = false;
-				for (Object o : type.getEnumConstants()) {
-					CodedValue cv = (CodedValue)o;
-					if (cv.getValue().equalsIgnoreCase(value.toString())) {
-						ret = o;
-						found = true;
-					}
-				}
-				if (!found) {
+				CodedValue cv = getCodedValue((Class<CodedValue>)type, value.toString());
+				if (cv == null) {
 					throw new IllegalArgumentException("Unable to convert " + value + " to an enum of type: " + type);
+				}
+				ret = cv;
+			}
+			else if (CodedOrNonCoded.class.isAssignableFrom(type)) {
+				try {
+					CodedOrNonCoded codedOrNonCoded = (CodedOrNonCoded) type.newInstance();
+					CodedValue cv = getCodedValue(codedOrNonCoded.getCodedValueType(), value.toString());
+					codedOrNonCoded.setCodedValue(cv);
+					codedOrNonCoded.setNonCodedValue((cv == null ? value.toString() : null));
+					ret = codedOrNonCoded;
+				}
+				catch (Exception e) {
+					throw new IllegalArgumentException("Unable to convert " + value + " to " + type, e);
 				}
 			}
 		}
 		return (T)ret;
+	}
+
+	public static <T extends CodedValue> T getCodedValue(Class<T> type, String value) {
+		for (Object o : type.getEnumConstants()) {
+			CodedValue cv = (CodedValue)o;
+			if (cv.getValue().equalsIgnoreCase(value.toString())) {
+				return (T)cv;
+			}
+		}
+		return null;
 	}
 
 	public static <T> T toObject(Class<T> type, Map<String, Object> values) {
@@ -92,7 +109,8 @@ public class ExportUtil {
 			T o = type.newInstance();
 			for (PropertyDescriptor descriptor : PropertyUtils.getPropertyDescriptors(type)) {
 				if (PropertyUtils.isWriteable(o, descriptor.getName())) {
-					PropertyUtils.setProperty(o, descriptor.getName(), getValueFromMap(descriptor.getPropertyType(), descriptor.getName(), values));
+					Object val = getValueFromMap(descriptor.getPropertyType(), descriptor.getName(), values);
+					PropertyUtils.setProperty(o, descriptor.getName(), val);
 				}
 			}
 			return o;

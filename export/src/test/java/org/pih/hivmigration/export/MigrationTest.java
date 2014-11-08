@@ -60,10 +60,10 @@ public class MigrationTest {
 
 	@Test
 	public void shouldReturnEnumValuesForColumn() {
-		String table = "";
-		String column = "";
-		if (Util.notEmpty(table) && Util.notEmpty(column)) {
-			List<String> ret = DB.listResult("select distinct " + column + " from " + table + " order by " + column, String.class);
+		//String query = "select distinct symptom from hiv_exam_symptoms order by symptom";
+		String query = "select symptom, count(*) from hiv_exam_symptoms where lower(trim(symptom)) = symptom and replace(symptom, ' ', '') = symptom group by symptom having count(*) > 100 order by symptom";
+		if (Util.notEmpty(query)) {
+			List<String> ret = DB.listResult(query, String.class);
 			for (String s : ret) {
 				System.out.println(s);
 			}

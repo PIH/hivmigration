@@ -13,6 +13,7 @@ import org.pih.hivmigration.common.Patient;
 import org.pih.hivmigration.common.code.HivStatus;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.export.DB;
+import org.pih.hivmigration.export.ExportUtil;
 import org.pih.hivmigration.export.TestUtils;
 
 import java.util.Collection;
@@ -229,6 +230,13 @@ public class PatientQueryTest {
 	public void shouldTestOpportunisticInfections() throws Exception {
 		Collection c = PatientQuery.getOpportunisticInfections().values();
 		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_exam_ois");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestSymptomGroups() throws Exception {
+		Collection c = PatientQuery.getSymptomGroups().values();
+		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_exam_symptoms");
 		TestUtils.assertAllPropertiesArePopulated(c);
 	}
 
