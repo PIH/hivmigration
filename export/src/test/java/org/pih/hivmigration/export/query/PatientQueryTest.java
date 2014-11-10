@@ -4,7 +4,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pih.hivmigration.common.FollowupEncounter;
 import org.pih.hivmigration.common.HivStatusData;
@@ -13,7 +12,6 @@ import org.pih.hivmigration.common.Patient;
 import org.pih.hivmigration.common.code.HivStatus;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.export.DB;
-import org.pih.hivmigration.export.ExportUtil;
 import org.pih.hivmigration.export.TestUtils;
 
 import java.util.Collection;
@@ -197,7 +195,6 @@ public class PatientQueryTest {
 			int numFound = TestUtils.getNonNullPropertiesFoundInCollection(intakes, "hospitalizedAtDiagnosis");
 			String q ="select count(*) from hiv_intake_extra where hospitalized_at_diagnosis_p is not null ";
 			Assert.assertEquals(DB.uniqueResult(q, Integer.class).intValue(), numFound);
-
 		}
 	}
 
@@ -231,6 +228,7 @@ public class PatientQueryTest {
 		Collection c = PatientQuery.getOpportunisticInfections().values();
 		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_exam_ois");
 		TestUtils.assertAllPropertiesArePopulated(c);
+		TestUtils.assertAllValuesAreJoinedToEncounters(c.size(), "opportunisticInfections", getIntakeEncounters(), getFollowupEncounters());
 	}
 
 	@Test
@@ -238,6 +236,7 @@ public class PatientQueryTest {
 		Collection c = PatientQuery.getSymptomGroups().values();
 		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_exam_symptoms");
 		TestUtils.assertAllPropertiesArePopulated(c);
+		TestUtils.assertAllValuesAreJoinedToEncounters(c.size(), "symptomGroups", getIntakeEncounters(), getFollowupEncounters());
 	}
 
 	@Test
@@ -245,6 +244,15 @@ public class PatientQueryTest {
 		Collection c = PatientQuery.getLabTestOrders().values();
 		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_ordered_lab_tests");
 		TestUtils.assertAllPropertiesArePopulated(c);
+		TestUtils.assertAllValuesAreJoinedToEncounters(c.size(), "labTestOrders", getIntakeEncounters(), getFollowupEncounters());
+	}
+
+	@Test
+	public void shouldTestGenericOrders() throws Exception {
+		Collection c = PatientQuery.getGenericOrders().values();
+		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_ordered_other");
+		TestUtils.assertAllPropertiesArePopulated(c);
+		TestUtils.assertAllValuesAreJoinedToEncounters(c.size(), "genericOrders", getIntakeEncounters(), getFollowupEncounters());
 	}
 
 	@Test

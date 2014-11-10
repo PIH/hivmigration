@@ -5,6 +5,7 @@ import org.pih.hivmigration.common.Allergy;
 import org.pih.hivmigration.common.Contact;
 import org.pih.hivmigration.common.Diagnosis;
 import org.pih.hivmigration.common.FollowupEncounter;
+import org.pih.hivmigration.common.GenericOrder;
 import org.pih.hivmigration.common.HivStatusData;
 import org.pih.hivmigration.common.IntakeEncounter;
 import org.pih.hivmigration.common.LabTestOrder;
@@ -150,6 +151,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "opportunisticInfections", getOpportunisticInfections()));
 		joinData.add(new JoinData("encounter_id", "symptomGroups", getSymptomGroups()));
 		joinData.add(new JoinData("encounter_id", "labTestOrders", getLabTestOrders()));
+		joinData.add(new JoinData("encounter_id", "genericOrders", getGenericOrders()));
 
 		return DB.listMapResult(query, IntakeEncounter.class, joinData);
 	}
@@ -173,6 +175,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "opportunisticInfections", getOpportunisticInfections()));
 		joinData.add(new JoinData("encounter_id", "symptomGroups", getSymptomGroups()));
 		joinData.add(new JoinData("encounter_id", "labTestOrders", getLabTestOrders()));
+		joinData.add(new JoinData("encounter_id", "genericOrders", getGenericOrders()));
 
 		return DB.listMapResult(query, FollowupEncounter.class, joinData);
 	}
@@ -317,5 +320,15 @@ public class PatientQuery {
 		query.append("select	encounter_id, test as testCoded, test_other as testNonCoded ");
 		query.append("from		hiv_ordered_lab_tests ");
 		return DB.listMapResult(query, LabTestOrder.class);
+	}
+
+	/**
+	 * @return Map from encounterId to a List of GenericOrder
+	 */
+	public static ListMap<Integer, GenericOrder> getGenericOrders() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	encounter_id, ordered, comments ");
+		query.append("from		hiv_ordered_other ");
+		return DB.listMapResult(query, GenericOrder.class);
 	}
 }

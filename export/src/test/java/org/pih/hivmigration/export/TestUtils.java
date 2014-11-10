@@ -2,6 +2,7 @@ package org.pih.hivmigration.export;
 
 import junit.framework.Assert;
 import org.apache.commons.beanutils.PropertyUtils;
+import org.pih.hivmigration.common.Encounter;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.common.util.Util;
 
@@ -127,5 +128,13 @@ public class TestUtils {
 		foundButNotExpected.removeAll(tablesExpected);
 
 		Assert.assertTrue("Expected to not find " + type + " encounters in " + foundButNotExpected + " but did", foundButNotExpected.isEmpty());
+	}
+
+	public static void assertAllValuesAreJoinedToEncounters(int expectedSize, String propertyToCheck, ListMap<Integer, ? extends Encounter>... encounterLists) {
+		int found = 0;
+		for (ListMap<Integer, ? extends Encounter> encounterList : encounterLists) {
+			found += getNonNullPropertiesFoundInCollection(encounterList.values(), propertyToCheck);
+		}
+		Assert.assertEquals(expectedSize, found);
 	}
 }

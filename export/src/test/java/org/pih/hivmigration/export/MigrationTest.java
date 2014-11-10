@@ -29,7 +29,7 @@ public class MigrationTest {
 
 	@Test
 	public void shouldAnalyzeTable() throws Exception {
-		String table = "HIV_ORDERED_LAB_TESTS";
+		String table = "";
 		if (Util.notEmpty(table)) {
 			System.out.println("*********************");
 			System.out.println(table);
@@ -60,7 +60,8 @@ public class MigrationTest {
 
 	@Test
 	public void shouldReturnEnumValuesForColumn() {
-		String query = "select distinct test from HIV_ORDERED_LAB_TESTS order by test";
+		String query = "";
+		//String query = "select distinct ordered from HIV_ORDERED_OTHER order by ordered";
 		//String query = "select symptom, count(*) from hiv_exam_symptoms where lower(trim(symptom)) = symptom and replace(symptom, ' ', '') = symptom group by symptom having count(*) > 100 order by symptom";
 		if (Util.notEmpty(query)) {
 			List<String> ret = DB.listResult(query, String.class);
