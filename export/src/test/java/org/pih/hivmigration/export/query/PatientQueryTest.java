@@ -241,6 +241,13 @@ public class PatientQueryTest {
 	}
 
 	@Test
+	public void shouldTestLabTestOrders() throws Exception {
+		Collection c = PatientQuery.getLabTestOrders().values();
+		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_ordered_lab_tests");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
 	public void shouldIncludeOnlySpecifiedTablesForIntakeEncounters() throws Exception {
 		TestUtils.assertEncounterDataOnlyIn("intake",
 				"HIV_HIV_STATUS", "HIV_INTAKE_FORMS", "HIV_INTAKE_EXTRA", "HIV_EXAM_SYSTEM_STATUS",

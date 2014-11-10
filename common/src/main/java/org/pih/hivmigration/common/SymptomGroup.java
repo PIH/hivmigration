@@ -6,7 +6,7 @@ import java.util.Date;
 
 public class SymptomGroup {
 
-	private SymptomCodedOrNonCoded symptom;
+	private Symptom symptom;
 	private Boolean symptomPresent;
 	private Date symptomDate;
 	private Integer duration;
@@ -15,11 +15,11 @@ public class SymptomGroup {
 
 	public SymptomGroup() {}
 
-	public SymptomCodedOrNonCoded getSymptom() {
+	public Symptom getSymptom() {
 		return symptom;
 	}
 
-	public void setSymptom(SymptomCodedOrNonCoded symptom) {
+	public void setSymptom(Symptom symptom) {
 		this.symptom = symptom;
 	}
 

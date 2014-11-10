@@ -7,6 +7,7 @@ import org.pih.hivmigration.common.Diagnosis;
 import org.pih.hivmigration.common.FollowupEncounter;
 import org.pih.hivmigration.common.HivStatusData;
 import org.pih.hivmigration.common.IntakeEncounter;
+import org.pih.hivmigration.common.LabTestOrder;
 import org.pih.hivmigration.common.OpportunisticInfection;
 import org.pih.hivmigration.common.PamEnrollment;
 import org.pih.hivmigration.common.Patient;
@@ -148,6 +149,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "responsiblePerson", getResponsiblePersonData()));
 		joinData.add(new JoinData("encounter_id", "opportunisticInfections", getOpportunisticInfections()));
 		joinData.add(new JoinData("encounter_id", "symptomGroups", getSymptomGroups()));
+		joinData.add(new JoinData("encounter_id", "labTestOrders", getLabTestOrders()));
 
 		return DB.listMapResult(query, IntakeEncounter.class, joinData);
 	}
@@ -170,6 +172,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "responsiblePerson", getResponsiblePersonData()));
 		joinData.add(new JoinData("encounter_id", "opportunisticInfections", getOpportunisticInfections()));
 		joinData.add(new JoinData("encounter_id", "symptomGroups", getSymptomGroups()));
+		joinData.add(new JoinData("encounter_id", "labTestOrders", getLabTestOrders()));
 
 		return DB.listMapResult(query, FollowupEncounter.class, joinData);
 	}
@@ -304,5 +307,15 @@ public class PatientQuery {
 		query.append("select 	encounter_id, symptom, result as symptomPresent, symptom_date, duration, duration_unit, symptom_comment ");
 		query.append("from		hiv_exam_symptoms ");
 		return DB.listMapResult(query, SymptomGroup.class);
+	}
+
+	/**
+	 * @return Map from encounterId to a List of LabTestOrder
+	 */
+	public static ListMap<Integer, LabTestOrder> getLabTestOrders() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	encounter_id, test as testCoded, test_other as testNonCoded ");
+		query.append("from		hiv_ordered_lab_tests ");
+		return DB.listMapResult(query, LabTestOrder.class);
 	}
 }

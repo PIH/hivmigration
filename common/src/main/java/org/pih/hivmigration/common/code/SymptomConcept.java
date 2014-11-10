@@ -3,7 +3,7 @@ package org.pih.hivmigration.common.code;
 /**
  * This corresponds to the hiv_exam_symptoms.symptom column
  */
-public enum Symptom implements CodedValue {
+public enum SymptomConcept implements CodedValue {
 
 	AUCUN,
 	BLOODY_DIARRHEA,
