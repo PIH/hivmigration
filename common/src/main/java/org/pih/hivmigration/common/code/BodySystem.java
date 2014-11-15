@@ -1,5 +1,8 @@
 package org.pih.hivmigration.common.code;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * This corresponds to the hiv_exam_system_status.system values
  */
@@ -18,7 +21,8 @@ public enum BodySystem implements CodedValue {
 	CARDIOVASCULAR,
 	PULMONARY;
 
-	public String getValue() {
-		return name().toLowerCase();
+	@Override
+	public List<String> getValues() {
+		return Arrays.asList(name().toLowerCase());
 	}
 }

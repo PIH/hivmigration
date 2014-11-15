@@ -1,12 +1,12 @@
 package org.pih.hivmigration.common;
 
-import org.pih.hivmigration.common.code.HivStatus;
+import org.pih.hivmigration.common.code.SimpleLabResult;
 
 import java.util.Date;
 
 public class HivStatusData {
 
-	private HivStatus status;
+	private SimpleLabResult status;
 	private Date statusDate;
 	private Boolean dateUnknown;
 	private String testLocationCoded;
@@ -16,11 +16,11 @@ public class HivStatusData {
 
 	public HivStatusData() {}
 
-	public HivStatus getStatus() {
+	public SimpleLabResult getStatus() {
 		return status;
 	}
 
-	public void setStatus(HivStatus status) {
+	public void setStatus(SimpleLabResult status) {
 		this.status = status;
 	}
 

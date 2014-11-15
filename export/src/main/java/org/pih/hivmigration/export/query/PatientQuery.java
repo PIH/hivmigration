@@ -2,16 +2,21 @@ package org.pih.hivmigration.export.query;
 
 import org.pih.hivmigration.common.Address;
 import org.pih.hivmigration.common.Allergy;
+import org.pih.hivmigration.common.CervicalCancerEncounter;
 import org.pih.hivmigration.common.Contact;
 import org.pih.hivmigration.common.Diagnosis;
 import org.pih.hivmigration.common.FollowupEncounter;
 import org.pih.hivmigration.common.GenericOrder;
 import org.pih.hivmigration.common.HivStatusData;
 import org.pih.hivmigration.common.IntakeEncounter;
+import org.pih.hivmigration.common.LabResultEncounter;
 import org.pih.hivmigration.common.LabTestOrder;
+import org.pih.hivmigration.common.LabTestResult;
+import org.pih.hivmigration.common.NutritionalEvaluationEncounter;
 import org.pih.hivmigration.common.OpportunisticInfection;
 import org.pih.hivmigration.common.PamEnrollment;
 import org.pih.hivmigration.common.Patient;
+import org.pih.hivmigration.common.PatientContactEncounter;
 import org.pih.hivmigration.common.PostnatalEncounter;
 import org.pih.hivmigration.common.Pregnancy;
 import org.pih.hivmigration.common.PreviousTreatment;
@@ -152,6 +157,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "symptomGroups", getSymptomGroups()));
 		joinData.add(new JoinData("encounter_id", "labTestOrders", getLabTestOrders()));
 		joinData.add(new JoinData("encounter_id", "genericOrders", getGenericOrders()));
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
 
 		return DB.listMapResult(query, IntakeEncounter.class, joinData);
 	}
@@ -176,8 +182,69 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "symptomGroups", getSymptomGroups()));
 		joinData.add(new JoinData("encounter_id", "labTestOrders", getLabTestOrders()));
 		joinData.add(new JoinData("encounter_id", "genericOrders", getGenericOrders()));
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
 
 		return DB.listMapResult(query, FollowupEncounter.class, joinData);
+	}
+
+	/**
+	 * @return Map from patientId to a List of PatientContactEncounters
+	 */
+	public static ListMap<Integer, PatientContactEncounter> getPatientContactEncounters() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments ");
+		query.append("from		hiv_encounters e ");
+		query.append("where		e.type = 'patient_contact'");
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
+
+		return DB.listMapResult(query, PatientContactEncounter.class, joinData);
+	}
+
+	/**
+	 * @return Map from patientId to a List of CervicalCancerEncounters
+	 */
+	public static ListMap<Integer, CervicalCancerEncounter> getCervicalCancerEncounters() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments ");
+		query.append("from		hiv_encounters e ");
+		query.append("where		e.type = 'cervical_cancer'");
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
+
+		return DB.listMapResult(query, CervicalCancerEncounter.class, joinData);
+	}
+
+	/**
+	 * @return Map from patientId to a List of NutritionalEvaluationEncounters
+	 */
+	public static ListMap<Integer, NutritionalEvaluationEncounter> getNutritionalEvaluationEncounters() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments ");
+		query.append("from		hiv_encounters e ");
+		query.append("where		e.type = 'food_study'");
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
+
+		return DB.listMapResult(query, NutritionalEvaluationEncounter.class, joinData);
+	}
+
+	/**
+	 * @return Map from patientId to a List of LabResultEncounters
+	 */
+	public static ListMap<Integer, LabResultEncounter> getLabResultEncounters() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments, e.performed_by ");
+		query.append("from		hiv_encounters e ");
+		query.append("where		e.type = 'lab_result'");
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
+
+		return DB.listMapResult(query, LabResultEncounter.class, joinData);
 	}
 
 	/**
@@ -330,5 +397,16 @@ public class PatientQuery {
 		query.append("select	encounter_id, ordered, comments ");
 		query.append("from		hiv_ordered_other ");
 		return DB.listMapResult(query, GenericOrder.class);
+	}
+
+	/**
+	 * @return Map from encounterId to a List of GenericOrder
+	 */
+	public static ListMap<Integer, LabTestResult> getLabTestResults() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	encounter_id, lab_test, test_date, result ");
+		query.append("from		hiv_exam_lab_results ");
+		query.append("where		result is not null ");
+		return DB.listMapResult(query, LabTestResult.class);
 	}
 }

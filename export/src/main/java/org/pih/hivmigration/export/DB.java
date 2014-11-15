@@ -57,6 +57,16 @@ public class DB {
 		}
 	}
 
+	public static void executeUpdate(String sql, Object...params) {
+		try {
+			QueryRunner runner = new QueryRunner();
+			runner.update(connection, sql, params);
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Unable to execute query: " + sql, e);
+		}
+	}
+
 	public static <T> ListMap<Integer, T> listMapResult(StringBuilder sql, final Class<T> type, final JoinData... joinData) {
 		return listMapResult(sql, type, Arrays.asList(joinData));
 	}

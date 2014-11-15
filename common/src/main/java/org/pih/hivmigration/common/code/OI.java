@@ -1,5 +1,8 @@
 package org.pih.hivmigration.common.code;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * This corresponds to the hiv_exam_ois.oi values
  */
@@ -70,7 +73,8 @@ public enum OI implements CodedValue {
 	WASTING,
 	WEIGHT_LOSS;
 
-	public String getValue() {
-		return name().toLowerCase();
+	@Override
+	public List<String> getValues() {
+		return Arrays.asList(name().toLowerCase());
 	}
 }

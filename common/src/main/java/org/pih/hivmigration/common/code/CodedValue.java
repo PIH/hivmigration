@@ -1,7 +1,9 @@
 package org.pih.hivmigration.common.code;
 
+import java.util.List;
+
 public interface CodedValue {
 
-	String getValue();
+	List<String> getValues();
 
 }

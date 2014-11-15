@@ -60,26 +60,24 @@ HIV_DATA_AUDIT_TRACKING_FORMS
 HIV_ENCOUNTERS
 
 # OTHER COMBINATION
-"accompagnateur", "HIV_DATA_AUDIT_ENTRY", "HIV_EXAM_LAB_RESULTS", "HIV_OBSERVATIONS"
+"accompagnateur", "HIV_DATA_AUDIT_ENTRY", "HIV_OBSERVATIONS"
 "anlap_lab_result", "HIV_LAB_RESULTS"
 "anlap_vital_signs", "HIV_EXAM_VITAL_SIGNS"
 "cervical_cancer", "HIV_EXAM_EXTRA", "HIV_EXAM_LAB_RESULTS", "HIV_OBSERVATIONS"
 "food_study", "HIV_EXAM_LAB_RESULTS", "HIV_EXAM_VITAL_SIGNS", "HIV_OBSERVATIONS"
-"food_support", "HIV_EXAM_LAB_RESULTS", "HIV_OBSERVATIONS"
+"food_support", "HIV_OBSERVATIONS"
 "hop_abstraction", "HIV_OBSERVATIONS", "HIV_TB_STATUS"
 "lab_result", "HIV_DATA_AUDIT_ENTRY", "HIV_EXAM_LAB_RESULTS", "HIV_LAB_RESULTS"
-"not_specified", "HIV_EXAM_VITAL_SIGNS"
-"note", "HIV_EXAM_LAB_RESULTS"
-"observation", "HIV_EXAM_VITAL_SIGNS"
+"note"
 "patient_contact", "HIV_DATA_AUDIT_ENTRY", "HIV_EXAM_LAB_RESULTS", "HIV_EXAM_VITAL_SIGNS"
 "pregnancy", "HIV_EXAM_EXTRA", "HIV_OBSERVATIONS"
-"regime", "HIV_EXAM_LAB_RESULTS", "HIV_OBSERVATIONS", "HIV_REGIMES"
+"regime", "HIV_OBSERVATIONS", "HIV_REGIMES"
 
 "HIV_DATA_AUDIT_ENTRY", "accompagnateur", "followup", "intake", "lab_result", "patient_contact"
-"HIV_EXAM_LAB_RESULTS", "accompagnateur", "cervical_cancer", "followup", "food_study", "food_support", "intake", "lab_result", "note", "patient_contact", "regime"
+"HIV_EXAM_LAB_RESULTS", "cervical_cancer", "followup", "food_study", "intake", "lab_result", "patient_contact"
 "HIV_OBSERVATIONS", "accompagnateur", "cervical_cancer", "followup", "food_study", "food_support", "hop_abstraction", "intake", "pregnancy", "regime"
 "HIV_LAB_RESULTS", "anlap_lab_result", "lab_result"
-"HIV_EXAM_VITAL_SIGNS", "anlap_vital_signs", "followup", "food_study", "intake", "not_specified", "observation", "patient_contact"
+"HIV_EXAM_VITAL_SIGNS", "anlap_vital_signs", "followup", "food_study", "intake", "patient_contact"
 "HIV_EXAM_EXTRA", "cervical_cancer", "followup", "intake", "pregnancy"
 "HIV_ENCOUNTERS", "followup", "lab_result", "note"
 "HIV_TB_STATUS", "followup", "hop_abstraction", "intake"
@@ -94,7 +92,6 @@ HIV_TB_STATUS
 HIV_EXAM_EXTRA
 
 # MANY-TO-ONE ENCOUNTER DATA
-HIV_EXAM_LAB_RESULTS
 HIV_EXAM_VITAL_SIGNS
 HIV_LAB_RESULTS
 HIV_OBSERVATIONS

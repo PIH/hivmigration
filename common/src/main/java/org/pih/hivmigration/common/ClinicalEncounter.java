@@ -20,6 +20,7 @@ public class ClinicalEncounter extends Encounter {
 	private List<SymptomGroup> symptomGroups;
 	private List<LabTestOrder> labTestOrders;
 	private List<GenericOrder> genericOrders;
+	private List<LabTestResult> labResults;
 
 	public ClinicalEncounter() {}
 
@@ -125,5 +126,13 @@ public class ClinicalEncounter extends Encounter {
 
 	public void setGenericOrders(List<GenericOrder> genericOrders) {
 		this.genericOrders = genericOrders;
+	}
+
+	public List<LabTestResult> getLabResults() {
+		return labResults;
+	}
+
+	public void setLabResults(List<LabTestResult> labResults) {
+		this.labResults = labResults;
 	}
 }

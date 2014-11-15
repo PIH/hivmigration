@@ -1,5 +1,8 @@
 package org.pih.hivmigration.common.code;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * This corresponds to the hiv_exam_system_status.condition values
  */
@@ -73,7 +76,8 @@ public enum OtherOrderable implements CodedValue {
 	VOLUNTARY_COUNSELING_AND_TESTING,
 	WORK_TRAINING;
 
-	public String getValue() {
-		return name().toLowerCase();
+	@Override
+	public List<String> getValues() {
+		return Arrays.asList(name().toLowerCase());
 	}
 }

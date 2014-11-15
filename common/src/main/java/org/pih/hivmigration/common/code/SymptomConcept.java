@@ -1,5 +1,8 @@
 package org.pih.hivmigration.common.code;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * This corresponds to the hiv_exam_symptoms.symptom column
  */
@@ -48,7 +51,8 @@ public enum SymptomConcept implements CodedValue {
 	VISION_PROBLEMS,
 	VOMITING;
 
-	public String getValue() {
-		return name().toLowerCase();
+	@Override
+	public List<String> getValues() {
+		return Arrays.asList(name().toLowerCase());
 	}
 }

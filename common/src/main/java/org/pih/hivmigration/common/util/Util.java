@@ -68,6 +68,14 @@ public class Util {
 		return ret;
 	}
 
+	public static <K, V> Map<K, V> toMap(Object... keysAndValues) {
+		Map<K, V> m = new LinkedHashMap<K, V>();
+		for (int i=0; i<keysAndValues.length; i+=2) {
+			m.put((K)keysAndValues[i], (V)keysAndValues[i+1]);
+		}
+		return m;
+	}
+
 	public static boolean isEmpty(Object o) {
 		return o == null || o.equals("");
 	}
@@ -204,6 +212,30 @@ public class Util {
 			IOUtils.closeQuietly(is);
 		}
 		return ret;
+	}
+
+	public static boolean isInListIgnoreCaseAndWhitespace(String stringToCheck, List<String> listToCheck) {
+		stringToCheck = stringToCheck.trim();
+		for (String listItem : listToCheck) {
+			if (listItem.trim().equalsIgnoreCase(stringToCheck)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static Double parseDoubleIfPossible(String stringToCheck) {
+		try {
+			Double d = Double.valueOf(stringToCheck);
+			return d;
+		}
+		catch (Exception e) {
+			return null;
+		}
+	}
+
+	public static boolean isDouble(String stringToCheck) {
+		return parseDoubleIfPossible(stringToCheck) != null;
 	}
 }
 

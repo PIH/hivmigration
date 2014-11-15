@@ -3,13 +3,16 @@ package org.pih.hivmigration.export;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.pih.hivmigration.common.CodedOrNonCoded;
+import org.pih.hivmigration.common.LabTestResult;
 import org.pih.hivmigration.common.User;
 import org.pih.hivmigration.common.code.CodedValue;
 import org.pih.hivmigration.common.util.Util;
+import org.pih.hivmigration.export.handler.LabTestResultHandler;
 import org.pih.hivmigration.export.query.UserQuery;
 
 import java.beans.PropertyDescriptor;
 import java.io.StringWriter;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -42,6 +45,20 @@ public class ExportUtil {
 		throw new IllegalArgumentException("Unable to find " + name + " in " + values);
 	}
 
+	public static Date toDate(String dateYmd) {
+		Date ret = null;
+		if (!Util.isEmpty(dateYmd)) {
+			try {
+				DateFormat df = DateFormat.getDateInstance();
+				ret = df.parse(dateYmd);
+			}
+			catch (Exception e) {
+				throw new IllegalArgumentException("Cannot parse " + dateYmd + " into a date");
+			}
+		}
+		return ret;
+	}
+
 	public static <T> T convertValue(Object value, Class<T> type) {
 		Object ret = value;
 		if (value != null) {
@@ -52,7 +69,12 @@ public class ExportUtil {
 				ret = value.toString();
 			}
 			else if (type == Date.class) {
-				ret = value;
+				if (value instanceof Date) {
+					ret = value;
+				}
+				else {
+					ret = toDate((String)value);
+				}
 			}
 			else if (type == Boolean.class) {
 				if ("t".equals(value) || "T".equals(value)) {
@@ -94,8 +116,10 @@ public class ExportUtil {
 	public static <T extends CodedValue> T getCodedValue(Class<T> type, String value) {
 		for (Object o : type.getEnumConstants()) {
 			CodedValue cv = (CodedValue)o;
-			if (cv.getValue().equalsIgnoreCase(value.toString())) {
-				return (T)cv;
+			for (String possibleValue : cv.getValues()) {
+				if (possibleValue.equalsIgnoreCase(value.toString())) {
+					return (T)cv;
+				}
 			}
 		}
 		return null;
@@ -105,6 +129,9 @@ public class ExportUtil {
 		try {
 			if (Map.class.isAssignableFrom(type)) {
 				return (T)values;
+			}
+			else if (LabTestResult.class.isAssignableFrom(type)) {
+				return (T)LabTestResultHandler.createLabTestResultResult(values);
 			}
 			T o = type.newInstance();
 			for (PropertyDescriptor descriptor : PropertyUtils.getPropertyDescriptors(type)) {

@@ -1,5 +1,6 @@
 package org.pih.hivmigration.export;
 
+import com.sun.org.apache.bcel.internal.generic.IFNONNULL;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.junit.After;
 import org.junit.Before;
@@ -61,7 +62,7 @@ public class MigrationTest {
 	@Test
 	public void shouldReturnEnumValuesForColumn() {
 		String query = "";
-		//String query = "select distinct ordered from HIV_ORDERED_OTHER order by ordered";
+		query = "select distinct lab_test from HIV_EXAM_LAB_RESULTS where result is not null order by lab_test";
 		//String query = "select symptom, count(*) from hiv_exam_symptoms where lower(trim(symptom)) = symptom and replace(symptom, ' ', '') = symptom group by symptom having count(*) > 100 order by symptom";
 		if (Util.notEmpty(query)) {
 			List<String> ret = DB.listResult(query, String.class);
@@ -106,6 +107,28 @@ public class MigrationTest {
 			List<Map<String, Object>> results = DB.executeQuery(query.toString(), new MapListHandler());
 			for (Map<String, Object> row : results) {
 				System.out.println(row.get("TYPE") + ": " + row.get("NUM"));
+			}
+		}
+	}
+
+	@Test
+	public void shouldTestLabResults() {
+		List<String> labTests = DB.listResult("select distinct lab_test from hiv_exam_lab_results order by lab_test", String.class);
+		for (String labTest : labTests) {
+			List<String> distinctResults = DB.listResult("select distinct result from hiv_exam_lab_results where result is not null and lab_test = ?", String.class, labTest);
+			if (distinctResults.size() < 20) {
+				System.out.println(labTest + ": " + distinctResults);
+			}
+			else {
+				int numNumeric = 0;
+				for (String result : distinctResults) {
+					try {
+						Double.parseDouble(result);
+						numNumeric++;
+					}
+					catch (Exception e) {}
+				}
+				System.out.println(labTest + ": " + numNumeric + " / " + distinctResults.size() + " results are numeric");
 			}
 		}
 	}

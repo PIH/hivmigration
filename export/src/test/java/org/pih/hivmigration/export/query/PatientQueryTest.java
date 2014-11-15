@@ -5,11 +5,16 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.pih.hivmigration.common.CervicalCancerEncounter;
 import org.pih.hivmigration.common.FollowupEncounter;
 import org.pih.hivmigration.common.HivStatusData;
 import org.pih.hivmigration.common.IntakeEncounter;
+import org.pih.hivmigration.common.LabResultEncounter;
+import org.pih.hivmigration.common.LabTestResult;
+import org.pih.hivmigration.common.NutritionalEvaluationEncounter;
 import org.pih.hivmigration.common.Patient;
-import org.pih.hivmigration.common.code.HivStatus;
+import org.pih.hivmigration.common.PatientContactEncounter;
+import org.pih.hivmigration.common.code.SimpleLabResult;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.export.DB;
 import org.pih.hivmigration.export.TestUtils;
@@ -23,6 +28,10 @@ public class PatientQueryTest {
 	private static Map<Integer, Patient> patients;
 	private static ListMap<Integer, IntakeEncounter> intakeEncounters;
 	private static ListMap<Integer, FollowupEncounter> followupEncounters;
+	private static ListMap<Integer, PatientContactEncounter> patientContactEncounters;
+	private static ListMap<Integer, CervicalCancerEncounter> cervicalCancerEncounters;
+	private static ListMap<Integer, NutritionalEvaluationEncounter> nutritionalEvaluationEncounters;
+	private static ListMap<Integer, LabResultEncounter> labResultEncounters;
 
 	@Before
 	public void beforeTest() throws Exception {
@@ -39,6 +48,10 @@ public class PatientQueryTest {
 		patients = null;
 		intakeEncounters = null;
 		followupEncounters = null;
+		patientContactEncounters = null;
+		cervicalCancerEncounters = null;
+		nutritionalEvaluationEncounters = null;
+		labResultEncounters = null;
 	}
 
 	protected Collection<Patient> getPatients() {
@@ -60,6 +73,34 @@ public class PatientQueryTest {
 			followupEncounters = PatientQuery.getFollowupEncounters();
 		}
 		return followupEncounters;
+	}
+
+	protected ListMap<Integer, PatientContactEncounter> getPatientContactEncounters() {
+		if (patientContactEncounters == null) {
+			patientContactEncounters = PatientQuery.getPatientContactEncounters();
+		}
+		return patientContactEncounters;
+	}
+
+	protected ListMap<Integer, CervicalCancerEncounter> getCervicalCancerEncounters() {
+		if (cervicalCancerEncounters == null) {
+			cervicalCancerEncounters = PatientQuery.getCervicalCancerEncounters();
+		}
+		return cervicalCancerEncounters;
+	}
+
+	protected ListMap<Integer, NutritionalEvaluationEncounter> getNutritionalEvaluationEncounters() {
+		if (nutritionalEvaluationEncounters == null) {
+			nutritionalEvaluationEncounters = PatientQuery.getNutritionalEvaluationEncounters();
+		}
+		return nutritionalEvaluationEncounters;
+	}
+
+	protected ListMap<Integer, LabResultEncounter> getLabResultEncounters() {
+		if (labResultEncounters == null) {
+			labResultEncounters = PatientQuery.getLabResultEncounters();
+		}
+		return labResultEncounters;
 	}
 
 	@Test
@@ -112,6 +153,42 @@ public class PatientQueryTest {
 	}
 
 	@Test
+	public void shouldTestPatientContactEncounters() throws Exception {
+		Collection c = getPatientContactEncounters().values();
+		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'patient_contact'");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestCervicalCancerEncounters() throws Exception {
+		Collection c = getCervicalCancerEncounters().values();
+		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'cervical_cancer'");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestNutritionalEvaluationEncounters() throws Exception {
+		Collection c = getNutritionalEvaluationEncounters().values();
+		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'food_study'");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestLabResultEncounters() throws Exception {
+		Collection c = getLabResultEncounters().values();
+		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'lab_result'");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestEncounterProperties() throws Exception {
+		int expectedComments = DB.uniqueResult("select count(*) from hiv_encounters where comments is not null", Integer.class);
+
+		// TODO: Uncomment and update this when we figure out what to do with "note" encounters
+		//TestUtils.assertAllValuesAreJoinedToEncounters(expectedComments, "comments", getIntakeEncounters(), getFollowupEncounters(), getPatientContactEncounters());
+	}
+
+	@Test
 	public void shouldTestAllergies() throws Exception {
 		Collection c = PatientQuery.getAllergies().values();
 		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_allergies");
@@ -159,7 +236,7 @@ public class PatientQueryTest {
 		Map<Integer, HivStatusData> data = PatientQuery.getHivStatusData();
 		for (Integer pId : data.keySet()) {
 			HivStatusData d = data.get(pId);
-			if (d.getStatus() == HivStatus.NEGATIVE || d.getStatus() == HivStatus.UNKNOWN) {
+			if (d.getStatus() == SimpleLabResult.NEGATIVE || d.getStatus() == SimpleLabResult.UNKNOWN) {
 				Assert.assertFalse("Patient " + pId + " has a historical positive HIV status but this is not in the export", positivePats.contains(pId));
 			}
 		}
@@ -253,6 +330,17 @@ public class PatientQueryTest {
 		TestUtils.assertCollectionSizeMatchesBaseTableSize(c, "hiv_ordered_other");
 		TestUtils.assertAllPropertiesArePopulated(c);
 		TestUtils.assertAllValuesAreJoinedToEncounters(c.size(), "genericOrders", getIntakeEncounters(), getFollowupEncounters());
+	}
+
+	@Test
+	public void shouldTestLabTestResults() throws Exception {
+		ListMap<Integer, LabTestResult> resultMap = PatientQuery.getLabTestResults();
+		TestUtils.assertCollectionSizeMatchesQuerySize(resultMap.values(), "select count(*) from hiv_exam_lab_results where result is not null");
+		TestUtils.assertAllPropertiesArePopulated(resultMap.values());
+		TestUtils.assertAllValuesAreJoinedToEncounters(resultMap.size(), "labResults", getIntakeEncounters(), getFollowupEncounters(),
+				getPatientContactEncounters(), getCervicalCancerEncounters(), getNutritionalEvaluationEncounters(), getLabResultEncounters());
+
+		// TODO: Add more comprehensive testing of expected test results, datypes, etc
 	}
 
 	@Test
