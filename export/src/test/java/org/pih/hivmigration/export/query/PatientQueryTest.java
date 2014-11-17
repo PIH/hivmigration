@@ -14,12 +14,14 @@ import org.pih.hivmigration.common.LabTestResult;
 import org.pih.hivmigration.common.NutritionalEvaluationEncounter;
 import org.pih.hivmigration.common.Patient;
 import org.pih.hivmigration.common.PatientContactEncounter;
+import org.pih.hivmigration.common.PregnancyDataEntryTransaction;
 import org.pih.hivmigration.common.code.SimpleLabResult;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.export.DB;
 import org.pih.hivmigration.export.TestUtils;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +34,7 @@ public class PatientQueryTest {
 	private static ListMap<Integer, CervicalCancerEncounter> cervicalCancerEncounters;
 	private static ListMap<Integer, NutritionalEvaluationEncounter> nutritionalEvaluationEncounters;
 	private static ListMap<Integer, LabResultEncounter> labResultEncounters;
+	private static ListMap<Integer, PregnancyDataEntryTransaction> pregnancyDataEntryTransactions;
 
 	@Before
 	public void beforeTest() throws Exception {
@@ -52,6 +55,7 @@ public class PatientQueryTest {
 		cervicalCancerEncounters = null;
 		nutritionalEvaluationEncounters = null;
 		labResultEncounters = null;
+		pregnancyDataEntryTransactions = null;
 	}
 
 	protected Collection<Patient> getPatients() {
@@ -101,6 +105,13 @@ public class PatientQueryTest {
 			labResultEncounters = PatientQuery.getLabResultEncounters();
 		}
 		return labResultEncounters;
+	}
+
+	protected ListMap<Integer, PregnancyDataEntryTransaction> getPregnancyDataEntryTransactions() {
+		if (pregnancyDataEntryTransactions == null) {
+			pregnancyDataEntryTransactions = PatientQuery.getPregnancyDataEntryTransactions();
+		}
+		return pregnancyDataEntryTransactions;
 	}
 
 	@Test
@@ -177,6 +188,13 @@ public class PatientQueryTest {
 	public void shouldTestLabResultEncounters() throws Exception {
 		Collection c = getLabResultEncounters().values();
 		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'lab_result'");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestPregnancyDataEntryTransactions() throws Exception {
+		Collection c = getPregnancyDataEntryTransactions().values();
+		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'pregnancy'");
 		TestUtils.assertAllPropertiesArePopulated(c);
 	}
 
@@ -297,6 +315,40 @@ public class PatientQueryTest {
 		{
 			int found = DB.uniqueResult("select count(*) from hiv_exams where presenting_complaint is not null", Integer.class);
 			Assert.assertEquals(0, found);
+		}
+	}
+
+	@Test
+	public void shouldTestHivExamExtraData() throws Exception {
+		{
+			int expected = DB.uniqueResult("select count(*) from hiv_exam_extra where last_period_date is not null", Integer.class);
+			TestUtils.assertAllValuesAreJoinedToEncounters(expected, "lastPeriodDate", getIntakeEncounters(), getFollowupEncounters(), getCervicalCancerEncounters());
+		}
+		{
+			int expected = DB.uniqueResult("select count(*) from hiv_exam_extra where expected_delivery_date is not null", Integer.class);
+			TestUtils.assertAllValuesAreJoinedToEncounters(expected, "expectedDeliveryDate", getIntakeEncounters(), getFollowupEncounters(), getPregnancyDataEntryTransactions());
+		}
+		{
+			int expected = DB.uniqueResult("select count(*) from hiv_exam_extra where pregnant_p is not null", Integer.class);
+			TestUtils.assertAllValuesAreJoinedToEncounters(expected, "pregnant", getIntakeEncounters(), getFollowupEncounters(), getPregnancyDataEntryTransactions());
+		}
+		Map<String, String> clinicalProperties = new HashMap<String, String>();
+		clinicalProperties.put("mothersFirstName", "mothers_first_name");
+		clinicalProperties.put("mothersLastName", "mothers_last_name");
+		clinicalProperties.put("postTestCounseling", "post_test_counseling_p");
+		clinicalProperties.put("partnerReferralStatus", "partner_referred_for_tr_p");
+		clinicalProperties.put("nextExamDate", "next_exam_date");
+		clinicalProperties.put("whoStage", "who_stage");
+		clinicalProperties.put("mainActivityBefore", "main_activity_before");
+		clinicalProperties.put("mainActivityHowNow", "main_activity_how_now");
+		clinicalProperties.put("otherActivitiesBefore", "other_activities_before");
+		clinicalProperties.put("otherActivitiesHowNow", "other_activities_how_now");
+		clinicalProperties.put("oiNow", "oi_now_p");
+		clinicalProperties.put("planExtra", "plan_extra");
+
+		for (String property : clinicalProperties.keySet()) {
+			int expected = DB.uniqueResult("select count(*) from hiv_exam_extra where " + clinicalProperties.get(property) + " is not null", Integer.class);
+			TestUtils.assertAllValuesAreJoinedToEncounters(expected, property, getIntakeEncounters(), getFollowupEncounters());
 		}
 	}
 

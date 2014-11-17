@@ -19,6 +19,7 @@ import org.pih.hivmigration.common.Patient;
 import org.pih.hivmigration.common.PatientContactEncounter;
 import org.pih.hivmigration.common.PostnatalEncounter;
 import org.pih.hivmigration.common.Pregnancy;
+import org.pih.hivmigration.common.PregnancyDataEntryTransaction;
 import org.pih.hivmigration.common.PreviousTreatment;
 import org.pih.hivmigration.common.ResponsiblePerson;
 import org.pih.hivmigration.common.SocioeconomicData;
@@ -136,11 +137,16 @@ public class PatientQuery {
 		query.append("			f.address, f.examining_doctor, f.recommendation as recommendations, f.previous_diagnoses, f.financial_aid_p as startFinancialAid, ");
 		query.append("			f.continue_financial_aid_p as continueFinancialAid, f.nutritional_aid_p as startNutritionalAid, f.form_version, ");
 		query.append("			x.hospitalized_at_diagnosis_p as hospitalizedAtDiagnosis, exam.presenting_history as presentingComplaint, ");
-		query.append("			exam.diagnosis as differentialDiagnosis, exam.comments as physicalExamComments ");
-		query.append("from		hiv_encounters e, hiv_intake_forms f, hiv_intake_extra x, hiv_exams exam ");
+		query.append("			exam.diagnosis as differentialDiagnosis, exam.comments as physicalExamComments, ");
+		query.append("			xx.pregnant_p as pregnant, xx.last_period_date, xx.expected_delivery_date, xx.mothers_first_name, xx.mothers_last_name, ");
+		query.append("			xx.post_test_counseling_p as postTestCounseling, xx.partner_referred_for_tr_p as partnerReferralStatus, ");
+		query.append("			xx.next_exam_date, xx.who_stage, xx.main_activity_before, xx.main_activity_how_now, xx.other_activities_before, xx.other_activities_how_now, ");
+		query.append("			xx.oi_now_p as oiNow, xx.plan_extra ");
+		query.append("from		hiv_encounters e, hiv_intake_forms f, hiv_intake_extra x, hiv_exams exam, hiv_exam_extra xx ");
 		query.append("where		e.encounter_id = f.encounter_id(+) ");
 		query.append("and		e.encounter_id = x.encounter_id(+) ");
 		query.append("and		e.encounter_id = exam.encounter_id(+) ");
+		query.append("and		e.encounter_id = xx.encounter_id(+) ");
 		query.append("and		e.type = 'intake'");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
@@ -170,10 +176,15 @@ public class PatientQuery {
 		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments, ");
 		query.append("			f.examining_doctor, f.recommendations, f.progress, f.well_followed_p as wellFollowed, f.financial_aid_p as startFinancialAid, ");
 		query.append("			f.continue_financial_aid_p as continueFinancialAid, f.med_toxicity_p as med_toxicity, f.med_toxicity_comments, f.form_version, ");
-		query.append("			exam.presenting_history as presentingComplaint, exam.comments as physicalExamComments ");
-		query.append("from		hiv_encounters e, hiv_followup_forms f, hiv_exams exam ");
+		query.append("			exam.presenting_history as presentingComplaint, exam.comments as physicalExamComments, ");
+		query.append("			xx.pregnant_p as pregnant, xx.last_period_date, xx.expected_delivery_date, xx.mothers_first_name, xx.mothers_last_name, ");
+		query.append("			xx.post_test_counseling_p as postTestCounseling, xx.partner_referred_for_tr_p as partnerReferralStatus, ");
+		query.append("			xx.next_exam_date, xx.who_stage, xx.main_activity_before, xx.main_activity_how_now, xx.other_activities_before, xx.other_activities_how_now, ");
+		query.append("			xx.oi_now_p as oiNow, xx.plan_extra ");
+		query.append("from		hiv_encounters e, hiv_followup_forms f, hiv_exams exam, hiv_exam_extra xx ");
 		query.append("where		e.encounter_id = f.encounter_id(+) ");
 		query.append("and		e.encounter_id = exam.encounter_id(+) ");
+		query.append("and		e.encounter_id = xx.encounter_id(+) ");
 		query.append("and		e.type = 'followup'");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
@@ -207,9 +218,11 @@ public class PatientQuery {
 	 */
 	public static ListMap<Integer, CervicalCancerEncounter> getCervicalCancerEncounters() {
 		StringBuilder query = new StringBuilder();
-		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments ");
-		query.append("from		hiv_encounters e ");
-		query.append("where		e.type = 'cervical_cancer'");
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments, ");
+		query.append("			x.last_period_date ");
+		query.append("from		hiv_encounters e, hiv_exam_extra x ");
+		query.append("where		e.type = 'cervical_cancer' ");
+		query.append("and		e.encounter_id = x.encounter_id(+) ");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
 		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
@@ -245,6 +258,22 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
 
 		return DB.listMapResult(query, LabResultEncounter.class, joinData);
+	}
+
+	/**
+	 * @return Map from patientId to a List of PregnancyDataEntryTransactions
+	 */
+	public static ListMap<Integer, PregnancyDataEntryTransaction> getPregnancyDataEntryTransactions() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.patient_id, e.encounter_id, e.entered_by, e.entry_date, ");
+		query.append("			x.pregnant_p as pregnant, x.expected_delivery_date ");
+		query.append("from		hiv_encounters e, hiv_exam_extra x ");
+		query.append("where		e.type = 'pregnancy' ");
+		query.append("and		e.encounter_id = x.encounter_id(+) ");
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+
+		return DB.listMapResult(query, PregnancyDataEntryTransaction.class, joinData);
 	}
 
 	/**

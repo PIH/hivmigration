@@ -1,5 +1,6 @@
 package org.pih.hivmigration.common;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -7,9 +8,18 @@ import java.util.List;
  */
 public class CervicalCancerEncounter extends Encounter {
 
+	private Date lastPeriodDate;
 	private List<LabTestResult> labResults;
 
 	public CervicalCancerEncounter() {}
+
+	public Date getLastPeriodDate() {
+		return lastPeriodDate;
+	}
+
+	public void setLastPeriodDate(Date lastPeriodDate) {
+		this.lastPeriodDate = lastPeriodDate;
+	}
 
 	public List<LabTestResult> getLabResults() {
 		return labResults;
