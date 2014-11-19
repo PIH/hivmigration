@@ -9,6 +9,7 @@ public class LabTestResult {
 
 	private LabTest labTest;
 	private Date testDate;
+	private String sampleId;
 	private CodedValue valueCoded;
 	private Double valueNumeric;
 	private Double valuePercent;
@@ -36,6 +37,14 @@ public class LabTestResult {
 
 	public void setTestDate(Date testDate) {
 		this.testDate = testDate;
+	}
+
+	public String getSampleId() {
+		return sampleId;
+	}
+
+	public void setSampleId(String sampleId) {
+		this.sampleId = sampleId;
 	}
 
 	public CodedValue getValueCoded() {

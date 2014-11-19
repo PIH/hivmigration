@@ -8,6 +8,8 @@ import java.util.List;
 public class NutritionalEvaluationEncounter extends Encounter {
 
 	private List<LabTestResult> labResults;
+	private Double weight;
+	private Double height;
 
 	public NutritionalEvaluationEncounter() {}
 
@@ -17,5 +19,21 @@ public class NutritionalEvaluationEncounter extends Encounter {
 
 	public void setLabResults(List<LabTestResult> labResults) {
 		this.labResults = labResults;
+	}
+
+	public Double getWeight() {
+		return weight;
+	}
+
+	public void setWeight(Double weight) {
+		this.weight = weight;
+	}
+
+	public Double getHeight() {
+		return height;
+	}
+
+	public void setHeight(Double height) {
+		this.height = height;
 	}
 }

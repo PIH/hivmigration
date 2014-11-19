@@ -67,11 +67,11 @@ public class DB {
 		}
 	}
 
-	public static <T> ListMap<Integer, T> listMapResult(StringBuilder sql, final Class<T> type, final JoinData... joinData) {
-		return listMapResult(sql, type, Arrays.asList(joinData));
+	public static <T> ListMap<Integer, T> beanListMapResult(StringBuilder sql, final Class<T> type, final JoinData... joinData) {
+		return beanListMapResult(sql, type, Arrays.asList(joinData));
 	}
 
-	public static <T> ListMap<Integer, T> listMapResult(StringBuilder sql, final Class<T> type, final List<JoinData> joinData) {
+	public static <T> ListMap<Integer, T> beanListMapResult(StringBuilder sql, final Class<T> type, final List<JoinData> joinData) {
 		return executeQuery(sql.toString(), new ResultSetHandler<ListMap<Integer, T>>() {
 			public ListMap<Integer, T> handle(ResultSet resultSet) throws SQLException {
 				ListMap<Integer, T> ret = new ListMap<Integer, T>();
@@ -102,11 +102,11 @@ public class DB {
 		});
 	}
 
-	public static <T> Map<Integer, T> mapResult(StringBuilder sql, final Class<T> type, final JoinData... joinData) {
-		return mapResult(sql, type, Arrays.asList(joinData));
+	public static <T> Map<Integer, T> beanMapResult(StringBuilder sql, final Class<T> type, final JoinData... joinData) {
+		return beanMapResult(sql, type, Arrays.asList(joinData));
 	}
 
-	public static <T> Map<Integer, T> mapResult(StringBuilder sql, final Class<T> type, final List<JoinData> joinData) {
+	public static <T> Map<Integer, T> beanMapResult(StringBuilder sql, final Class<T> type, final List<JoinData> joinData) {
 		return executeQuery(sql.toString(), new ResultSetHandler<Map<Integer, T>>() {
 			public Map<Integer, T> handle(ResultSet resultSet) throws SQLException {
 				Map<Integer, T> ret = new LinkedHashMap<Integer, T>();
@@ -147,6 +147,22 @@ public class DB {
 
 	public static List<Map<String, Object>> tableResult(String sql, Object... arguments) {
 		return executeQuery(sql, new MapListHandler(), arguments);
+	}
+
+	public static <K, V> Map<K, V> simpleMapResult(String sql, final Class<K> keyType, final Class<V> valueType) {
+		return executeQuery(sql, new ResultSetHandler<Map<K, V>>() {
+			public Map<K, V> handle(ResultSet resultSet) throws SQLException {
+				Map<K, V> ret = new LinkedHashMap<K, V>();
+				while (resultSet.next()) {
+					K key = ExportUtil.convertValue(resultSet.getObject(1), keyType);
+					if (ret.containsKey(key)) {
+						throw new IllegalStateException("Cannot convert query to a simple map since more than one value exists for key: " + key);
+					}
+					ret.put(key, ExportUtil.convertValue(resultSet.getObject(2), valueType));
+				}
+				return ret;
+			}
+		});
 	}
 
 	public static <T extends Enum> ListMap<Integer, T> enumResult(StringBuilder sql, final Class<T> type, Object...arguments) {

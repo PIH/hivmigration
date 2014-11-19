@@ -12,6 +12,7 @@ import org.pih.hivmigration.export.query.UserQuery;
 
 import java.beans.PropertyDescriptor;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -64,6 +65,17 @@ public class ExportUtil {
 		if (value != null) {
 			if (type == Integer.class) {
 				ret = Integer.valueOf(value.toString());
+			}
+			else if (type == Double.class) {
+				if (value instanceof BigDecimal) {
+					ret = ((BigDecimal)value).doubleValue();
+				}
+				else if (value instanceof Number) {
+					ret = ((Number)value).doubleValue();
+				}
+				else {
+					ret = Double.valueOf(value.toString());
+				}
 			}
 			else if (type == String.class) {
 				ret = value.toString();

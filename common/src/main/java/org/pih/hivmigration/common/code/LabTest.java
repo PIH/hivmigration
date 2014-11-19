@@ -1,5 +1,6 @@
 package org.pih.hivmigration.common.code;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,8 +31,7 @@ public enum LabTest implements CodedValue {
 	GLUCOSE,
 	ERYTH_SED_RATE,
 	HANGING_DROP,
-	HEMATOCRIT,
-	HEMATOCRITE,
+	HEMATOCRIT("hematocrite"),
 	HEMOGLOBIN,
 	MALARIA_SMEAR,
 	NONE,
@@ -67,8 +67,21 @@ public enum LabTest implements CodedValue {
 	WESTERN_BLOT,
 	WHITE_BLOOD_COUNT;
 
+	private List<String> synonyms;
+
+	LabTest() {}
+
+	LabTest(String...synonyms) {
+		this.synonyms = Arrays.asList(synonyms);
+	}
+
 	@Override
 	public List<String> getValues() {
-		return Arrays.asList(name().toLowerCase());
+		List<String> ret = new ArrayList<String>();
+		ret.add(name().toLowerCase());
+		if (synonyms != null) {
+			ret.addAll(synonyms);
+		}
+		return ret;
 	}
 }

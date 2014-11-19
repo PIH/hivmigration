@@ -29,6 +29,6 @@ public class UserQuery {
 		query.append("from		users u, parties p, persons n ");
 		query.append("where		u.user_id = p.party_id ");
 		query.append("and		u.user_id = n.person_id ");
-		return DB.mapResult(query, User.class);
+		return DB.beanMapResult(query, User.class);
 	}
 }

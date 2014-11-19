@@ -1,5 +1,6 @@
 package org.pih.hivmigration.export.query;
 
+import org.apache.commons.dbutils.ResultSetHandler;
 import org.pih.hivmigration.common.AccompagnateurMedicationPickup;
 import org.pih.hivmigration.common.Address;
 import org.pih.hivmigration.common.Allergy;
@@ -31,9 +32,13 @@ import org.pih.hivmigration.common.SystemStatus;
 import org.pih.hivmigration.common.code.WhoStagingCriteria;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.export.DB;
+import org.pih.hivmigration.export.ExportUtil;
 import org.pih.hivmigration.export.JoinData;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -77,7 +82,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("patient_id", "pregnancies", getPregnancies()));
 		joinData.add(new JoinData("patient_id", "postnatalEncounters", getPostnatalEncounters()));
 
-		return DB.mapResult(query, Patient.class, joinData);
+		return DB.beanMapResult(query, Patient.class, joinData);
 	}
 
 	/**
@@ -94,7 +99,7 @@ public class PatientQuery {
 		query.append("from		hiv_addresses a, hiv_locality l ");
 		query.append("where		a.locality_id = l.locality_id(+) ");
 		query.append("order by	decode(a.type, 'current', 1, 0) desc, a.entry_date desc ");
-		return DB.listMapResult(query, Address.class);
+		return DB.beanListMapResult(query, Address.class);
 	}
 
 	/**
@@ -106,7 +111,7 @@ public class PatientQuery {
 		StringBuilder query = new StringBuilder();
 		query.append("select	patient_id, patient_tx_id as identifier, start_date, end_date ");
 		query.append("from		hiv_course_of_tx ");
-		return DB.mapResult(query, PamEnrollment.class);
+		return DB.beanMapResult(query, PamEnrollment.class);
 	}
 
 	/**
@@ -121,7 +126,7 @@ public class PatientQuery {
 		pregnancyQuery.append("select	patient_id, pregnancy_id, last_period_date, expected_delivery_date, gravidity, parity, num_abortions, num_living_children, ");
 		pregnancyQuery.append("			family_planning_method, post_outcome_family_planning, comments, outcome, outcome_date, outcome_location, outcome_method ");
 		pregnancyQuery.append("from		hiv_pregnancy ");
-		return DB.listMapResult(pregnancyQuery, Pregnancy.class);
+		return DB.beanListMapResult(pregnancyQuery, Pregnancy.class);
 	}
 
 	/**
@@ -137,7 +142,7 @@ public class PatientQuery {
 		examQuery.append("from		hiv_encounters e, hiv_pregnancy_exam x ");
 		examQuery.append("where		e.encounter_id = x.encounter_id(+) ");
 		examQuery.append("and		e.type = 'infant_followup' ");
-		return DB.listMapResult(examQuery, PostnatalEncounter.class);
+		return DB.beanListMapResult(examQuery, PostnatalEncounter.class);
 	}
 
 	/**
@@ -178,8 +183,16 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "labTestOrders", getLabTestOrders()));
 		joinData.add(new JoinData("encounter_id", "genericOrders", getGenericOrders()));
 		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
+		joinData.add(new JoinData("encounter_id", "weight", getWeights()));
+		joinData.add(new JoinData("encounter_id", "height", getHeights()));
+		joinData.add(new JoinData("encounter_id", "bmi", getBMIs()));
+		joinData.add(new JoinData("encounter_id", "systolicBloodPressure", getSystolicBloodPressures()));
+		joinData.add(new JoinData("encounter_id", "diastolicBloodPressure", getDiastolicBloodPressures()));
+		joinData.add(new JoinData("encounter_id", "heartRate", getHeartRates()));
+		joinData.add(new JoinData("encounter_id", "respirationRate", getRespirationRates()));
+		joinData.add(new JoinData("encounter_id", "temperature", getTemperatures()));
 
-		return DB.listMapResult(query, IntakeEncounter.class, joinData);
+		return DB.beanListMapResult(query, IntakeEncounter.class, joinData);
 	}
 
 	/**
@@ -208,8 +221,16 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "labTestOrders", getLabTestOrders()));
 		joinData.add(new JoinData("encounter_id", "genericOrders", getGenericOrders()));
 		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
+		joinData.add(new JoinData("encounter_id", "weight", getWeights()));
+		joinData.add(new JoinData("encounter_id", "height", getHeights()));
+		joinData.add(new JoinData("encounter_id", "bmi", getBMIs()));
+		joinData.add(new JoinData("encounter_id", "systolicBloodPressure", getSystolicBloodPressures()));
+		joinData.add(new JoinData("encounter_id", "diastolicBloodPressure", getDiastolicBloodPressures()));
+		joinData.add(new JoinData("encounter_id", "heartRate", getHeartRates()));
+		joinData.add(new JoinData("encounter_id", "respirationRate", getRespirationRates()));
+		joinData.add(new JoinData("encounter_id", "temperature", getTemperatures()));
 
-		return DB.listMapResult(query, FollowupEncounter.class, joinData);
+		return DB.beanListMapResult(query, FollowupEncounter.class, joinData);
 	}
 
 	/**
@@ -219,12 +240,14 @@ public class PatientQuery {
 		StringBuilder query = new StringBuilder();
 		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments ");
 		query.append("from		hiv_encounters e ");
-		query.append("where		e.type = 'patient_contact'");
+		query.append("where		e.type in ('patient_contact', 'anlap_vital_signs') ");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
 		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
+		joinData.add(new JoinData("encounter_id", "weight", getWeights()));
+		joinData.add(new JoinData("encounter_id", "height", getHeights()));
 
-		return DB.listMapResult(query, PatientContactEncounter.class, joinData);
+		return DB.beanListMapResult(query, PatientContactEncounter.class, joinData);
 	}
 
 	/**
@@ -241,7 +264,7 @@ public class PatientQuery {
 		List<JoinData> joinData = new ArrayList<JoinData>();
 		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
 
-		return DB.listMapResult(query, CervicalCancerEncounter.class, joinData);
+		return DB.beanListMapResult(query, CervicalCancerEncounter.class, joinData);
 	}
 
 	/**
@@ -255,8 +278,10 @@ public class PatientQuery {
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
 		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
+		joinData.add(new JoinData("encounter_id", "weight", getWeights()));
+		joinData.add(new JoinData("encounter_id", "height", getHeights()));
 
-		return DB.listMapResult(query, NutritionalEvaluationEncounter.class, joinData);
+		return DB.beanListMapResult(query, NutritionalEvaluationEncounter.class, joinData);
 	}
 
 	/**
@@ -269,9 +294,9 @@ public class PatientQuery {
 		query.append("where		e.type in ('lab_result', 'anlap_lab_result') ");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
-		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromLabAndExam()));
 
-		return DB.listMapResult(query, LabResultEncounter.class, joinData);
+		return DB.beanListMapResult(query, LabResultEncounter.class, joinData);
 	}
 
 	/**
@@ -286,7 +311,7 @@ public class PatientQuery {
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
 
-		return DB.listMapResult(query, FoodSupportEncounter.class, joinData);
+		return DB.beanListMapResult(query, FoodSupportEncounter.class, joinData);
 	}
 
 	/**
@@ -300,7 +325,7 @@ public class PatientQuery {
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
 
-		return DB.listMapResult(query, AccompagnateurMedicationPickup.class, joinData);
+		return DB.beanListMapResult(query, AccompagnateurMedicationPickup.class, joinData);
 	}
 
 	/**
@@ -318,7 +343,7 @@ public class PatientQuery {
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
 
-		return DB.listMapResult(query, Note.class, joinData);
+		return DB.beanListMapResult(query, Note.class, joinData);
 	}
 
 	/**
@@ -334,7 +359,7 @@ public class PatientQuery {
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
 
-		return DB.listMapResult(query, PregnancyDataEntryTransaction.class, joinData);
+		return DB.beanListMapResult(query, PregnancyDataEntryTransaction.class, joinData);
 	}
 
 	/**
@@ -344,7 +369,7 @@ public class PatientQuery {
 		StringBuilder query = new StringBuilder();
 		query.append("select	patient_id, nvl(inn, other_reason) as allergen, allergy_date, type_of_reaction ");
 		query.append("from		hiv_allergies ");
-		return DB.listMapResult(query, Allergy.class);
+		return DB.beanListMapResult(query, Allergy.class);
 	}
 
 	/**
@@ -356,7 +381,7 @@ public class PatientQuery {
 		query.append("			clinic_p as followedInAClinicForHivCare, clinic_name as nameOfClinic, ");
 		query.append("			referred_tr_p as referredForHivTest, referred_clinic as nameOfReferralClinic, deceased_p as deceased ");
 		query.append("from		hiv_contacts ");
-		return DB.listMapResult(query, Contact.class);
+		return DB.beanListMapResult(query, Contact.class);
 	}
 
 	/**
@@ -368,7 +393,7 @@ public class PatientQuery {
 		query.append("			p.present_p as present, p.diagnosis_date, p.diagnosis_comments ");
 		query.append("from		hiv_patient_diagnoses p, hiv_diagnoses d ");
 		query.append("where		p.diagnosis_id = d.diagnosis_id(+) ");
-		return DB.listMapResult(query, Diagnosis.class);
+		return DB.beanListMapResult(query, Diagnosis.class);
 	}
 
 	/**
@@ -379,7 +404,7 @@ public class PatientQuery {
 		query.append("select	patient_id, inn as treatmentCoded, treatment_other as treatmentNonCoded, ");
 		query.append("			start_date, end_date, treatment_outcome as outcome ");
 		query.append("from		hiv_previous_exposures ");
-		return DB.listMapResult(query, PreviousTreatment.class);
+		return DB.beanListMapResult(query, PreviousTreatment.class);
 	}
 
 	/**
@@ -396,7 +421,7 @@ public class PatientQuery {
 		query.append("			x.arrival_method_other as arrivalOtherMethod ");
 		query.append("from		hiv_socioeconomics s, hiv_socioeconomics_extra x ");
 		query.append("where		s.patient_id = x.patient_id(+) ");
-		return DB.mapResult(query, SocioeconomicData.class);
+		return DB.beanMapResult(query, SocioeconomicData.class);
 	}
 
 	/**
@@ -413,7 +438,7 @@ public class PatientQuery {
 		query.append("			test_location as testLocationCoded, test_location_other as testLocationNonCoded, entered_date as entryDate, entered_by ");
 		query.append("from		hiv_hiv_status ");
 		query.append("order by	entered_date asc");
-		return DB.mapResult(query, HivStatusData.class);
+		return DB.beanMapResult(query, HivStatusData.class);
 	}
 
 	/**
@@ -423,7 +448,7 @@ public class PatientQuery {
 		StringBuilder query = new StringBuilder();
 		query.append("select	encounter_id, system, condition ");
 		query.append("from		hiv_exam_system_status ");
-		return DB.listMapResult(query, SystemStatus.class);
+		return DB.beanListMapResult(query, SystemStatus.class);
 	}
 
 	/**
@@ -433,7 +458,7 @@ public class PatientQuery {
 		StringBuilder query = new StringBuilder();
 		query.append("select	encounter_id, oi, comments ");
 		query.append("from		hiv_exam_ois ");
-		return DB.listMapResult(query, OpportunisticInfection.class);
+		return DB.beanListMapResult(query, OpportunisticInfection.class);
 	}
 
 	/**
@@ -456,7 +481,7 @@ public class PatientQuery {
 		query.append("from		hiv_intake_extra ");
 		query.append("where		(responsible_first_name is not null or responsible_first_name2 is not null or responsible_last_name is not null ");
 		query.append("or		responsible_pih_id is not null or responsible_relation is not null) ");
-		return DB.mapResult(query, ResponsiblePerson.class);
+		return DB.beanMapResult(query, ResponsiblePerson.class);
 	}
 
 	/**
@@ -466,7 +491,7 @@ public class PatientQuery {
 		StringBuilder query = new StringBuilder();
 		query.append("select 	encounter_id, symptom, result as symptomPresent, symptom_date, duration, duration_unit, symptom_comment ");
 		query.append("from		hiv_exam_symptoms ");
-		return DB.listMapResult(query, SymptomGroup.class);
+		return DB.beanListMapResult(query, SymptomGroup.class);
 	}
 
 	/**
@@ -476,7 +501,7 @@ public class PatientQuery {
 		StringBuilder query = new StringBuilder();
 		query.append("select	encounter_id, test as testCoded, test_other as testNonCoded ");
 		query.append("from		hiv_ordered_lab_tests ");
-		return DB.listMapResult(query, LabTestOrder.class);
+		return DB.beanListMapResult(query, LabTestOrder.class);
 	}
 
 	/**
@@ -486,17 +511,140 @@ public class PatientQuery {
 		StringBuilder query = new StringBuilder();
 		query.append("select	encounter_id, ordered, comments ");
 		query.append("from		hiv_ordered_other ");
-		return DB.listMapResult(query, GenericOrder.class);
+		return DB.beanListMapResult(query, GenericOrder.class);
 	}
 
 	/**
-	 * @return Map from encounterId to a List of GenericOrder
+	 * @return Map from encounterId to a List of LabTestResult entered on a clinical form
 	 */
 	public static ListMap<Integer, LabTestResult> getLabTestResultsFromExam() {
 		StringBuilder query = new StringBuilder();
 		query.append("select	encounter_id, lab_test, test_date, result ");
 		query.append("from		hiv_exam_lab_results ");
 		query.append("where		result is not null ");
-		return DB.listMapResult(query, LabTestResult.class);
+		return DB.beanListMapResult(query, LabTestResult.class);
+	}
+
+	/**
+	 * @return Map from encounterId to a List of LabTestResult entered from Laboratory
+	 * We replace commas in valueText since these are found in the viral load result as a thousands separator
+	 */
+	public static ListMap<Integer, LabTestResult> getLabTestResultsFromLab() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.encounter_id, t.name as lab_test, e.encounter_date as test_date, sample_id, ");
+		query.append("			value as value_numeric, value_p as value_boolean, replace(value_string, ',', '') as value_text ");
+		query.append("from		hiv_encounters e, hiv_lab_results r, hiv_lab_tests t ");
+		query.append("where		e.encounter_id = r.encounter_id ");
+		query.append("and		r.lab_test_id = t.lab_test_id ");
+		return DB.beanListMapResult(query, LabTestResult.class);
+	}
+
+	/**
+	 * @return Map from encounterId to a List of LabTestResult entered from any source
+	 * Convenience method to combine lab tests results by either exam or lab sources for the same encounters
+	 */
+	public static ListMap<Integer, LabTestResult> getLabTestResultsFromLabAndExam() {
+		ListMap<Integer, LabTestResult> ret = getLabTestResultsFromExam();
+		ListMap<Integer, LabTestResult> fromLab = getLabTestResultsFromLab();
+		for (Integer encounterId : fromLab.keySet()) {
+			for (LabTestResult r : fromLab.get(encounterId)) {
+				ret.putInList(encounterId, r);
+			}
+		}
+		return ret;
+	}
+
+	/**
+	 * @return Map from encounterId to weight in kg recorded in an encounter
+	 */
+	public static Map<Integer, Double> getWeights() {
+		String q = "select encounter_id, result, result_unit from hiv_exam_vital_signs where sign = 'weight' and result is not null";
+		return DB.executeQuery(q, new ResultSetHandler<Map<Integer, Double>>() {
+			public Map<Integer, Double> handle(ResultSet resultSet) throws SQLException {
+				Map<Integer, Double> m = new HashMap<Integer, Double>();
+				while (resultSet.next()) {
+					Integer encounterId = ExportUtil.convertValue(resultSet.getObject(1), Integer.class);
+					double weight = resultSet.getBigDecimal(2).doubleValue();
+					boolean isKg = "kgs".equalsIgnoreCase(resultSet.getString(3));
+					if (!isKg) {  // Historically, weight was captured in lbs, so assume lbs if not explicitly specified
+						weight = weight / 2.20462;
+					}
+					m.put(encounterId, weight);
+				}
+				return m;
+			}
+		});
+	}
+
+	/**
+	 * @return Map from encounterId to height in cm recorded in an encounter
+	 */
+	public static Map<Integer, Double> getHeights() {
+		String q = "select encounter_id, result from hiv_exam_vital_signs where sign = 'height' and result is not null";
+		return DB.executeQuery(q, new ResultSetHandler<Map<Integer, Double>>() {
+			public Map<Integer, Double> handle(ResultSet resultSet) throws SQLException {
+				Map<Integer, Double> m = new HashMap<Integer, Double>();
+				while (resultSet.next()) {
+					Integer encounterId = ExportUtil.convertValue(resultSet.getObject(1), Integer.class);
+					double height = resultSet.getBigDecimal(2).doubleValue();
+					// Historically, weight was captured in M, more recently cm.
+					// Rather than use this field though, we should be able to infer from the data.
+					// Here, we will use 3 as our M/CM value (assuming no one is 9 ft tall)
+					if (height < 3) {
+						height = height * 100;
+					}
+					m.put(encounterId, height);
+				}
+				return m;
+			}
+		});
+	}
+
+	/**
+	 * @return Map from encounterId to systolic BP in mmHg recorded in an encounter
+	 */
+	public static Map<Integer, Double> getSystolicBloodPressures() {
+		String q = "select encounter_id, result from hiv_exam_vital_signs where sign = 'blood_pressure_sys' and result is not null";
+		return DB.simpleMapResult(q, Integer.class, Double.class);
+	}
+
+	/**
+	 * @return Map from encounterId to diastolic BP in mmHg recorded in an encounter
+	 */
+	public static Map<Integer, Double> getDiastolicBloodPressures() {
+		String q = "select encounter_id, result from hiv_exam_vital_signs where sign = 'blood_pressure_dias' and result is not null";
+		return DB.simpleMapResult(q, Integer.class, Double.class);
+	}
+
+	/**
+	 * @return Map from encounterId to BMI in kg_per_m2 recorded in an encounter
+	 */
+	public static Map<Integer, Double> getBMIs() {
+		String q = "select encounter_id, result from hiv_exam_vital_signs where sign = 'bmi' and result is not null";
+		return DB.simpleMapResult(q, Integer.class, Double.class);
+	}
+
+	/**
+	 * @return Map from encounterId to Heart Rate in per_minute recorded in an encounter
+	 */
+	public static Map<Integer, Double> getHeartRates() {
+		String q = "select encounter_id, result from hiv_exam_vital_signs where sign = 'heart_rate' and result is not null";
+		return DB.simpleMapResult(q, Integer.class, Double.class);
+	}
+
+	/**
+	 * @return Map from encounterId to Respiration Rate in per_minute recorded in an encounter
+	 */
+	public static Map<Integer, Double> getRespirationRates() {
+		String q = "select encounter_id, result from hiv_exam_vital_signs where sign = 'respiration_rate' and result is not null";
+		return DB.simpleMapResult(q, Integer.class, Double.class);
+	}
+
+	/**
+	 * @return Map from encounterId to temperature in celsius recorded in an encounter
+	 */
+	public static Map<Integer, Double> getTemperatures() {
+		String q = "select encounter_id, result from hiv_exam_vital_signs where sign = 'temperature' and result is not null";
+		return DB.simpleMapResult(q, Integer.class, Double.class);
 	}
 }

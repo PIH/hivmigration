@@ -10,6 +10,8 @@ public class PatientContactEncounter extends Encounter {
 	private String location;  // TODO: Make this a Location reference
 	private List<LabTestResult> labResults;
 	private String comments;
+	private Double weight;
+	private Double height;
 
 	public PatientContactEncounter() {}
 
@@ -35,5 +37,21 @@ public class PatientContactEncounter extends Encounter {
 
 	public void setComments(String comments) {
 		this.comments = comments;
+	}
+
+	public Double getWeight() {
+		return weight;
+	}
+
+	public void setWeight(Double weight) {
+		this.weight = weight;
+	}
+
+	public Double getHeight() {
+		return height;
+	}
+
+	public void setHeight(Double height) {
+		this.height = height;
 	}
 }

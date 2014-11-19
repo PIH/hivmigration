@@ -11,7 +11,7 @@ import org.pih.hivmigration.common.code.SimpleLabResult;
 import org.pih.hivmigration.common.util.Util;
 import org.pih.hivmigration.export.ExportUtil;
 
-import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -64,12 +64,12 @@ public class LabTestResultHandler {
 
 	public static List<LabTest> PERCENTAGE_RESULTS = Arrays.asList(
 		LabTest.CD4_PERCENT, // Exceptional values exist, including several values over 100 that are likely just CD4s
-		LabTest.HEMATOCRITE
+		LabTest.HEMATOCRIT
 	);
 
 	public static Map<LabTest, Class<? extends CodedValue>> NUMERIC_OR_PERCENTAGE_RESULTS = Util.toMap(
 		LabTest.CD4, LabTest.CD4_PERCENT,
-		LabTest.HEMOGLOBIN, LabTest.HEMATOCRITE,
+		LabTest.HEMOGLOBIN, LabTest.HEMATOCRIT,
 		LabTest.TOT_LYMPH_COUNT, LabTest.TOT_LYMPH_COUNT_PERCENT
 	);
 
@@ -79,21 +79,42 @@ public class LabTestResultHandler {
 
 	public static LabTestResult createLabTestResultResult(Map<String, Object> dataRow) {
 
-		LabTestResult ret = null;
-
-		if (dataRow.size() != 4 && !dataRow.containsKey("ENCOUNTER_ID") || !dataRow.containsKey("LAB_TEST") || !dataRow.containsKey("TEST_DATE") || !dataRow.containsKey("RESULT")) {
-			throw new IllegalArgumentException("Expected 4 columns were not found");
-		}
-
+		Object encounterId = dataRow.get("ENCOUNTER_ID");
 		LabTest labTest = ExportUtil.convertValue(dataRow.get("LAB_TEST"), LabTest.class);
 		Date testDate = ExportUtil.convertValue(dataRow.get("TEST_DATE"), Date.class);
+		String sampleId = (String)dataRow.get("SAMPLE_ID");
+		String result = (String)dataRow.get("RESULT");
+		BigDecimal resultNumeric = ExportUtil.convertValue(dataRow.get("VALUE_NUMERIC"), BigDecimal.class);
+		SimpleLabResult resultBoolean = ExportUtil.convertValue(dataRow.get("VALUE_BOOLEAN"), SimpleLabResult.class);
+		String resultText = (String)dataRow.get("VALUE_TEXT");
 
-		String rawResult = (String)dataRow.get("RESULT");
+		if (encounterId == null || labTest == null) {
+			throw new IllegalArgumentException("Missing either encounterId, testName, or testDate: " + dataRow);
+		}
 
-		if (!Util.isEmpty(rawResult)) { // Do not migrate empty results
+		boolean hasExamResult = result != null;
+		boolean hasLabResult = (resultNumeric != null || resultBoolean != null || resultText != null);
+		if (hasExamResult && hasLabResult) {
+			throw new IllegalArgumentException("Expected either exam result or lab result: " + dataRow);
+		}
+		if (!hasExamResult && !hasLabResult) {
+			throw new IllegalArgumentException("Missing result: " + dataRow);
+		}
 
-			ret = new LabTestResult(labTest, testDate);
+		LabTestResult ret = new LabTestResult(labTest, testDate);
+		ret.setSampleId(sampleId);
 
+		if (resultNumeric != null) {
+			ret.setValueNumeric(resultNumeric.doubleValue());
+		}
+		else if (resultBoolean != null) {
+			ret.setValueCoded(resultBoolean);
+		}
+		else if (resultText != null || result != null) {
+			String rawResult = Util.nvlStr(resultText, result);
+			if (Util.isEmpty(rawResult)) {
+				throw new IllegalArgumentException("Result is empty: " + dataRow);
+			}
 			if (TEXT_RESULTS.contains(labTest)) {
 				ret.setValueText(rawResult);
 			}

@@ -455,14 +455,35 @@ public class PatientQueryTest {
 	}
 
 	@Test
-	public void shouldTestLabTestResults() throws Exception {
-		ListMap<Integer, LabTestResult> resultMap = PatientQuery.getLabTestResultsFromExam();
-		TestUtils.assertCollectionSizeMatchesQuerySize(resultMap.values(), "select count(*) from hiv_exam_lab_results where result is not null");
+	public void shouldTestLabTestResultsFromExamAndLab() throws Exception {
+		ListMap<Integer, LabTestResult> resultMap = PatientQuery.getLabTestResultsFromLabAndExam();
+		int num = DB.uniqueResult("select count(*) from hiv_exam_lab_results where result is not null", Integer.class);
+		num += DB.uniqueResult("select count(*) from hiv_lab_results", Integer.class);
+		TestUtils.assertCollectionSizeMatchesNumber(resultMap.values(), num);
 		TestUtils.assertAllPropertiesArePopulated(resultMap.values());
-		TestUtils.assertAllValuesAreJoinedToEncounters(resultMap.size(), "labResults", getIntakeEncounters(), getFollowupEncounters(),
-				getPatientContactEncounters(), getCervicalCancerEncounters(), getNutritionalEvaluationEncounters(), getLabResultEncounters());
+		TestUtils.assertAllValuesAreJoinedToEncounters(resultMap.size(), "labResults", getIntakeEncounters(), getFollowupEncounters(), getPatientContactEncounters(), getCervicalCancerEncounters(), getNutritionalEvaluationEncounters(), getLabResultEncounters());
+	}
 
-		// TODO: Add more comprehensive testing of expected test results, datypes, etc
+	@Test
+	public void shouldTestVitalSigns() throws Exception {
+		Map<Integer, Double> weight = PatientQuery.getWeights();
+		Map<Integer, Double> height = PatientQuery.getHeights();
+		Map<Integer, Double> bmi = PatientQuery.getBMIs();
+		Map<Integer, Double> sysBp = PatientQuery.getSystolicBloodPressures();
+		Map<Integer, Double> diasBp = PatientQuery.getDiastolicBloodPressures();
+		Map<Integer, Double> heartRate = PatientQuery.getHeartRates();
+		Map<Integer, Double> respRate = PatientQuery.getRespirationRates();
+		Map<Integer, Double> temp = PatientQuery.getTemperatures();
+		int num = weight.size() + height.size() + bmi.size() + sysBp.size() + diasBp.size() + heartRate.size() + respRate.size() + temp.size();
+		Assert.assertEquals(DB.uniqueResult("select count(*) from hiv_exam_vital_signs where result is not null", Integer.class).intValue(), num);
+		TestUtils.assertAllValuesAreJoinedToEncounters(weight.size(), "weight", getIntakeEncounters(), getFollowupEncounters(), getNutritionalEvaluationEncounters(), getPatientContactEncounters());
+		TestUtils.assertAllValuesAreJoinedToEncounters(height.size(), "height", getIntakeEncounters(), getFollowupEncounters(), getNutritionalEvaluationEncounters(), getPatientContactEncounters());
+		TestUtils.assertAllValuesAreJoinedToEncounters(bmi.size(), "bmi", getIntakeEncounters(), getFollowupEncounters());
+		TestUtils.assertAllValuesAreJoinedToEncounters(sysBp.size(), "systolicBloodPressure", getIntakeEncounters(), getFollowupEncounters());
+		TestUtils.assertAllValuesAreJoinedToEncounters(diasBp.size(), "diastolicBloodPressure", getIntakeEncounters(), getFollowupEncounters());
+		TestUtils.assertAllValuesAreJoinedToEncounters(heartRate.size(), "heartRate", getIntakeEncounters(), getFollowupEncounters());
+		TestUtils.assertAllValuesAreJoinedToEncounters(respRate.size(), "respirationRate", getIntakeEncounters(), getFollowupEncounters());
+		TestUtils.assertAllValuesAreJoinedToEncounters(temp.size(), "temperature", getIntakeEncounters(), getFollowupEncounters());
 	}
 
 	@Test

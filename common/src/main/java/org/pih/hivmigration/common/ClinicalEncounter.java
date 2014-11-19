@@ -41,6 +41,14 @@ public class ClinicalEncounter extends Encounter {
 	private List<LabTestOrder> labTestOrders;
 	private List<GenericOrder> genericOrders;
 	private List<LabTestResult> labResults;
+	private Double weight;
+	private Double height;
+	private Double bmi;
+	private Double systolicBloodPressure;
+	private Double diastolicBloodPressure;
+	private Double heartRate;
+	private Double respirationRate;
+	private Double temperature;
 
 	public ClinicalEncounter() {}
 
@@ -274,5 +282,69 @@ public class ClinicalEncounter extends Encounter {
 
 	public void setLabResults(List<LabTestResult> labResults) {
 		this.labResults = labResults;
+	}
+
+	public Double getWeight() {
+		return weight;
+	}
+
+	public void setWeight(Double weight) {
+		this.weight = weight;
+	}
+
+	public Double getHeight() {
+		return height;
+	}
+
+	public void setHeight(Double height) {
+		this.height = height;
+	}
+
+	public Double getBmi() {
+		return bmi;
+	}
+
+	public void setBmi(Double bmi) {
+		this.bmi = bmi;
+	}
+
+	public Double getSystolicBloodPressure() {
+		return systolicBloodPressure;
+	}
+
+	public void setSystolicBloodPressure(Double systolicBloodPressure) {
+		this.systolicBloodPressure = systolicBloodPressure;
+	}
+
+	public Double getDiastolicBloodPressure() {
+		return diastolicBloodPressure;
+	}
+
+	public void setDiastolicBloodPressure(Double diastolicBloodPressure) {
+		this.diastolicBloodPressure = diastolicBloodPressure;
+	}
+
+	public Double getHeartRate() {
+		return heartRate;
+	}
+
+	public void setHeartRate(Double heartRate) {
+		this.heartRate = heartRate;
+	}
+
+	public Double getRespirationRate() {
+		return respirationRate;
+	}
+
+	public void setRespirationRate(Double respirationRate) {
+		this.respirationRate = respirationRate;
+	}
+
+	public Double getTemperature() {
+		return temperature;
+	}
+
+	public void setTemperature(Double temperature) {
+		this.temperature = temperature;
 	}
 }

@@ -61,24 +61,20 @@ HIV_ENCOUNTERS
 
 # OTHER COMBINATION
 "accompagnateur", "HIV_DATA_AUDIT_ENTRY", "HIV_OBSERVATIONS"
-"anlap_lab_result", "HIV_LAB_RESULTS"
 "anlap_vital_signs", "HIV_EXAM_VITAL_SIGNS"
-"cervical_cancer", "HIV_EXAM_LAB_RESULTS", "HIV_OBSERVATIONS"
-"food_study", "HIV_EXAM_LAB_RESULTS", "HIV_EXAM_VITAL_SIGNS", "HIV_OBSERVATIONS"
+"cervical_cancer", "HIV_OBSERVATIONS"
+"food_study", "HIV_OBSERVATIONS"
 "food_support", "HIV_OBSERVATIONS"
 "hop_abstraction", "HIV_OBSERVATIONS", "HIV_TB_STATUS"
-"lab_result", "HIV_DATA_AUDIT_ENTRY", "HIV_EXAM_LAB_RESULTS", "HIV_LAB_RESULTS"
-"note"
-"patient_contact", "HIV_DATA_AUDIT_ENTRY", "HIV_EXAM_LAB_RESULTS", "HIV_EXAM_VITAL_SIGNS"
+"lab_result", "HIV_DATA_AUDIT_ENTRY"
+"patient_contact", "HIV_DATA_AUDIT_ENTRY"
 "pregnancy", "HIV_OBSERVATIONS"
 "regime", "HIV_OBSERVATIONS", "HIV_REGIMES"
 
 "HIV_DATA_AUDIT_ENTRY", "accompagnateur", "followup", "intake", "lab_result", "patient_contact"
-"HIV_EXAM_LAB_RESULTS", "cervical_cancer", "followup", "food_study", "intake", "lab_result", "patient_contact"
 "HIV_OBSERVATIONS", "accompagnateur", "cervical_cancer", "followup", "food_study", "food_support", "hop_abstraction", "intake", "pregnancy", "regime"
-"HIV_LAB_RESULTS", "anlap_lab_result", "lab_result"
 "HIV_EXAM_VITAL_SIGNS", "anlap_vital_signs", "followup", "food_study", "intake", "patient_contact"
-"HIV_ENCOUNTERS", "followup", "lab_result", "note"
+"HIV_ENCOUNTERS", "followup", "lab_result"
 "HIV_TB_STATUS", "followup", "hop_abstraction", "intake"
 "HIV_REGIMES", "intake", "regime"
 
@@ -86,8 +82,6 @@ HIV_ENCOUNTERS
 HIV_TB_STATUS
 
 # MANY-TO-ONE ENCOUNTER DATA
-HIV_EXAM_VITAL_SIGNS
-HIV_LAB_RESULTS
 HIV_OBSERVATIONS
 HIV_REGIMES
 
