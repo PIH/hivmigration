@@ -9,6 +9,7 @@ public class LabResultEncounter extends Encounter {
 
 	private List<LabTestResult> labResults;
 	private String performedBy;
+	private String comments;
 
 	public LabResultEncounter() {}
 
@@ -26,5 +27,13 @@ public class LabResultEncounter extends Encounter {
 
 	public void setPerformedBy(String performedBy) {
 		this.performedBy = performedBy;
+	}
+
+	public String getComments() {
+		return comments;
+	}
+
+	public void setComments(String comments) {
+		this.comments = comments;
 	}
 }

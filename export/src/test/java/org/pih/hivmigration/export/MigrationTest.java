@@ -1,6 +1,5 @@
 package org.pih.hivmigration.export;
 
-import com.sun.org.apache.bcel.internal.generic.IFNONNULL;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.junit.After;
 import org.junit.Before;
@@ -16,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Ignore
 public class MigrationTest {
 
 	@Before
@@ -91,6 +91,22 @@ public class MigrationTest {
 					System.out.println(column.getColumnName().toLowerCase());
 				}
 			}
+		}
+	}
+
+	@Test
+	public void shouldReturnEncounterColumnsForType() throws Exception {
+		List<String> types = DB.listResult("select distinct type from hiv_encounters", String.class);
+		List<TableColumn> columns = DB.getAllColumns("HIV_ENCOUNTERS");
+		for (TableColumn column : columns) {
+			List<String> found = new ArrayList<String>();
+			for (String type : types) {
+				Integer num = DB.uniqueResult("select count(*) from hiv_encounters where type = ? and " + column.getColumnName() + " is not null", Integer.class, type);
+				if (num > 0) {
+					found.add(type);
+				}
+			}
+			System.out.println(column.getColumnName() + ": " + found);
 		}
 	}
 

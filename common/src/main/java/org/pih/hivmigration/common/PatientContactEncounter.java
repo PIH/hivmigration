@@ -7,10 +7,19 @@ import java.util.List;
  */
 public class PatientContactEncounter extends Encounter {
 
+	private String location;  // TODO: Make this a Location reference
 	private List<LabTestResult> labResults;
 	private String comments;
 
 	public PatientContactEncounter() {}
+
+	public String getLocation() {
+		return location;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
+	}
 
 	public List<LabTestResult> getLabResults() {
 		return labResults;

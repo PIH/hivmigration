@@ -24,6 +24,17 @@ public class Patient {
 
 	private PamEnrollment pamEnrollment;
 	private List<Address> addresses;
+
+	private List<IntakeEncounter> intakeEncounters;
+	private List<FollowupEncounter> followupEncounters;
+	private List<PatientContactEncounter> patientContactEncounters;
+	private List<CervicalCancerEncounter> cervicalCancerEncounters;
+	private List<NutritionalEvaluationEncounter> nutritionalEvaluationEncounters;
+	private List<LabResultEncounter> labResultEncounters;
+	private List<FoodSupportEncounter> foodSupportEncounters;
+	private List<AccompagnateurMedicationPickup> accompagnateurMedicationPickups;
+	private List<Note> notes;
+	private List<PregnancyDataEntryTransaction> pregnancyDataEntryTransactions;
 	private List<Pregnancy> pregnancies;
 	private List<PostnatalEncounter> postnatalEncounters;
 
@@ -170,6 +181,86 @@ public class Patient {
 
 	public void addAddress(Address address) {
 		getAddresses().add(address);
+	}
+
+	public List<IntakeEncounter> getIntakeEncounters() {
+		return intakeEncounters;
+	}
+
+	public void setIntakeEncounters(List<IntakeEncounter> intakeEncounters) {
+		this.intakeEncounters = intakeEncounters;
+	}
+
+	public List<FollowupEncounter> getFollowupEncounters() {
+		return followupEncounters;
+	}
+
+	public void setFollowupEncounters(List<FollowupEncounter> followupEncounters) {
+		this.followupEncounters = followupEncounters;
+	}
+
+	public List<PatientContactEncounter> getPatientContactEncounters() {
+		return patientContactEncounters;
+	}
+
+	public void setPatientContactEncounters(List<PatientContactEncounter> patientContactEncounters) {
+		this.patientContactEncounters = patientContactEncounters;
+	}
+
+	public List<CervicalCancerEncounter> getCervicalCancerEncounters() {
+		return cervicalCancerEncounters;
+	}
+
+	public void setCervicalCancerEncounters(List<CervicalCancerEncounter> cervicalCancerEncounters) {
+		this.cervicalCancerEncounters = cervicalCancerEncounters;
+	}
+
+	public List<NutritionalEvaluationEncounter> getNutritionalEvaluationEncounters() {
+		return nutritionalEvaluationEncounters;
+	}
+
+	public void setNutritionalEvaluationEncounters(List<NutritionalEvaluationEncounter> nutritionalEvaluationEncounters) {
+		this.nutritionalEvaluationEncounters = nutritionalEvaluationEncounters;
+	}
+
+	public List<LabResultEncounter> getLabResultEncounters() {
+		return labResultEncounters;
+	}
+
+	public void setLabResultEncounters(List<LabResultEncounter> labResultEncounters) {
+		this.labResultEncounters = labResultEncounters;
+	}
+
+	public List<FoodSupportEncounter> getFoodSupportEncounters() {
+		return foodSupportEncounters;
+	}
+
+	public void setFoodSupportEncounters(List<FoodSupportEncounter> foodSupportEncounters) {
+		this.foodSupportEncounters = foodSupportEncounters;
+	}
+
+	public List<AccompagnateurMedicationPickup> getAccompagnateurMedicationPickups() {
+		return accompagnateurMedicationPickups;
+	}
+
+	public void setAccompagnateurMedicationPickups(List<AccompagnateurMedicationPickup> accompagnateurMedicationPickups) {
+		this.accompagnateurMedicationPickups = accompagnateurMedicationPickups;
+	}
+
+	public List<Note> getNotes() {
+		return notes;
+	}
+
+	public void setNotes(List<Note> notes) {
+		this.notes = notes;
+	}
+
+	public List<PregnancyDataEntryTransaction> getPregnancyDataEntryTransactions() {
+		return pregnancyDataEntryTransactions;
+	}
+
+	public void setPregnancyDataEntryTransactions(List<PregnancyDataEntryTransaction> pregnancyDataEntryTransactions) {
+		this.pregnancyDataEntryTransactions = pregnancyDataEntryTransactions;
 	}
 
 	public List<Pregnancy> getPregnancies() {

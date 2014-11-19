@@ -12,9 +12,9 @@ import java.util.List;
  */
 public class ClinicalEncounter extends Encounter {
 
+	private String location;  // TODO: Make this a Location reference
 	private String examiningDoctor;
 	private String recommendations;
-	private String comments;
 	private Boolean startFinancialAid;
 	private Boolean continueFinancialAid;
 	private String formVersion;
@@ -44,6 +44,14 @@ public class ClinicalEncounter extends Encounter {
 
 	public ClinicalEncounter() {}
 
+	public String getLocation() {
+		return location;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
+	}
+
 	public String getExaminingDoctor() {
 		return examiningDoctor;
 	}
@@ -58,14 +66,6 @@ public class ClinicalEncounter extends Encounter {
 
 	public void setRecommendations(String recommendations) {
 		this.recommendations = recommendations;
-	}
-
-	public String getComments() {
-		return comments;
-	}
-
-	public void setComments(String comments) {
-		this.comments = comments;
 	}
 
 	public Boolean getStartFinancialAid() {

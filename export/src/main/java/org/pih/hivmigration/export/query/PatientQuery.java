@@ -1,17 +1,20 @@
 package org.pih.hivmigration.export.query;
 
+import org.pih.hivmigration.common.AccompagnateurMedicationPickup;
 import org.pih.hivmigration.common.Address;
 import org.pih.hivmigration.common.Allergy;
 import org.pih.hivmigration.common.CervicalCancerEncounter;
 import org.pih.hivmigration.common.Contact;
 import org.pih.hivmigration.common.Diagnosis;
 import org.pih.hivmigration.common.FollowupEncounter;
+import org.pih.hivmigration.common.FoodSupportEncounter;
 import org.pih.hivmigration.common.GenericOrder;
 import org.pih.hivmigration.common.HivStatusData;
 import org.pih.hivmigration.common.IntakeEncounter;
 import org.pih.hivmigration.common.LabResultEncounter;
 import org.pih.hivmigration.common.LabTestOrder;
 import org.pih.hivmigration.common.LabTestResult;
+import org.pih.hivmigration.common.Note;
 import org.pih.hivmigration.common.NutritionalEvaluationEncounter;
 import org.pih.hivmigration.common.OpportunisticInfection;
 import org.pih.hivmigration.common.PamEnrollment;
@@ -60,6 +63,17 @@ public class PatientQuery {
 		List<JoinData> joinData = new ArrayList<JoinData>();
 		joinData.add(new JoinData("patient_id", "addresses", getAddresses()));
 		joinData.add(new JoinData("patient_id", "pamEnrollment", getPamEnrollments()));
+
+		joinData.add(new JoinData("patient_id", "intakeEncounters", getIntakeEncounters()));
+		joinData.add(new JoinData("patient_id", "followupEncounters", getFollowupEncounters()));
+		joinData.add(new JoinData("patient_id", "patientContactEncounters", getPatientContactEncounters()));
+		joinData.add(new JoinData("patient_id", "cervicalCancerEncounters", getCervicalCancerEncounters()));
+		joinData.add(new JoinData("patient_id", "nutritionalEvaluationEncounters", getNutritionalEvaluationEncounters()));
+		joinData.add(new JoinData("patient_id", "labResultEncounters", getLabResultEncounters()));
+		joinData.add(new JoinData("patient_id", "foodSupportEncounters", getFoodSupportEncounters()));
+		joinData.add(new JoinData("patient_id", "accompagnateurMedicationPickups", getAccompagnateurMedicationPickups()));
+		joinData.add(new JoinData("patient_id", "notes", getNotes()));
+		joinData.add(new JoinData("patient_id", "pregnancyDataEntryTransactions", getPregnancyDataEntryTransactions()));
 		joinData.add(new JoinData("patient_id", "pregnancies", getPregnancies()));
 		joinData.add(new JoinData("patient_id", "postnatalEncounters", getPostnatalEncounters()));
 
@@ -163,7 +177,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "symptomGroups", getSymptomGroups()));
 		joinData.add(new JoinData("encounter_id", "labTestOrders", getLabTestOrders()));
 		joinData.add(new JoinData("encounter_id", "genericOrders", getGenericOrders()));
-		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
 
 		return DB.listMapResult(query, IntakeEncounter.class, joinData);
 	}
@@ -173,7 +187,7 @@ public class PatientQuery {
 	 */
 	public static ListMap<Integer, FollowupEncounter> getFollowupEncounters() {
 		StringBuilder query = new StringBuilder();
-		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments, ");
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, ");
 		query.append("			f.examining_doctor, f.recommendations, f.progress, f.well_followed_p as wellFollowed, f.financial_aid_p as startFinancialAid, ");
 		query.append("			f.continue_financial_aid_p as continueFinancialAid, f.med_toxicity_p as med_toxicity, f.med_toxicity_comments, f.form_version, ");
 		query.append("			exam.presenting_history as presentingComplaint, exam.comments as physicalExamComments, ");
@@ -193,7 +207,7 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "symptomGroups", getSymptomGroups()));
 		joinData.add(new JoinData("encounter_id", "labTestOrders", getLabTestOrders()));
 		joinData.add(new JoinData("encounter_id", "genericOrders", getGenericOrders()));
-		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
 
 		return DB.listMapResult(query, FollowupEncounter.class, joinData);
 	}
@@ -208,7 +222,7 @@ public class PatientQuery {
 		query.append("where		e.type = 'patient_contact'");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
-		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
 
 		return DB.listMapResult(query, PatientContactEncounter.class, joinData);
 	}
@@ -218,14 +232,14 @@ public class PatientQuery {
 	 */
 	public static ListMap<Integer, CervicalCancerEncounter> getCervicalCancerEncounters() {
 		StringBuilder query = new StringBuilder();
-		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments, ");
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, ");
 		query.append("			x.last_period_date ");
 		query.append("from		hiv_encounters e, hiv_exam_extra x ");
 		query.append("where		e.type = 'cervical_cancer' ");
 		query.append("and		e.encounter_id = x.encounter_id(+) ");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
-		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
 
 		return DB.listMapResult(query, CervicalCancerEncounter.class, joinData);
 	}
@@ -235,12 +249,12 @@ public class PatientQuery {
 	 */
 	public static ListMap<Integer, NutritionalEvaluationEncounter> getNutritionalEvaluationEncounters() {
 		StringBuilder query = new StringBuilder();
-		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments ");
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.entered_by, e.entry_date ");
 		query.append("from		hiv_encounters e ");
 		query.append("where		e.type = 'food_study'");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
-		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
 
 		return DB.listMapResult(query, NutritionalEvaluationEncounter.class, joinData);
 	}
@@ -250,14 +264,61 @@ public class PatientQuery {
 	 */
 	public static ListMap<Integer, LabResultEncounter> getLabResultEncounters() {
 		StringBuilder query = new StringBuilder();
-		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.encounter_site as location, e.entered_by, e.entry_date, e.comments, e.performed_by ");
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.entered_by, e.entry_date, e.performed_by, decode(e.type, 'anlap_lab_result', 'ANLAP', null) as comments ");
 		query.append("from		hiv_encounters e ");
-		query.append("where		e.type = 'lab_result'");
+		query.append("where		e.type in ('lab_result', 'anlap_lab_result') ");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
-		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResults()));
+		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
 
 		return DB.listMapResult(query, LabResultEncounter.class, joinData);
+	}
+
+	/**
+	 * @return Map from patientId to a List of FoodSupportEncounter
+	 */
+	public static ListMap<Integer, FoodSupportEncounter> getFoodSupportEncounters() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.entered_by, e.entry_date, o.value as dateReceived ");
+		query.append("from		hiv_encounters e, hiv_observations o ");
+		query.append("where		e.type = 'food_support' ");
+		query.append("and		e.encounter_id = o.encounter_id(+)");
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+
+		return DB.listMapResult(query, FoodSupportEncounter.class, joinData);
+	}
+
+	/**
+	 * @return Map from patientId to a List of AccompagnateurMedicationPickup
+	 */
+	public static ListMap<Integer, AccompagnateurMedicationPickup> getAccompagnateurMedicationPickups() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.entered_by, e.entry_date ");
+		query.append("from		hiv_encounters e ");
+		query.append("where		e.type = 'accompagnateur'");
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+
+		return DB.listMapResult(query, AccompagnateurMedicationPickup.class, joinData);
+	}
+
+	/**
+	 * @return Map from patientId to a List of Patient Notes
+	 * Here we are intentionally excluding notes that were created to record the fact that the encounter was uploaded via the offline application tool, which is
+	 * simply audit information we can archive.  As a result, the "response_to" field is no longer needed, so we are ignoring that as well and treating all notes
+	 * as simply patient-level chronological notes
+	 */
+	public static ListMap<Integer, Note> getNotes() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.patient_id, e.encounter_date, e.entered_by, e.entry_date, e.comments, e.note_title ");
+		query.append("from		hiv_encounters e ");
+		query.append("where		e.type = 'note' ");
+		query.append("and		(e.note_title is null or e.note_title <> 'Uploaded from') ");
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+
+		return DB.listMapResult(query, Note.class, joinData);
 	}
 
 	/**
@@ -431,7 +492,7 @@ public class PatientQuery {
 	/**
 	 * @return Map from encounterId to a List of GenericOrder
 	 */
-	public static ListMap<Integer, LabTestResult> getLabTestResults() {
+	public static ListMap<Integer, LabTestResult> getLabTestResultsFromExam() {
 		StringBuilder query = new StringBuilder();
 		query.append("select	encounter_id, lab_test, test_date, result ");
 		query.append("from		hiv_exam_lab_results ");

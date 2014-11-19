@@ -8,10 +8,19 @@ import java.util.List;
  */
 public class CervicalCancerEncounter extends Encounter {
 
+	private String location;  // TODO: Make this a Location reference
 	private Date lastPeriodDate;
 	private List<LabTestResult> labResults;
 
 	public CervicalCancerEncounter() {}
+
+	public String getLocation() {
+		return location;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
+	}
 
 	public Date getLastPeriodDate() {
 		return lastPeriodDate;
