@@ -287,6 +287,11 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "weight", getWeights()));
 		joinData.add(new JoinData("encounter_id", "height", getHeights()));
 
+		for (Map.Entry<String, String> propertyAndColumn : Util.getPropertyToObsNameMap(NutritionalEvaluationEncounter.class).entrySet()) {
+			String propertyName = propertyAndColumn.getKey();
+			joinData.add(new JoinData("encounter_id", propertyName, getObservations(propertyAndColumn.getValue(), Util.getFieldType(NutritionalEvaluationEncounter.class, propertyName))));
+		}
+
 		return DB.beanListMapResult(query, NutritionalEvaluationEncounter.class, joinData);
 	}
 

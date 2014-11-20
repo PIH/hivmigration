@@ -62,7 +62,6 @@ HIV_ENCOUNTERS
 # OTHER COMBINATION
 "accompagnateur", "HIV_DATA_AUDIT_ENTRY", "HIV_OBSERVATIONS"
 "anlap_vital_signs", "HIV_EXAM_VITAL_SIGNS"
-"food_study", "HIV_OBSERVATIONS"
 "food_support", "HIV_OBSERVATIONS"
 "hop_abstraction", "HIV_OBSERVATIONS", "HIV_TB_STATUS"
 "lab_result", "HIV_DATA_AUDIT_ENTRY"
@@ -71,7 +70,7 @@ HIV_ENCOUNTERS
 "regime", "HIV_OBSERVATIONS", "HIV_REGIMES"
 
 "HIV_DATA_AUDIT_ENTRY", "accompagnateur", "followup", "intake", "lab_result", "patient_contact"
-"HIV_OBSERVATIONS", "accompagnateur", "followup", "food_study", "food_support", "hop_abstraction", "intake", "pregnancy", "regime"
+"HIV_OBSERVATIONS", "accompagnateur", "followup", "food_support", "hop_abstraction", "intake", "pregnancy", "regime"
 "HIV_EXAM_VITAL_SIGNS", "anlap_vital_signs", "followup", "food_study", "intake", "patient_contact"
 "HIV_ENCOUNTERS", "followup", "lab_result"
 "HIV_TB_STATUS", "followup", "hop_abstraction", "intake"
@@ -128,9 +127,6 @@ HIV_REGIMES (product_id, encounter_opened_by, ddd, dwd, prn, start_date) - only 
    HIV_OBSERVATIONS (ENCOUNTER_ID, OBSERVATION, VALUE, ENTRY_DATE)
    TODO: Confirm this is it
 
- ***** food_study ***** 
-  HIV_OBSERVATIONS (ENCOUNTER_ID, OBSERVATION, VALUE, ENTRY_DATE)
-
  ***** pregnancy ***** 
  HIV_OBSERVATIONS (ENCOUNTER_ID, OBSERVATION, VALUE, ENTRY_DATE)
 
@@ -146,7 +142,7 @@ HIV_TB_STATUS (ENCOUNTER_ID, TYPE, PULMONARY_P, STATUS_DATE, PPD_POSITIVE, TB_AC
 
 Encounter types with data for each table
 
-HIV_OBSERVATIONS: [accompagnateur, cervical_cancer, followup, food_study, intake]
+HIV_OBSERVATIONS: [accompagnateur, cervical_cancer, followup, intake]
 HIV_TB_STATUS: [followup, intake]
 HIV_REGIMES: [intake, regime]
 
