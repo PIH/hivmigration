@@ -16,6 +16,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -149,20 +150,31 @@ public class DB {
 		return executeQuery(sql, new MapListHandler(), arguments);
 	}
 
-	public static <K, V> Map<K, V> simpleMapResult(String sql, final Class<K> keyType, final Class<V> valueType) {
+	public static <K, V> Map<K, V> simpleMapResult(String sql, final Class<K> keyType, final Class<V> valueType, Object...arguments) {
 		return executeQuery(sql, new ResultSetHandler<Map<K, V>>() {
 			public Map<K, V> handle(ResultSet resultSet) throws SQLException {
 				Map<K, V> ret = new LinkedHashMap<K, V>();
 				while (resultSet.next()) {
 					K key = ExportUtil.convertValue(resultSet.getObject(1), keyType);
-					if (ret.containsKey(key)) {
-						throw new IllegalStateException("Cannot convert query to a simple map since more than one value exists for key: " + key);
+					V value = ExportUtil.convertValue(resultSet.getObject(2), valueType);
+					if (List.class.isAssignableFrom(valueType)) {
+						List existing = (List)ret.get(key);
+						if (existing == null) {
+							existing = new ArrayList();
+							ret.put(key, (V)existing);
+						}
+						existing.add(value);
 					}
-					ret.put(key, ExportUtil.convertValue(resultSet.getObject(2), valueType));
+					else {
+						if (ret.containsKey(key)) {
+							throw new IllegalStateException("Cannot convert query to a simple map since more than one value exists for key: " + key);
+						}
+						ret.put(key, value);
+					}
 				}
 				return ret;
 			}
-		});
+		}, arguments);
 	}
 
 	public static <T extends Enum> ListMap<Integer, T> enumResult(StringBuilder sql, final Class<T> type, Object...arguments) {

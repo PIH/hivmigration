@@ -16,9 +16,11 @@ package org.pih.hivmigration.common.util;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.pih.hivmigration.common.ObsName;
 
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -236,6 +238,35 @@ public class Util {
 
 	public static boolean isDouble(String stringToCheck) {
 		return parseDoubleIfPossible(stringToCheck) != null;
+	}
+
+	public static Map<String, String> getPropertyToObsNameMap(Class<?> classToCheck) {
+		Map<String, String> ret = new LinkedHashMap<String, String>();
+
+		// If this class extends another class, then inspect all inherited field values as well
+		Class superclass = classToCheck.getSuperclass();
+		if (superclass != null) {
+			ret.putAll(getPropertyToObsNameMap(superclass));
+		}
+
+		// Iterate across all of the declared fields in the passed class
+		for (Field f : classToCheck.getDeclaredFields()) {
+			ObsName ann = f.getAnnotation(ObsName.class);
+			if (ann != null) {
+				ret.put(f.getName(), Util.nvlStr(ann.value(), f.getName()));
+			}
+		}
+		return ret;
+	}
+
+	public static Class<?> getFieldType(Class<?> classToCheck, String propertyName) {
+		try {
+			Field f = classToCheck.getDeclaredField(propertyName);
+			return f.getType();
+		}
+		catch (Exception e) {
+			throw new IllegalArgumentException("Unable to find property named " + propertyName + " on class " + classToCheck);
+		}
 	}
 }
 

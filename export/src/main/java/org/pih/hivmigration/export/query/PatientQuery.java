@@ -31,6 +31,7 @@ import org.pih.hivmigration.common.SymptomGroup;
 import org.pih.hivmigration.common.SystemStatus;
 import org.pih.hivmigration.common.code.WhoStagingCriteria;
 import org.pih.hivmigration.common.util.ListMap;
+import org.pih.hivmigration.common.util.Util;
 import org.pih.hivmigration.export.DB;
 import org.pih.hivmigration.export.ExportUtil;
 import org.pih.hivmigration.export.JoinData;
@@ -263,6 +264,11 @@ public class PatientQuery {
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
 		joinData.add(new JoinData("encounter_id", "labResults", getLabTestResultsFromExam()));
+
+		for (Map.Entry<String, String> propertyAndColumn : Util.getPropertyToObsNameMap(CervicalCancerEncounter.class).entrySet()) {
+			String propertyName = propertyAndColumn.getKey();
+			joinData.add(new JoinData("encounter_id", propertyName, getObservations(propertyAndColumn.getValue(), Util.getFieldType(CervicalCancerEncounter.class, propertyName))));
+		}
 
 		return DB.beanListMapResult(query, CervicalCancerEncounter.class, joinData);
 	}
@@ -646,5 +652,13 @@ public class PatientQuery {
 	public static Map<Integer, Double> getTemperatures() {
 		String q = "select encounter_id, result from hiv_exam_vital_signs where sign = 'temperature' and result is not null";
 		return DB.simpleMapResult(q, Integer.class, Double.class);
+	}
+
+	/**
+	 * @return Map from encounterId to observation value for a particular observation
+	 */
+	public static <T> Map<Integer, T> getObservations(String observation, Class<T> valueType) {
+		String query = "select encounter_id, value from hiv_observations where observation = ? and value is not null";
+		return DB.simpleMapResult(query, Integer.class, valueType, observation);
 	}
 }

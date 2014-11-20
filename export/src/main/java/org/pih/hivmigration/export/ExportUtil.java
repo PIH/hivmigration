@@ -14,6 +14,7 @@ import java.beans.PropertyDescriptor;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -50,7 +51,7 @@ public class ExportUtil {
 		Date ret = null;
 		if (!Util.isEmpty(dateYmd)) {
 			try {
-				DateFormat df = DateFormat.getDateInstance();
+				DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 				ret = df.parse(dateYmd);
 			}
 			catch (Exception e) {
@@ -89,10 +90,13 @@ public class ExportUtil {
 				}
 			}
 			else if (type == Boolean.class) {
-				if ("t".equals(value) || "T".equals(value)) {
+				if (value instanceof Boolean) {
+					ret = value;
+				}
+				else if ("t".equals(value) || "T".equals(value) || "true".equals(value)) {
 					ret = Boolean.TRUE;
 				}
-				else if ("f".equals(value) || "F".equals(value)) {
+				else if ("f".equals(value) || "F".equals(value) || "no".equals(value) || "false".equals(value)) {
 					ret = Boolean.FALSE;
 				}
 				else {
