@@ -62,7 +62,6 @@ HIV_ENCOUNTERS
 # OTHER COMBINATION
 "accompagnateur", "HIV_DATA_AUDIT_ENTRY", "HIV_OBSERVATIONS"
 "anlap_vital_signs", "HIV_EXAM_VITAL_SIGNS"
-"cervical_cancer", "HIV_OBSERVATIONS"
 "food_study", "HIV_OBSERVATIONS"
 "food_support", "HIV_OBSERVATIONS"
 "hop_abstraction", "HIV_OBSERVATIONS", "HIV_TB_STATUS"
@@ -72,7 +71,7 @@ HIV_ENCOUNTERS
 "regime", "HIV_OBSERVATIONS", "HIV_REGIMES"
 
 "HIV_DATA_AUDIT_ENTRY", "accompagnateur", "followup", "intake", "lab_result", "patient_contact"
-"HIV_OBSERVATIONS", "accompagnateur", "cervical_cancer", "followup", "food_study", "food_support", "hop_abstraction", "intake", "pregnancy", "regime"
+"HIV_OBSERVATIONS", "accompagnateur", "followup", "food_study", "food_support", "hop_abstraction", "intake", "pregnancy", "regime"
 "HIV_EXAM_VITAL_SIGNS", "anlap_vital_signs", "followup", "food_study", "intake", "patient_contact"
 "HIV_ENCOUNTERS", "followup", "lab_result"
 "HIV_TB_STATUS", "followup", "hop_abstraction", "intake"
@@ -131,9 +130,6 @@ HIV_REGIMES (product_id, encounter_opened_by, ddd, dwd, prn, start_date) - only 
 
  ***** food_study ***** 
   HIV_OBSERVATIONS (ENCOUNTER_ID, OBSERVATION, VALUE, ENTRY_DATE)
-
- ***** cervical_cancer ***** 
- HIV_OBSERVATIONS (ENCOUNTER_ID, OBSERVATION, VALUE, ENTRY_DATE)
 
  ***** pregnancy ***** 
  HIV_OBSERVATIONS (ENCOUNTER_ID, OBSERVATION, VALUE, ENTRY_DATE)
