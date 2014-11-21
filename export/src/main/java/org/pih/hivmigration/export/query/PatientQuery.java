@@ -336,6 +336,11 @@ public class PatientQuery {
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
 
+		for (Map.Entry<String, String> propertyAndColumn : Util.getPropertyToObsNameMap(AccompagnateurMedicationPickup.class).entrySet()) {
+			String propertyName = propertyAndColumn.getKey();
+			joinData.add(new JoinData("encounter_id", propertyName, getObservations(propertyAndColumn.getValue(), Util.getFieldType(AccompagnateurMedicationPickup.class, propertyName))));
+		}
+
 		return DB.beanListMapResult(query, AccompagnateurMedicationPickup.class, joinData);
 	}
 
@@ -369,6 +374,10 @@ public class PatientQuery {
 		query.append("and		e.encounter_id = x.encounter_id(+) ");
 
 		List<JoinData> joinData = new ArrayList<JoinData>();
+		for (Map.Entry<String, String> propertyAndColumn : Util.getPropertyToObsNameMap(PregnancyDataEntryTransaction.class).entrySet()) {
+			String propertyName = propertyAndColumn.getKey();
+			joinData.add(new JoinData("encounter_id", propertyName, getObservations(propertyAndColumn.getValue(), Util.getFieldType(PregnancyDataEntryTransaction.class, propertyName))));
+		}
 
 		return DB.beanListMapResult(query, PregnancyDataEntryTransaction.class, joinData);
 	}

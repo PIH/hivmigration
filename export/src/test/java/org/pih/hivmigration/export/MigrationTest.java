@@ -158,61 +158,64 @@ public class MigrationTest {
 
 			List<String> encounterTypes = DB.listResult("select distinct type from hiv_encounters order by type", String.class);
 			for (String encounterType : encounterTypes) {
-				Map<String, Integer> tableCounts = new LinkedHashMap<String, Integer>();
-				typeToTableMap.put(encounterType, tableCounts);
-				List<Map<String, Object>> rows = DB.getForeignKeysToTable("hiv_encounters", "encounter_id");
-				for (Map<String, Object> row : rows) {
-					String tableName = (String) row.get("tableName");
-					String columnName = (String) row.get("columnName");
+				if ("accompagnateur".equals(encounterType)) {
+					Map<String, Integer> tableCounts = new LinkedHashMap<String, Integer>();
+					typeToTableMap.put(encounterType, tableCounts);
+					List<Map<String, Object>> rows = DB.getForeignKeysToTable("hiv_encounters", "encounter_id" );
+					for (Map<String, Object> row : rows) {
+						String tableName = (String) row.get("tableName" );
+						String columnName = (String) row.get("columnName" );
 
-					StringBuilder query = new StringBuilder();
-					query.append("select 	count(*) ");
-					query.append("from 		").append(tableName).append(" t, hiv_encounters e ");
-					query.append("where		t.").append(columnName).append(" = e.encounter_id ");
-					query.append("and		e.type = ? ");
+						StringBuilder query = new StringBuilder();
+						query.append("select 	count(*) " );
+						query.append("from 		" ).append(tableName).append(" t, hiv_encounters e " );
+						query.append("where		t." ).append(columnName).append(" = e.encounter_id " );
+						query.append("and		e.type = ? " );
 
-					Integer numFound = DB.uniqueResult(query.toString(), Integer.class, encounterType);
-					if (numFound > 0) {
-						for (TableColumn column : DB.getAllColumns(tableName)) {
-							StringBuilder q = new StringBuilder();
-							q.append("select 	count(*) ");
-							q.append("from 		").append(tableName).append(" t, hiv_encounters e ");
-							q.append("where		t.").append(columnName).append(" = e.encounter_id ");
-							q.append("and		e.type = ? ");
-							q.append("and		t.").append(column.getColumnName().toLowerCase()).append(" is not null");
-							Integer numColValues = DB.uniqueResult(q.toString(), Integer.class, encounterType);
+						Integer numFound = DB.uniqueResult(query.toString(), Integer.class, encounterType);
+						if (numFound > 0) {
+							for (TableColumn column : DB.getAllColumns(tableName)) {
+								StringBuilder q = new StringBuilder();
+								q.append("select 	count(*) " );
+								q.append("from 		" ).append(tableName).append(" t, hiv_encounters e " );
+								q.append("where		t." ).append(columnName).append(" = e.encounter_id " );
+								q.append("and		e.type = ? " );
+								q.append("and		t." ).append(column.getColumnName().toLowerCase()).append(" is not null" );
+								Integer numColValues = DB.uniqueResult(q.toString(), Integer.class, encounterType);
 
-							if (numColValues > 0) {
-								Set<String> typeSet = tableToTypeMap.get(tableName);
-								if (typeSet == null) {
-									typeSet = new LinkedHashSet<String>();
-									tableToTypeMap.put(tableName, typeSet);
+								if (numColValues > 0) {
+									Set<String> typeSet = tableToTypeMap.get(tableName);
+									if (typeSet == null) {
+										typeSet = new LinkedHashSet<String>();
+										tableToTypeMap.put(tableName, typeSet);
+									}
+
+									tableCounts.put(tableName + "." + column.getColumnName(), numColValues);
+									typeSet.add(encounterType);
 								}
-
-								tableCounts.put(tableName + "." + column.getColumnName(), numColValues);
-								typeSet.add(encounterType);
 							}
 						}
 					}
 				}
 			}
 
-			System.out.println("Tables with data for each encounter type");
+			System.out.println("Tables with data for each encounter type" );
 			for (String encounterType : typeToTableMap.keySet()) {
-				System.out.println("");
-				System.out.println(" ***** " + encounterType + " ***** ");
+				System.out.println("" );
+				System.out.println(" ***** " + encounterType + " ***** " );
 				Map<String, Integer> tableCounts = typeToTableMap.get(encounterType);
 				for (String tabCol : tableCounts.keySet()) {
 					System.out.println(tabCol + ": " + tableCounts.get(tabCol));
 				}
-				System.out.println("");
+				System.out.println("" );
 			}
-			System.out.println("");
+			System.out.println("" );
 
-			System.out.println("Encounter types with data for each table");
+			System.out.println("Encounter types with data for each table" );
 			for (String table : tableToTypeMap.keySet()) {
 				System.out.println(table + ": " + tableToTypeMap.get(table));
 			}
+
 		}
 	}
 
