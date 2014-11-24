@@ -1,6 +1,9 @@
 package org.pih.hivmigration.common;
 
+import org.pih.hivmigration.common.code.HivTbStatus;
+import org.pih.hivmigration.common.code.Location;
 import org.pih.hivmigration.common.code.WhoStagingCriteria;
+import org.pih.hivmigration.common.util.ObsName;
 
 import java.util.Date;
 import java.util.List;
@@ -12,6 +15,20 @@ public class IntakeEncounter extends ClinicalEncounter {
 	private Boolean hospitalizedAtDiagnosis;
 	private String differentialDiagnosis;
 	private String comments;
+
+	@ObsName("transfer_p") Boolean transferred;
+	@ObsName("transfer_in_from") String transferInFrom;
+	@ObsName("transfer_out_to")
+	Location transferOutTo;
+
+	@ObsName("prophylaxis_not_indicated") Boolean prophylaxisNotIndicated;
+	@ObsName("arv_treatment_reason") String arvTreatmentReason;
+	@ObsName("category") HivTbStatus hivTbStatus;
+
+	// TODO: Make these into a lab result?
+	@ObsName("western_blot_date") Date westernBlotDate;
+	@ObsName("western_blot_date_unknown") Boolean westernBlotUnknown;
+	@ObsName("western_blot_result") String westernBlotResult;
 
 	private List<Allergy> allergies;
 	private List<Contact> contacts;
@@ -62,6 +79,78 @@ public class IntakeEncounter extends ClinicalEncounter {
 
 	public void setComments(String comments) {
 		this.comments = comments;
+	}
+
+	public Boolean getTransferred() {
+		return transferred;
+	}
+
+	public void setTransferred(Boolean transferred) {
+		this.transferred = transferred;
+	}
+
+	public String getTransferInFrom() {
+		return transferInFrom;
+	}
+
+	public void setTransferInFrom(String transferInFrom) {
+		this.transferInFrom = transferInFrom;
+	}
+
+	public Location getTransferOutTo() {
+		return transferOutTo;
+	}
+
+	public void setTransferOutTo(Location transferOutTo) {
+		this.transferOutTo = transferOutTo;
+	}
+
+	public Boolean getProphylaxisNotIndicated() {
+		return prophylaxisNotIndicated;
+	}
+
+	public void setProphylaxisNotIndicated(Boolean prophylaxisNotIndicated) {
+		this.prophylaxisNotIndicated = prophylaxisNotIndicated;
+	}
+
+	public String getArvTreatmentReason() {
+		return arvTreatmentReason;
+	}
+
+	public void setArvTreatmentReason(String arvTreatmentReason) {
+		this.arvTreatmentReason = arvTreatmentReason;
+	}
+
+	public HivTbStatus getHivTbStatus() {
+		return hivTbStatus;
+	}
+
+	public void setHivTbStatus(HivTbStatus hivTbStatus) {
+		this.hivTbStatus = hivTbStatus;
+	}
+
+	public Date getWesternBlotDate() {
+		return westernBlotDate;
+	}
+
+	public void setWesternBlotDate(Date westernBlotDate) {
+		this.westernBlotDate = westernBlotDate;
+	}
+
+	public Boolean getWesternBlotUnknown() {
+		return westernBlotUnknown;
+	}
+
+	public void setWesternBlotUnknown(Boolean westernBlotUnknown) {
+		this.westernBlotUnknown = westernBlotUnknown;
+	}
+
+	public String getWesternBlotResult() {
+		return westernBlotResult;
+	}
+
+	public void setWesternBlotResult(String westernBlotResult) {
+		this.westernBlotResult = westernBlotResult;
 	}
 
 	public List<Allergy> getAllergies() {

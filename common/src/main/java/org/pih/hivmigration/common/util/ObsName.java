@@ -1,4 +1,4 @@
-package org.pih.hivmigration.common;
+package org.pih.hivmigration.common.util;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

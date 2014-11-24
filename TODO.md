@@ -60,13 +60,11 @@ HIV_DATA_AUDIT_TRACKING_FORMS
 HIV_ENCOUNTERS
 
 # OTHER COMBINATION
-"accompagnateur", "HIV_DATA_AUDIT_ENTRY", "HIV_OBSERVATIONS"
+"accompagnateur", "HIV_DATA_AUDIT_ENTRY"
 "anlap_vital_signs", "HIV_EXAM_VITAL_SIGNS"
-"food_support", "HIV_OBSERVATIONS"
 "hop_abstraction", "HIV_OBSERVATIONS", "HIV_TB_STATUS"
 "lab_result", "HIV_DATA_AUDIT_ENTRY"
 "patient_contact", "HIV_DATA_AUDIT_ENTRY"
-"pregnancy", "HIV_OBSERVATIONS"
 "regime", "HIV_OBSERVATIONS", "HIV_REGIMES"
 
 "HIV_DATA_AUDIT_ENTRY", "accompagnateur", "followup", "intake", "lab_result", "patient_contact"
@@ -112,9 +110,11 @@ HIV_SURVEILLANCE_NEW
 
 # Remaining stuff for encounters...
 
+Test HIV_OBSERVATIONS population across all enocunter types
+In unit tests, ignore "'drug_started_dose_unit_1-4'"
+
  ***** intake ***** 
 HIV_REGIMES (product_id, encounter_opened_by, ddd, dwd, prn, start_date) - only 3 of these
- HIV_OBSERVATIONS (ENCOUNTER_ID, OBSERVATION, VALUE, ENTRY_DATE)
  HIV_TB_STATUS (ENCOUNTER_ID, TYPE, PULMONARY_P, STATUS_DATE, PPD_POSITIVE, TB_ACTIVE_P, EXTRAPULMONARY_P, DRUG_RESISTANT_P, DRUG_RESISTANT_COMMENT, ENTERED_DATE, ENTERED_BY)
 
  ***** followup ***** 
@@ -134,7 +134,6 @@ HIV_TB_STATUS (ENCOUNTER_ID, TYPE, PULMONARY_P, STATUS_DATE, PPD_POSITIVE, TB_AC
 
 Encounter types with data for each table
 
-HIV_OBSERVATIONS: [followup, intake]
 HIV_TB_STATUS: [followup, intake]
 HIV_REGIMES: [intake, regime]
 

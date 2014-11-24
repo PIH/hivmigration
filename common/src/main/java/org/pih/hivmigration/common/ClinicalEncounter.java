@@ -1,8 +1,14 @@
 package org.pih.hivmigration.common;
 
 import org.pih.hivmigration.common.code.ActivityFrequency;
+import org.pih.hivmigration.common.code.ArvTreatmentNeeded;
+import org.pih.hivmigration.common.code.ExposureType;
+import org.pih.hivmigration.common.code.Location;
 import org.pih.hivmigration.common.code.PartnerReferralStatus;
+import org.pih.hivmigration.common.code.TbTreatmentNeeded;
+import org.pih.hivmigration.common.code.TreatmentStatus;
 import org.pih.hivmigration.common.code.WhoStage;
+import org.pih.hivmigration.common.util.ObsName;
 
 import java.util.Date;
 import java.util.List;
@@ -12,7 +18,7 @@ import java.util.List;
  */
 public class ClinicalEncounter extends Encounter {
 
-	private String location;  // TODO: Make this a Location reference
+	private Location location;
 	private String examiningDoctor;
 	private String recommendations;
 	private Boolean startFinancialAid;
@@ -50,13 +56,29 @@ public class ClinicalEncounter extends Encounter {
 	private Double respirationRate;
 	private Double temperature;
 
+	@ObsName("arv_treatment_needed") ArvTreatmentNeeded arvTreatmentNeeded;
+	@ObsName("arvs_for_accident") ExposureType arvsForAccident;
+	@ObsName("arvs_for_ptme") Boolean arvsForPtme;
+	@ObsName("adherence_accompagnateur") Boolean accompagnateurSeenEachDay; // TODO: Why not just followup
+	@ObsName("adherence_missed_last_four_days") Integer adherenceMissedLastFourDays; // TODO: Why not just followup
+	@ObsName("hospitalized_since_last_visit") Boolean hospitalizedSinceLastVisit; // TODO: Why not just followup
+	@ObsName("rdv_birth_place") String birthplace;
+	@ObsName("regimen_changed_p") Boolean regimenChanged;
+	@ObsName("side_effects_present") Boolean sideEffectsPresent;
+	@ObsName("tb_treatment_needed") TbTreatmentNeeded tbTreatmentNeeded;
+	@ObsName("treatment_status") TreatmentStatus treatmentStatus;
+	@ObsName("treatment_status_date_died") Date dateDied;
+	@ObsName("treatment_status_date_abandoned") Date dateAbandoned;
+	@ObsName("treatment_status_stopped_comment") String treatmentStoppedComment;
+	@ObsName("treatment_status_transferred_comment") String transferredComment;
+
 	public ClinicalEncounter() {}
 
-	public String getLocation() {
+	public Location getLocation() {
 		return location;
 	}
 
-	public void setLocation(String location) {
+	public void setLocation(Location location) {
 		this.location = location;
 	}
 
@@ -346,5 +368,125 @@ public class ClinicalEncounter extends Encounter {
 
 	public void setTemperature(Double temperature) {
 		this.temperature = temperature;
+	}
+
+	public ArvTreatmentNeeded getArvTreatmentNeeded() {
+		return arvTreatmentNeeded;
+	}
+
+	public void setArvTreatmentNeeded(ArvTreatmentNeeded arvTreatmentNeeded) {
+		this.arvTreatmentNeeded = arvTreatmentNeeded;
+	}
+
+	public ExposureType getArvsForAccident() {
+		return arvsForAccident;
+	}
+
+	public void setArvsForAccident(ExposureType arvsForAccident) {
+		this.arvsForAccident = arvsForAccident;
+	}
+
+	public Boolean getArvsForPtme() {
+		return arvsForPtme;
+	}
+
+	public void setArvsForPtme(Boolean arvsForPtme) {
+		this.arvsForPtme = arvsForPtme;
+	}
+
+	public Boolean getAccompagnateurSeenEachDay() {
+		return accompagnateurSeenEachDay;
+	}
+
+	public void setAccompagnateurSeenEachDay(Boolean accompagnateurSeenEachDay) {
+		this.accompagnateurSeenEachDay = accompagnateurSeenEachDay;
+	}
+
+	public Integer getAdherenceMissedLastFourDays() {
+		return adherenceMissedLastFourDays;
+	}
+
+	public void setAdherenceMissedLastFourDays(Integer adherenceMissedLastFourDays) {
+		this.adherenceMissedLastFourDays = adherenceMissedLastFourDays;
+	}
+
+	public Boolean getHospitalizedSinceLastVisit() {
+		return hospitalizedSinceLastVisit;
+	}
+
+	public void setHospitalizedSinceLastVisit(Boolean hospitalizedSinceLastVisit) {
+		this.hospitalizedSinceLastVisit = hospitalizedSinceLastVisit;
+	}
+
+	public String getBirthplace() {
+		return birthplace;
+	}
+
+	public void setBirthplace(String birthplace) {
+		this.birthplace = birthplace;
+	}
+
+	public Boolean getRegimenChanged() {
+		return regimenChanged;
+	}
+
+	public void setRegimenChanged(Boolean regimenChanged) {
+		this.regimenChanged = regimenChanged;
+	}
+
+	public Boolean getSideEffectsPresent() {
+		return sideEffectsPresent;
+	}
+
+	public void setSideEffectsPresent(Boolean sideEffectsPresent) {
+		this.sideEffectsPresent = sideEffectsPresent;
+	}
+
+	public TbTreatmentNeeded getTbTreatmentNeeded() {
+		return tbTreatmentNeeded;
+	}
+
+	public void setTbTreatmentNeeded(TbTreatmentNeeded tbTreatmentNeeded) {
+		this.tbTreatmentNeeded = tbTreatmentNeeded;
+	}
+
+	public TreatmentStatus getTreatmentStatus() {
+		return treatmentStatus;
+	}
+
+	public void setTreatmentStatus(TreatmentStatus treatmentStatus) {
+		this.treatmentStatus = treatmentStatus;
+	}
+
+	public Date getDateDied() {
+		return dateDied;
+	}
+
+	public void setDateDied(Date dateDied) {
+		this.dateDied = dateDied;
+	}
+
+	public Date getDateAbandoned() {
+		return dateAbandoned;
+	}
+
+	public void setDateAbandoned(Date dateAbandoned) {
+		this.dateAbandoned = dateAbandoned;
+	}
+
+	public String getTreatmentStoppedComment() {
+		return treatmentStoppedComment;
+	}
+
+	public void setTreatmentStoppedComment(String treatmentStoppedComment) {
+		this.treatmentStoppedComment = treatmentStoppedComment;
+	}
+
+	public String getTransferredComment() {
+		return transferredComment;
+	}
+
+	public void setTransferredComment(String transferredComment) {
+		this.transferredComment = transferredComment;
 	}
 }

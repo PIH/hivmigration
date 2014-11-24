@@ -193,6 +193,11 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "respirationRate", getRespirationRates()));
 		joinData.add(new JoinData("encounter_id", "temperature", getTemperatures()));
 
+		for (Map.Entry<String, String> propertyAndColumn : Util.getPropertyToObsNameMap(IntakeEncounter.class).entrySet()) {
+			String propertyName = propertyAndColumn.getKey();
+			joinData.add(new JoinData("encounter_id", propertyName, getObservations(propertyAndColumn.getValue(), Util.getFieldType(IntakeEncounter.class, propertyName))));
+		}
+
 		return DB.beanListMapResult(query, IntakeEncounter.class, joinData);
 	}
 
@@ -230,6 +235,11 @@ public class PatientQuery {
 		joinData.add(new JoinData("encounter_id", "heartRate", getHeartRates()));
 		joinData.add(new JoinData("encounter_id", "respirationRate", getRespirationRates()));
 		joinData.add(new JoinData("encounter_id", "temperature", getTemperatures()));
+
+		for (Map.Entry<String, String> propertyAndColumn : Util.getPropertyToObsNameMap(FollowupEncounter.class).entrySet()) {
+			String propertyName = propertyAndColumn.getKey();
+			joinData.add(new JoinData("encounter_id", propertyName, getObservations(propertyAndColumn.getValue(), Util.getFieldType(FollowupEncounter.class, propertyName))));
+		}
 
 		return DB.beanListMapResult(query, FollowupEncounter.class, joinData);
 	}
@@ -670,9 +680,28 @@ public class PatientQuery {
 
 	/**
 	 * @return Map from encounterId to observation value for a particular observation
+	 * If observation is in format obsName=value|obsName=value then will check this.  Otherwise will just get the value for that observation name
 	 */
 	public static <T> Map<Integer, T> getObservations(String observation, Class<T> valueType) {
-		String query = "select encounter_id, value from hiv_observations where observation = ? and value is not null";
-		return DB.simpleMapResult(query, Integer.class, valueType, observation);
+		System.out.println("Looking up " + observation + " for type " + valueType.getSimpleName());
+		if (observation.contains("=") && valueType == Boolean.class) {
+			StringBuilder q = new StringBuilder();
+			for (Map.Entry<String, String> e : Util.toMap(observation, "=", "|").entrySet()) {
+				q.append(q.length() == 0 ? " where (" : " or (");
+				q.append("observation = '").append(e.getKey()).append("' and value = '").append(e.getValue()).append("') ");
+			}
+			return DB.simpleMapResult("select encounter_id, 't' from hiv_observations " + q.toString(), Integer.class, valueType);
+		}
+		else if (observation.contains("|") && valueType == String.class) {
+			StringBuilder q = new StringBuilder();
+			for (String obsName : observation.split("|")) {
+				q.append(q.length() == 0 ? " where (" : " or (").append("observation = '").append(obsName).append("') ");
+			}
+			return DB.simpleMapResult("select encounter_id, value from hiv_observations " + q.toString(), Integer.class, valueType);
+		}
+		else {
+			String query = "select encounter_id, value, count(*) from hiv_observations where observation = ? and value is not null group by encounter_id, value";
+			return DB.simpleMapResult(query, Integer.class, valueType, observation);
+		}
 	}
 }

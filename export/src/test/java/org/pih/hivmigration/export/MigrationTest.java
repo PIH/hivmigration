@@ -62,7 +62,7 @@ public class MigrationTest {
 	@Test
 	public void shouldReturnEnumValuesForColumn() {
 		String query = "";
-		query = "select distinct lab_test from HIV_EXAM_LAB_RESULTS where result is not null order by lab_test";
+		query = "select distinct value from hiv_observations where observation in ('treatment_stopped_reason') order by value";
 		//String query = "select symptom, count(*) from hiv_exam_symptoms where lower(trim(symptom)) = symptom and replace(symptom, ' ', '') = symptom group by symptom having count(*) > 100 order by symptom";
 		if (Util.notEmpty(query)) {
 			List<String> ret = DB.listResult(query, String.class);

@@ -4,15 +4,21 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * This corresponds to cervical cancer screening encounters
+ * This codes out whether a patient is indicated as HIV or HIV-TB coinfected
  */
 public enum HivTbStatus implements CodedValue {
 
-	HIV,
-	HIV_TB;
+	HIV("HIV","hiv_only"),
+	HIV_TB("hiv_tb","hiv_tb_coinfected");
+
+	private List<String> values;
+
+	HivTbStatus(String... values) {
+		this.values = Arrays.asList(values);
+	}
 
 	@Override
 	public List<String> getValues() {
-		return Arrays.asList(name());
+		return values;
 	}
 }

@@ -1,7 +1,9 @@
 package org.pih.hivmigration.common;
 
 import org.pih.hivmigration.common.code.CytologyPlan;
+import org.pih.hivmigration.common.code.Location;
 import org.pih.hivmigration.common.code.SimpleLabResult;
+import org.pih.hivmigration.common.util.ObsName;
 
 import java.util.Date;
 import java.util.List;
@@ -11,7 +13,7 @@ import java.util.List;
  */
 public class CervicalCancerEncounter extends Encounter {
 
-	private String location;  // TODO: Make this a Location reference
+	private Location location;
 	private Date lastPeriodDate;
 	private List<LabTestResult> labResults;
 
@@ -52,11 +54,11 @@ public class CervicalCancerEncounter extends Encounter {
 
 	public CervicalCancerEncounter() {}
 
-	public String getLocation() {
+	public Location getLocation() {
 		return location;
 	}
 
-	public void setLocation(String location) {
+	public void setLocation(Location location) {
 		this.location = location;
 	}
 

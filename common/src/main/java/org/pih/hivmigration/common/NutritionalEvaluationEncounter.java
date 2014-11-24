@@ -2,6 +2,7 @@ package org.pih.hivmigration.common;
 
 import org.pih.hivmigration.common.code.DoubleEntryStatus;
 import org.pih.hivmigration.common.code.HivTbStatus;
+import org.pih.hivmigration.common.util.ObsName;
 
 import java.util.Date;
 import java.util.List;

@@ -1,5 +1,7 @@
 package org.pih.hivmigration.common;
 
+import org.pih.hivmigration.common.code.Location;
+
 import java.util.List;
 
 /**
@@ -7,7 +9,7 @@ import java.util.List;
  */
 public class PatientContactEncounter extends Encounter {
 
-	private String location;  // TODO: Make this a Location reference
+	private Location location;
 	private List<LabTestResult> labResults;
 	private String comments;
 	private Double weight;
@@ -15,11 +17,11 @@ public class PatientContactEncounter extends Encounter {
 
 	public PatientContactEncounter() {}
 
-	public String getLocation() {
+	public Location getLocation() {
 		return location;
 	}
 
-	public void setLocation(String location) {
+	public void setLocation(Location location) {
 		this.location = location;
 	}
 

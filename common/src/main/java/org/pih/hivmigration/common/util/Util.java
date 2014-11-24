@@ -16,7 +16,6 @@ package org.pih.hivmigration.common.util;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.pih.hivmigration.common.ObsName;
 
 import java.io.File;
 import java.io.InputStream;
@@ -260,11 +259,21 @@ public class Util {
 	}
 
 	public static Class<?> getFieldType(Class<?> classToCheck, String propertyName) {
+		Field f = null;
 		try {
-			Field f = classToCheck.getDeclaredField(propertyName);
+			f = classToCheck.getDeclaredField(propertyName);
+		}
+		catch (Exception e) {}
+		if (f == null) {
+			Class superclass = classToCheck.getSuperclass();
+			if (superclass != null) {
+				return getFieldType(superclass, propertyName);
+			}
+		}
+		if (f != null) {
 			return f.getType();
 		}
-		catch (Exception e) {
+		else {
 			throw new IllegalArgumentException("Unable to find property named " + propertyName + " on class " + classToCheck);
 		}
 	}

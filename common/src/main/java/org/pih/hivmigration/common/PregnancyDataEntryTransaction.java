@@ -1,5 +1,7 @@
 package org.pih.hivmigration.common;
 
+import org.pih.hivmigration.common.util.ObsName;
+
 import java.util.Date;
 
 /**
