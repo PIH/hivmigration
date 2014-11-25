@@ -18,6 +18,7 @@ import org.pih.hivmigration.common.NutritionalEvaluationEncounter;
 import org.pih.hivmigration.common.Patient;
 import org.pih.hivmigration.common.PatientContactEncounter;
 import org.pih.hivmigration.common.PregnancyDataEntryTransaction;
+import org.pih.hivmigration.common.RegimenChange;
 import org.pih.hivmigration.common.code.SimpleLabResult;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.export.DB;
@@ -38,6 +39,7 @@ public class PatientQueryTest {
 	private static ListMap<Integer, NutritionalEvaluationEncounter> nutritionalEvaluationEncounters;
 	private static ListMap<Integer, LabResultEncounter> labResultEncounters;
 	private static ListMap<Integer, FoodSupportEncounter> foodSupportEncounters;
+	private static ListMap<Integer, RegimenChange> regimenChanges;
 	private static ListMap<Integer, AccompagnateurMedicationPickup> accompagnateurMedicationPickups;
 	private static ListMap<Integer, PregnancyDataEntryTransaction> pregnancyDataEntryTransactions;
 	private static ListMap<Integer, Note> notes;
@@ -128,6 +130,13 @@ public class PatientQueryTest {
 			foodSupportEncounters = PatientQuery.getFoodSupportEncounters();
 		}
 		return foodSupportEncounters;
+	}
+
+	protected ListMap<Integer, RegimenChange> getRegimenChanges() {
+		if (regimenChanges == null) {
+			regimenChanges = PatientQuery.getRegimenChanges();
+		}
+		return regimenChanges;
 	}
 
 	protected ListMap<Integer, AccompagnateurMedicationPickup> getAccompagnateurMedicationPickups() {
@@ -226,6 +235,13 @@ public class PatientQueryTest {
 		Collection c = getFoodSupportEncounters().values();
 		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'food_support'");
 		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(value) from hiv_observations where observation = 'food_support_received'");
+		TestUtils.assertAllPropertiesArePopulated(c);
+	}
+
+	@Test
+	public void shouldTestRegimenChanges() throws Exception {
+		Collection c = getRegimenChanges().values();
+		TestUtils.assertCollectionSizeMatchesQuerySize(c, "select count(encounter_id) from hiv_encounters where type = 'regime'");
 		TestUtils.assertAllPropertiesArePopulated(c);
 	}
 

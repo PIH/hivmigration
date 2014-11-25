@@ -25,6 +25,7 @@ import org.pih.hivmigration.common.PostnatalEncounter;
 import org.pih.hivmigration.common.Pregnancy;
 import org.pih.hivmigration.common.PregnancyDataEntryTransaction;
 import org.pih.hivmigration.common.PreviousTreatment;
+import org.pih.hivmigration.common.RegimenChange;
 import org.pih.hivmigration.common.ResponsiblePerson;
 import org.pih.hivmigration.common.SocioeconomicData;
 import org.pih.hivmigration.common.SymptomGroup;
@@ -333,6 +334,25 @@ public class PatientQuery {
 		List<JoinData> joinData = new ArrayList<JoinData>();
 
 		return DB.beanListMapResult(query, FoodSupportEncounter.class, joinData);
+	}
+
+	/**
+	 * @return Map from patientId to a List of RegimenChanges
+	 */
+	public static ListMap<Integer, RegimenChange> getRegimenChanges() {
+		StringBuilder query = new StringBuilder();
+		query.append("select	e.patient_id, e.encounter_id, e.encounter_date, e.entered_by, e.entry_date ");
+		query.append("from		hiv_encounters e ");
+		query.append("where		e.type = 'regime' ");
+
+		List<JoinData> joinData = new ArrayList<JoinData>();
+
+		for (Map.Entry<String, String> propertyAndColumn : Util.getPropertyToObsNameMap(RegimenChange.class).entrySet()) {
+			String propertyName = propertyAndColumn.getKey();
+			joinData.add(new JoinData("encounter_id", propertyName, getObservations(propertyAndColumn.getValue(), Util.getFieldType(RegimenChange.class, propertyName))));
+		}
+
+		return DB.beanListMapResult(query, RegimenChange.class, joinData);
 	}
 
 	/**
@@ -683,7 +703,6 @@ public class PatientQuery {
 	 * If observation is in format obsName=value|obsName=value then will check this.  Otherwise will just get the value for that observation name
 	 */
 	public static <T> Map<Integer, T> getObservations(String observation, Class<T> valueType) {
-		System.out.println("Looking up " + observation + " for type " + valueType.getSimpleName());
 		if (observation.contains("=") && valueType == Boolean.class) {
 			StringBuilder q = new StringBuilder();
 			for (Map.Entry<String, String> e : Util.toMap(observation, "=", "|").entrySet()) {
