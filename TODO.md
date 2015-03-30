@@ -107,6 +107,12 @@ HIV_SURVEILLANCE_LOG
 HIV_SURVEILLANCE_LOG_ENTRY
 HIV_SURVEILLANCE_NEW
 
+# Issues to discuss
+
+CD4 and CD4% commonly mixed up
+Hemoglobin and Hematocrit commonly mixed up
+Total lymphocyte count - # or percent
+
 
 # Remaining stuff for encounters...
 

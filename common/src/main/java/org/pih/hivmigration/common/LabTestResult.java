@@ -2,12 +2,14 @@ package org.pih.hivmigration.common;
 
 import org.pih.hivmigration.common.code.CodedValue;
 import org.pih.hivmigration.common.code.LabTest;
+import org.pih.hivmigration.common.code.LabTestTypeOrBrand;
 
 import java.util.Date;
 
 public class LabTestResult {
 
 	private LabTest labTest;
+	private LabTestTypeOrBrand testType;
 	private Date testDate;
 	private String sampleId;
 	private CodedValue valueCoded;
@@ -29,6 +31,14 @@ public class LabTestResult {
 
 	public void setLabTest(LabTest labTest) {
 		this.labTest = labTest;
+	}
+
+	public LabTestTypeOrBrand getTestType() {
+		return testType;
+	}
+
+	public void setTestType(LabTestTypeOrBrand testType) {
+		this.testType = testType;
 	}
 
 	public Date getTestDate() {

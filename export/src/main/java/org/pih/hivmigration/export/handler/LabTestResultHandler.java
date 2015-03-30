@@ -7,6 +7,7 @@ import org.pih.hivmigration.common.code.CodedValue;
 import org.pih.hivmigration.common.code.CytologyResult;
 import org.pih.hivmigration.common.code.DstResult;
 import org.pih.hivmigration.common.code.LabTest;
+import org.pih.hivmigration.common.code.LabTestTypeOrBrand;
 import org.pih.hivmigration.common.code.SimpleLabResult;
 import org.pih.hivmigration.common.util.Util;
 import org.pih.hivmigration.export.ExportUtil;
@@ -81,6 +82,7 @@ public class LabTestResultHandler {
 
 		Object encounterId = dataRow.get("ENCOUNTER_ID");
 		LabTest labTest = ExportUtil.convertValue(dataRow.get("LAB_TEST"), LabTest.class);
+		LabTestTypeOrBrand testType = ExportUtil.convertValue(dataRow.get("TEST_TYPE"), LabTestTypeOrBrand.class);
 		Date testDate = ExportUtil.convertValue(dataRow.get("TEST_DATE"), Date.class);
 		String sampleId = (String)dataRow.get("SAMPLE_ID");
 		String result = (String)dataRow.get("RESULT");
@@ -103,6 +105,7 @@ public class LabTestResultHandler {
 
 		LabTestResult ret = new LabTestResult(labTest, testDate);
 		ret.setSampleId(sampleId);
+		ret.setTestType(testType);
 
 		if (resultNumeric != null) {
 			ret.setValueNumeric(resultNumeric.doubleValue());

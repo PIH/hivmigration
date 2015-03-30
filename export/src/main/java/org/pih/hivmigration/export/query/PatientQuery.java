@@ -581,7 +581,7 @@ public class PatientQuery {
 	 */
 	public static ListMap<Integer, LabTestResult> getLabTestResultsFromLab() {
 		StringBuilder query = new StringBuilder();
-		query.append("select	e.encounter_id, t.name as lab_test, e.encounter_date as test_date, sample_id, ");
+		query.append("select	e.encounter_id, t.name as lab_test, r.test_type, e.encounter_date as test_date, sample_id, ");
 		query.append("			value as value_numeric, value_p as value_boolean, replace(value_string, ',', '') as value_text ");
 		query.append("from		hiv_encounters e, hiv_lab_results r, hiv_lab_tests t ");
 		query.append("where		e.encounter_id = r.encounter_id ");
