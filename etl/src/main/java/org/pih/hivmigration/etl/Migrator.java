@@ -6,6 +6,7 @@ import org.apache.commons.lang.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.di.core.KettleEnvironment;
+import org.pentaho.di.core.Result;
 import org.pentaho.di.core.logging.FileLoggingEventListener;
 import org.pentaho.di.core.logging.KettleLogStore;
 import org.pentaho.di.core.logging.LogLevel;
@@ -15,6 +16,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -55,6 +57,18 @@ public class Migrator {
         System.setProperty("KETTLE_HOME", homeDirProperty);
         log.info("KETTLE_HOME = " + System.getProperty("KETTLE_HOME"));
         KettleEnvironment.init();
+
+        File kettleDir = new File(homeDir, ".kettle");
+        if (!kettleDir.exists()) {
+            kettleDir.mkdirs();
+        }
+        File kettleProperties = new File(kettleDir, "kettle.properties");
+        if (kettleProperties.exists()) {
+            kettleProperties.delete();
+        }
+        Properties props = new Properties();
+        props.put("HIV_MIGRATION_HOME", homeDir.getAbsolutePath());
+        props.store(new FileOutputStream(kettleProperties), "");
 
         File propertiesFile = new File(homeDir, "migration.properties");
         if (!propertiesFile.exists()) {
@@ -101,7 +115,7 @@ public class Migrator {
 
         FileLoggingEventListener logger = new FileLoggingEventListener(job.getLogChannelId(), logFile.getAbsolutePath(), true);
         KettleLogStore.getAppender().addLoggingEventListener(logger);
-/*
+
         try {
             log.info("Starting Migration");
             job.start();  // Start the job thread, which will execute asynchronously
@@ -120,11 +134,11 @@ public class Migrator {
         log.info("Job executed in:  " + stopWatch.toString());
         log.info("Job Result: " + result);
         log.info("***************");
-
-        */
     }
 
-    // Starting fromPath should be something like "jobs"
+    /**
+     * Recursively copy files from resources folder (eg. "jobs") to directory
+     */
     public static void loadMigrationCode(String fromPath, File toDir) {
         PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
         try {
@@ -147,9 +161,5 @@ public class Migrator {
         catch (Exception e) {
             throw new IllegalStateException("Error loading migration code", e);
         }
-    }
-
-    public static void copyResources(File fromPath, File toPath) {
-
     }
 }
