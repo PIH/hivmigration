@@ -77,13 +77,13 @@
   </notepads>
   <connection>
     <name>OpenMRS</name>
-    <server>localhost</server>
+    <server>&#x24;&#x7b;mysql.host&#x7d;</server>
     <type>MYSQL</type>
     <access>Native</access>
-    <database>openmrs</database>
-    <port>3308</port>
-    <username>root</username>
-    <password>Encrypted 2be98afc86aa7f2e4cb79ce10cc9da0ce</password>
+    <database>&#x24;&#x7b;mysql.database&#x7d;</database>
+    <port>&#x24;&#x7b;mysql.port&#x7d;</port>
+    <username>&#x24;&#x7b;mysql.username&#x7d;</username>
+    <password>&#x24;&#x7b;mysql.password&#x7d;</password>
     <servername/>
     <data_tablespace/>
     <index_tablespace/>
@@ -93,7 +93,7 @@
       <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>3308</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;mysql.port&#x7d;</attribute></attribute>
       <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
       <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
       <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
@@ -104,21 +104,21 @@
   </connection>
   <connection>
     <name>Oracle</name>
-    <server>localhost</server>
+    <server>&#x24;&#x7b;oracle.host&#x7d;</server>
     <type>ORACLE</type>
     <access>Native</access>
-    <database>XE</database>
-    <port>1521</port>
-    <username>hiv</username>
-    <password>Encrypted 2be98afc86aa7f2e4cb79ce10be9aa6cc</password>
+    <database>&#x24;&#x7b;oracle.sid&#x7d;</database>
+    <port>&#x24;&#x7b;oracle.port&#x7d;</port>
+    <username>&#x24;&#x7b;oracle.username&#x7d;</username>
+    <password>&#x24;&#x7b;oracle.password&#x7d;</password>
     <servername/>
-    <data_tablespace>HIV</data_tablespace>
-    <index_tablespace>HIV</index_tablespace>
+    <data_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</data_tablespace>
+    <index_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</index_tablespace>
     <attributes>
       <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>1521</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;oracle.port&#x7d;</attribute></attribute>
       <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
       <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
       <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>

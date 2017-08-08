@@ -1,0 +1,155 @@
+package org.pih.hivmigration.etl;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.time.StopWatch;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.pentaho.di.core.KettleEnvironment;
+import org.pentaho.di.core.logging.FileLoggingEventListener;
+import org.pentaho.di.core.logging.KettleLogStore;
+import org.pentaho.di.core.logging.LogLevel;
+import org.pentaho.di.job.Job;
+import org.pentaho.di.job.JobMeta;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+
+import java.io.File;
+import java.io.InputStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.util.Properties;
+
+/**
+ * Main class for executing the HIV migration
+ */
+public class Migrator {
+
+    private static final Log log = LogFactory.getLog(Migrator.class);
+
+    public static final String JOB_NAME = "job.name";
+    public static final String LOG_LEVEL = "job.log.level";
+
+    /**
+     * Run the application
+     */
+	public static void main(String[] args) throws Exception {
+
+        log.info("Starting up HIV Migrator");
+
+        RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+        log.info("JAVA VM: " + runtimeMxBean.getVmName());
+        log.info("JAVA VENDOR: " + runtimeMxBean.getSpecVendor());
+        log.info("JAVA VERSION: " + runtimeMxBean.getSpecVersion() + " (" + runtimeMxBean.getVmVersion() + ")");
+        log.info("JAVA_OPTS: " + runtimeMxBean.getInputArguments());
+
+	    // Initialize environment
+        String homeDirProperty = System.getenv("hivmigration_home");
+        File homeDir = new File(homeDirProperty);
+        log.info("Home Dir: " + homeDir.getAbsolutePath());
+
+        File logFile = new File(homeDir, "migration.log");
+        log.info("LOGGING TO: " + logFile.getAbsolutePath());
+
+        log.info("Initializing Kettle Environment");
+        System.setProperty("KETTLE_HOME", homeDirProperty);
+        log.info("KETTLE_HOME = " + System.getProperty("KETTLE_HOME"));
+        KettleEnvironment.init();
+
+        File propertiesFile = new File(homeDir, "migration.properties");
+        if (!propertiesFile.exists()) {
+            throw new IllegalStateException("Unable to find migration.properties file at: " + homeDir.getAbsolutePath());
+        }
+        Properties jobProperties = new Properties();
+        InputStream is = null;
+        try {
+            is = FileUtils.openInputStream(propertiesFile);
+            jobProperties.load(is);
+        }
+        finally {
+            IOUtils.closeQuietly(is);
+        }
+
+        File jobDir = new File(homeDir, "source");
+        loadMigrationCode("jobs", jobDir);
+
+        String jobFileName = jobProperties.getProperty(JOB_NAME, "migrate.kjb");
+        File migrationFile = new File(jobDir, jobFileName);
+
+        JobMeta jobMeta = new JobMeta(migrationFile.getAbsolutePath(), null);
+
+        Properties p = new Properties(); // TODO: Load these from file
+
+        log.info("Setting job parameters");
+        String[] declaredParameters = jobMeta.listParameters();
+        for (int i = 0; i < declaredParameters.length; i++) {
+            String parameterName = declaredParameters[i];
+            String description = jobMeta.getParameterDescription(parameterName);
+            String parameterValue = jobMeta.getParameterDefault(parameterName);
+            if (p.containsKey(parameterName)) {
+                parameterValue = p.getProperty(parameterName);
+            }
+            log.info("Setting parameter " + parameterName + " to " + parameterValue + " [description: " + description + "]");
+            jobMeta.setParameterValue(parameterName, parameterValue);
+        }
+
+        Job job = new Job(null, jobMeta);
+        job.setLogLevel(LogLevel.valueOf(jobProperties.getProperty(LOG_LEVEL, "BASIC")));
+
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+
+        FileLoggingEventListener logger = new FileLoggingEventListener(job.getLogChannelId(), logFile.getAbsolutePath(), true);
+        KettleLogStore.getAppender().addLoggingEventListener(logger);
+/*
+        try {
+            log.info("Starting Migration");
+            job.start();  // Start the job thread, which will execute asynchronously
+            job.waitUntilFinished(); // Wait until the job thread is finished
+        }
+        finally {
+            KettleLogStore.getAppender().removeLoggingEventListener(logger);
+            logger.close();
+        }
+
+        stopWatch.stop();
+
+        Result result = job.getResult();
+
+        log.info("***************");
+        log.info("Job executed in:  " + stopWatch.toString());
+        log.info("Job Result: " + result);
+        log.info("***************");
+
+        */
+    }
+
+    // Starting fromPath should be something like "jobs"
+    public static void loadMigrationCode(String fromPath, File toDir) {
+        PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
+        try {
+            Resource[] resources = resourceResolver.getResources("classpath*:/" + fromPath + "/*");
+            if (resources != null) {
+                for (Resource r : resources) {
+                    File sourceFile = r.getFile();
+                    String sourceFileName = sourceFile.getName();
+                    File destFile = new File(toDir, sourceFileName);
+                    if (sourceFile.isDirectory()) {
+                        destFile.mkdirs();
+                        loadMigrationCode(fromPath + "/" + sourceFileName, destFile);
+                    }
+                    else {
+                        FileUtils.copyFile(sourceFile, destFile);
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Error loading migration code", e);
+        }
+    }
+
+    public static void copyResources(File fromPath, File toPath) {
+
+    }
+}

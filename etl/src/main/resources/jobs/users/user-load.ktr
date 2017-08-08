@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <transformation>
   <info>
-    <name>user-transform</name>
+    <name>user-load</name>
     <description/>
     <extended_description/>
     <trans_version/>
@@ -77,13 +77,13 @@
   </notepads>
   <connection>
     <name>OpenMRS</name>
-    <server>localhost</server>
+    <server>&#x24;&#x7b;mysql.host&#x7d;</server>
     <type>MYSQL</type>
     <access>Native</access>
-    <database>openmrs</database>
-    <port>3308</port>
-    <username>root</username>
-    <password>Encrypted 2be98afc86aa7f2e4cb79ce10cc9da0ce</password>
+    <database>&#x24;&#x7b;mysql.database&#x7d;</database>
+    <port>&#x24;&#x7b;mysql.port&#x7d;</port>
+    <username>&#x24;&#x7b;mysql.username&#x7d;</username>
+    <password>&#x24;&#x7b;mysql.password&#x7d;</password>
     <servername/>
     <data_tablespace/>
     <index_tablespace/>
@@ -93,7 +93,7 @@
       <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>3308</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;mysql.port&#x7d;</attribute></attribute>
       <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
       <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
       <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
@@ -103,9 +103,10 @@
     </attributes>
   </connection>
   <order>
+  <hop> <from>Select from users</from><to>Load Users</to><enabled>Y</enabled> </hop>
   </order>
   <step>
-    <name>Transform Column Values</name>
+    <name>Load Users</name>
     <type>ExecSQL</type>
     <description/>
     <distribute>Y</distribute>
@@ -116,22 +117,58 @@
            <schema_name/>
            </partitioning>
     <connection>OpenMRS</connection>
-    <execute_each_row>N</execute_each_row>
-    <single_statement>N</single_statement>
-    <replace_variables>N</replace_variables>
-    <quoteString>N</quoteString>
-    <sql>update hivmigration_users set user_uuid &#x3d; uuid&#x28;&#x29;&#x3b;&#xa;update hivmigration_users set person_uuid &#x3d; uuid&#x28;&#x29;&#x3b;&#xa;update hivmigration_users set username &#x3d; left&#x28;email, locate&#x28;&#x27;&#x40;&#x27;, email&#x29; - 1&#x29;&#x3b;</sql>
+    <execute_each_row>Y</execute_each_row>
+    <single_statement>Y</single_statement>
+    <replace_variables>Y</replace_variables>
+    <quoteString>Y</quoteString>
+    <sql>call create_user&#x28;&#x3f;,&#x3f;,&#x3f;,&#x3f;,&#x3f;,&#x3f;,&#x3f;,&#x3f;,&#x3f;,&#x3f;&#x29;</sql>
     <set_params>N</set_params>
     <insert_field/>
     <update_field/>
     <delete_field/>
     <read_field/>
     <arguments>
+       <argument><name>source_user_id</name></argument>
+       <argument><name>user_uuid</name></argument>
+       <argument><name>person_uuid</name></argument>
+       <argument><name>username</name></argument>
+       <argument><name>email</name></argument>
+       <argument><name>first_name</name></argument>
+       <argument><name>last_name</name></argument>
+       <argument><name>password</name></argument>
+       <argument><name>salt</name></argument>
+       <argument><name>member_state</name></argument>
     </arguments>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>176</xloc>
-      <yloc>80</yloc>
+      <xloc>352</xloc>
+      <yloc>96</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Select from users</name>
+    <type>TableInput</type>
+    <description/>
+    <distribute>N</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <connection>OpenMRS</connection>
+    <sql>select  source_user_id, user_uuid, person_uuid, username, email, first_name, last_name, password, salt, member_state&#xa;from    hivmigration_users</sql>
+    <limit>0</limit>
+    <lookup/>
+    <execute_each_row>N</execute_each_row>
+    <variables_active>N</variables_active>
+    <lazy_conversion_active>N</lazy_conversion_active>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>160</xloc>
+      <yloc>96</yloc>
       <draw>Y</draw>
       </GUI>
     </step>
