@@ -3,6 +3,7 @@ package org.pih.hivmigration.export;
 import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.pih.hivmigration.common.util.Util;
 
@@ -11,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+@Ignore
 public class DBTest {
 
 	@Before

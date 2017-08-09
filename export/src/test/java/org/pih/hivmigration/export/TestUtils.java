@@ -2,6 +2,7 @@ package org.pih.hivmigration.export;
 
 import junit.framework.Assert;
 import org.apache.commons.beanutils.PropertyUtils;
+import org.junit.Ignore;
 import org.pih.hivmigration.common.util.ListMap;
 import org.pih.hivmigration.common.util.Util;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+@Ignore
 public class TestUtils {
 
 	public static DatabaseCredentials getDatabaseCredentials() {

@@ -4,6 +4,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.pih.hivmigration.common.AccompagnateurMedicationPickup;
 import org.pih.hivmigration.common.CervicalCancerEncounter;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Ignore
 public class PatientQueryTest {
 
 	private static Map<Integer, Patient> patients;

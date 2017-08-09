@@ -2,6 +2,7 @@ package org.pih.hivmigration.export.query;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.pih.hivmigration.common.User;
 import org.pih.hivmigration.export.DB;
@@ -9,6 +10,7 @@ import org.pih.hivmigration.export.TestUtils;
 
 import java.util.Map;
 
+@Ignore
 public class UserQueryTest {
 
 	@Before
