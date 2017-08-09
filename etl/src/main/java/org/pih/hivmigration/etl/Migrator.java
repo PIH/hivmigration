@@ -29,6 +29,7 @@ public class Migrator {
 
     private static final Log log = LogFactory.getLog(Migrator.class);
 
+    public static final String HIV_MIGRATION_HOME = "HIVMIGRATION_HOME";
     public static final String JOB_NAME = "job.name";
     public static final String LOG_LEVEL = "job.log.level";
 
@@ -46,7 +47,7 @@ public class Migrator {
         log.info("JAVA_OPTS: " + runtimeMxBean.getInputArguments());
 
 	    // Initialize environment
-        String homeDirProperty = System.getenv("hivmigration_home");
+        String homeDirProperty = System.getenv(HIV_MIGRATION_HOME);
         File homeDir = new File(homeDirProperty);
         log.info("Home Dir: " + homeDir.getAbsolutePath());
 
@@ -142,7 +143,7 @@ public class Migrator {
     public static void loadMigrationCode(String fromPath, File toDir) {
         PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
         try {
-            Resource[] resources = resourceResolver.getResources("classpath*:/" + fromPath + "/*");
+            Resource[] resources = resourceResolver.getResources("classpath*:" + fromPath + "/*");
             if (resources != null) {
                 for (Resource r : resources) {
                     File sourceFile = r.getFile();
