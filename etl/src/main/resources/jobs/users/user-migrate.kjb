@@ -95,23 +95,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>288</xloc>
-      <yloc>176</yloc>
-      </entry>
-    <entry>
-      <name>Delete previously migrated data 2</name>
-      <description/>
-      <type>SQL</type>
-      <sql/>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>T</sqlfromfile>
-      <sqlfilename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;delete-migrated-users.sql</sqlfilename>
-      <sendOneStatement>F</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>288</xloc>
-      <yloc>64</yloc>
+      <yloc>160</yloc>
       </entry>
     <entry>
       <name>Extract</name>
@@ -144,7 +128,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>480</xloc>
-      <yloc>416</yloc>
+      <yloc>400</yloc>
       </entry>
     <entry>
       <name>Transform</name>
@@ -177,7 +161,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>592</xloc>
-      <yloc>416</yloc>
+      <yloc>400</yloc>
       </entry>
     <entry>
       <name>Load</name>
@@ -210,7 +194,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>688</xloc>
-      <yloc>416</yloc>
+      <yloc>400</yloc>
       </entry>
     <entry>
       <name>Create Stored Procedure</name>
@@ -226,7 +210,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>288</xloc>
-      <yloc>416</yloc>
+      <yloc>400</yloc>
       </entry>
     <entry>
       <name>Drop Stored Procedure</name>
@@ -242,7 +226,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>288</xloc>
-      <yloc>288</yloc>
+      <yloc>272</yloc>
       </entry>
     <entry>
       <name>Load Configuration</name>
@@ -277,15 +261,6 @@
       </entry>
   </entries>
   <hops>
-    <hop>
-      <from>Delete previously migrated data 2</from>
-      <to>Create Staging Tables</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
     <hop>
       <from>Extract</from>
       <to>Transform</to>
@@ -342,7 +317,7 @@
     </hop>
     <hop>
       <from>Load Configuration</from>
-      <to>Delete previously migrated data 2</to>
+      <to>Create Staging Tables</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
