@@ -85,56 +85,67 @@ public class Migrator {
             IOUtils.closeQuietly(is);
         }
 
-        File jobDir = new File(homeDir, "source");
-        loadMigrationCode("jobs", jobDir);
-
-        String jobFileName = jobProperties.getProperty(JOB_NAME, "migrate.kjb");
-        File migrationFile = new File(jobDir, jobFileName);
-
-        JobMeta jobMeta = new JobMeta(migrationFile.getAbsolutePath(), null);
-
-        Properties p = new Properties(); // TODO: Load these from file
-
-        log.info("Setting job parameters");
-        String[] declaredParameters = jobMeta.listParameters();
-        for (int i = 0; i < declaredParameters.length; i++) {
-            String parameterName = declaredParameters[i];
-            String description = jobMeta.getParameterDescription(parameterName);
-            String parameterValue = jobMeta.getParameterDefault(parameterName);
-            if (p.containsKey(parameterName)) {
-                parameterValue = p.getProperty(parameterName);
-            }
-            log.info("Setting parameter " + parameterName + " to " + parameterValue + " [description: " + description + "]");
-            jobMeta.setParameterValue(parameterName, parameterValue);
-        }
-
-        Job job = new Job(null, jobMeta);
-        job.setLogLevel(LogLevel.valueOf(jobProperties.getProperty(LOG_LEVEL, "BASIC")));
-
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
-
-        FileLoggingEventListener logger = new FileLoggingEventListener(job.getLogChannelId(), logFile.getAbsolutePath(), true);
-        KettleLogStore.getAppender().addLoggingEventListener(logger);
+        File tmpSourceDir = new File(homeDir, "source");
 
         try {
-            log.info("Starting Migration");
-            job.start();  // Start the job thread, which will execute asynchronously
-            job.waitUntilFinished(); // Wait until the job thread is finished
+            if (tmpSourceDir.exists()) {
+                tmpSourceDir.delete();
+            }
+            tmpSourceDir.mkdirs();
+
+            loadMigrationCode("jobs", tmpSourceDir);
+
+            String jobFileName = jobProperties.getProperty(JOB_NAME, "migrate.kjb");
+            File migrationFile = new File(tmpSourceDir, jobFileName);
+
+            JobMeta jobMeta = new JobMeta(migrationFile.getAbsolutePath(), null);
+
+            Properties p = new Properties(); // TODO: Load these from file
+
+            log.info("Setting job parameters");
+            String[] declaredParameters = jobMeta.listParameters();
+            for (int i = 0; i < declaredParameters.length; i++) {
+                String parameterName = declaredParameters[i];
+                String description = jobMeta.getParameterDescription(parameterName);
+                String parameterValue = jobMeta.getParameterDefault(parameterName);
+                if (p.containsKey(parameterName)) {
+                    parameterValue = p.getProperty(parameterName);
+                }
+                log.info("Setting parameter " + parameterName + " to " + parameterValue + " [description: " + description + "]");
+                jobMeta.setParameterValue(parameterName, parameterValue);
+            }
+
+            Job job = new Job(null, jobMeta);
+            job.setLogLevel(LogLevel.valueOf(jobProperties.getProperty(LOG_LEVEL, "BASIC")));
+
+            StopWatch stopWatch = new StopWatch();
+            stopWatch.start();
+
+            FileLoggingEventListener logger = new FileLoggingEventListener(job.getLogChannelId(), logFile.getAbsolutePath(), true);
+            KettleLogStore.getAppender().addLoggingEventListener(logger);
+
+            try {
+                log.info("Starting Migration");
+                job.start();  // Start the job thread, which will execute asynchronously
+                job.waitUntilFinished(); // Wait until the job thread is finished
+            }
+            finally {
+                KettleLogStore.getAppender().removeLoggingEventListener(logger);
+                logger.close();
+            }
+
+            stopWatch.stop();
+
+            Result result = job.getResult();
+
+            log.info("***************");
+            log.info("Job executed in:  " + stopWatch.toString());
+            log.info("Job Result: " + result);
+            log.info("***************");
         }
         finally {
-            KettleLogStore.getAppender().removeLoggingEventListener(logger);
-            logger.close();
+            FileUtils.deleteDirectory(tmpSourceDir);
         }
-
-        stopWatch.stop();
-
-        Result result = job.getResult();
-
-        log.info("***************");
-        log.info("Job executed in:  " + stopWatch.toString());
-        log.info("Job Result: " + result);
-        log.info("***************");
     }
 
     /**
@@ -143,18 +154,19 @@ public class Migrator {
     public static void loadMigrationCode(String fromPath, File toDir) {
         PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
         try {
-            Resource[] resources = resourceResolver.getResources("classpath*:" + fromPath + "/*");
+            Resource[] resources = resourceResolver.getResources("classpath*:/" + fromPath + "/**/*");
             if (resources != null) {
                 for (Resource r : resources) {
-                    File sourceFile = r.getFile();
-                    String sourceFileName = sourceFile.getName();
-                    File destFile = new File(toDir, sourceFileName);
-                    if (sourceFile.isDirectory()) {
-                        destFile.mkdirs();
-                        loadMigrationCode(fromPath + "/" + sourceFileName, destFile);
-                    }
-                    else {
-                        FileUtils.copyFile(sourceFile, destFile);
+                    if (r.exists() && r.isReadable() && r.contentLength() > 0) {
+                        String urlPath = r.getURL().getPath();
+                        String prefixToLocate = "!/" + fromPath;
+                        int startIndex = urlPath.indexOf(prefixToLocate);
+                        if (startIndex > 0) {
+                            String dirPath = urlPath.substring(startIndex+prefixToLocate.length());
+                            File destFile = new File(toDir + dirPath);
+                            FileUtils.copyURLToFile(r.getURL(), destFile);
+                            log.info("Loaded job file: " + destFile.getAbsolutePath());
+                        }
                     }
                 }
             }
