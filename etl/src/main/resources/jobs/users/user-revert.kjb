@@ -94,7 +94,7 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>576</xloc>
+      <xloc>704</xloc>
       <yloc>64</yloc>
       </entry>
     <entry>
@@ -128,6 +128,19 @@
       <xloc>288</xloc>
       <yloc>64</yloc>
       </entry>
+    <entry>
+      <name>If table exists</name>
+      <description/>
+      <type>TABLE_EXISTS</type>
+      <tablename>hivmigration_users</tablename>
+      <schemaname/>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>464</xloc>
+      <yloc>64</yloc>
+      </entry>
   </entries>
   <hops>
     <hop>
@@ -141,6 +154,15 @@
     </hop>
     <hop>
       <from>Load Configuration</from>
+      <to>If table exists</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>If table exists</from>
       <to>Delete previously migrated data</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
