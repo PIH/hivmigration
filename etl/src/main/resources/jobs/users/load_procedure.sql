@@ -1,5 +1,4 @@
--- Ensure a user account exists with the given attributes
--- Note that password & salt will only be set on new users--existing user passwords will not be updated
+-- Create user account and associated person
 CREATE PROCEDURE create_user (
   _source_user_id INT,
   _user_uuid      CHAR(38),
