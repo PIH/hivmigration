@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <transformation>
   <info>
-    <name>patients-extract</name>
+    <name>patients-setup</name>
     <description/>
     <extended_description/>
     <trans_version/>
@@ -102,62 +102,12 @@
       <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
     </attributes>
   </connection>
-  <connection>
-    <name>Oracle</name>
-    <server>&#x24;&#x7b;oracle.host&#x7d;</server>
-    <type>ORACLE</type>
-    <access>Native</access>
-    <database>&#x24;&#x7b;oracle.sid&#x7d;</database>
-    <port>&#x24;&#x7b;oracle.port&#x7d;</port>
-    <username>&#x24;&#x7b;oracle.username&#x7d;</username>
-    <password>&#x24;&#x7b;oracle.password&#x7d;</password>
-    <servername/>
-    <data_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</data_tablespace>
-    <index_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</index_tablespace>
-    <attributes>
-      <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
-      <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
-      <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;oracle.port&#x7d;</attribute></attribute>
-      <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
-      <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
-      <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
-      <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
-      <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
-    </attributes>
-  </connection>
   <order>
-  <hop> <from>Extract Patients</from><to>Write to hivmigration_patients</to><enabled>Y</enabled> </hop>
+  <hop> <from>Get max ids</from><to>Alter autoincrements</to><enabled>Y</enabled> </hop>
   </order>
   <step>
-    <name>Extract Patients</name>
-    <type>TableInput</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-         <partitioning>
-           <method>none</method>
-           <schema_name/>
-           </partitioning>
-    <connection>Oracle</connection>
-    <sql>select		d.PATIENT_ID as SOURCE_PATIENT_ID, d.PIH_ID, d.NIF_ID, d.NATIONAL_ID, d.FIRST_NAME, d.FIRST_NAME2, d.LAST_NAME, upper&#x28;d.GENDER&#x29; as GENDER, &#xa;			d.BIRTH_DATE AS BIRTHDATE, decode&#x28;d.BIRTH_DATE_EXACT_P, &#x27;f&#x27;, 1, &#x27;t&#x27;, 0, null&#x29; as BIRTHDATE_ESTIMATED, d.PHONE_NUMBER, &#xa;			d.BIRTH_PLACE, d.AGENT as ACCOMPAGNATEUR_NAME, d.PATIENT_CREATED_BY, d.PATIENT_CREATED_DATE&#xa;from		HIV_DEMOGRAPHICS d&#xa;order by  	d.PATIENT_ID</sql>
-    <limit>0</limit>
-    <lookup/>
-    <execute_each_row>N</execute_each_row>
-    <variables_active>N</variables_active>
-    <lazy_conversion_active>N</lazy_conversion_active>
-     <cluster_schema/>
- <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>112</xloc>
-      <yloc>96</yloc>
-      <draw>Y</draw>
-      </GUI>
-    </step>
-
-  <step>
-    <name>Write to hivmigration_patients</name>
-    <type>TableOutput</type>
+    <name>Alter autoincrements</name>
+    <type>ExecSQL</type>
     <description/>
     <distribute>Y</distribute>
     <custom_distribution/>
@@ -167,88 +117,49 @@
            <schema_name/>
            </partitioning>
     <connection>OpenMRS</connection>
-    <schema/>
-    <table>hivmigration_patients</table>
-    <commit>1000</commit>
-    <truncate>N</truncate>
-    <ignore_errors>N</ignore_errors>
-    <use_batch>Y</use_batch>
-    <specify_fields>Y</specify_fields>
-    <partitioning_enabled>N</partitioning_enabled>
-    <partitioning_field/>
-    <partitioning_daily>N</partitioning_daily>
-    <partitioning_monthly>Y</partitioning_monthly>
-    <tablename_in_field>N</tablename_in_field>
-    <tablename_field/>
-    <tablename_in_table>Y</tablename_in_table>
-    <return_keys>N</return_keys>
-    <return_field/>
-    <fields>
-        <field>
-          <column_name>SOURCE_PATIENT_ID</column_name>
-          <stream_name>SOURCE_PATIENT_ID</stream_name>
-        </field>
-        <field>
-          <column_name>PIH_ID</column_name>
-          <stream_name>PIH_ID</stream_name>
-        </field>
-        <field>
-          <column_name>NIF_ID</column_name>
-          <stream_name>NIF_ID</stream_name>
-        </field>
-        <field>
-          <column_name>NATIONAL_ID</column_name>
-          <stream_name>NATIONAL_ID</stream_name>
-        </field>
-        <field>
-          <column_name>FIRST_NAME</column_name>
-          <stream_name>FIRST_NAME</stream_name>
-        </field>
-        <field>
-          <column_name>FIRST_NAME2</column_name>
-          <stream_name>FIRST_NAME2</stream_name>
-        </field>
-        <field>
-          <column_name>LAST_NAME</column_name>
-          <stream_name>LAST_NAME</stream_name>
-        </field>
-        <field>
-          <column_name>GENDER</column_name>
-          <stream_name>GENDER</stream_name>
-        </field>
-        <field>
-          <column_name>BIRTHDATE</column_name>
-          <stream_name>BIRTHDATE</stream_name>
-        </field>
-        <field>
-          <column_name>BIRTHDATE_ESTIMATED</column_name>
-          <stream_name>BIRTHDATE_ESTIMATED</stream_name>
-        </field>
-        <field>
-          <column_name>PHONE_NUMBER</column_name>
-          <stream_name>PHONE_NUMBER</stream_name>
-        </field>
-        <field>
-          <column_name>BIRTH_PLACE</column_name>
-          <stream_name>BIRTH_PLACE</stream_name>
-        </field>
-        <field>
-          <column_name>ACCOMPAGNATEUR_NAME</column_name>
-          <stream_name>ACCOMPAGNATEUR_NAME</stream_name>
-        </field>
-        <field>
-          <column_name>PATIENT_CREATED_BY</column_name>
-          <stream_name>PATIENT_CREATED_BY</stream_name>
-        </field>
-        <field>
-          <column_name>PATIENT_CREATED_DATE</column_name>
-          <stream_name>PATIENT_CREATED_DATE</stream_name>
-        </field>
-    </fields>
+    <execute_each_row>Y</execute_each_row>
+    <single_statement>N</single_statement>
+    <replace_variables>N</replace_variables>
+    <quoteString>N</quoteString>
+    <sql>ALTER TABLE hivmigration_patients AUTO_INCREMENT &#x3d; &#x3f;&#x3b;</sql>
+    <set_params>N</set_params>
+    <insert_field/>
+    <update_field/>
+    <delete_field/>
+    <read_field/>
+    <arguments>
+       <argument><name>next_person_id</name></argument>
+    </arguments>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
       <xloc>304</xloc>
-      <yloc>96</yloc>
+      <yloc>64</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Get max ids</name>
+    <type>TableInput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <connection>OpenMRS</connection>
+    <sql>select &#x28;max&#x28;person_id&#x29;&#x2b;1&#x29; as next_person_id from person&#x3b;</sql>
+    <limit>0</limit>
+    <lookup/>
+    <execute_each_row>N</execute_each_row>
+    <variables_active>N</variables_active>
+    <lazy_conversion_active>N</lazy_conversion_active>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>128</xloc>
+      <yloc>64</yloc>
       <draw>Y</draw>
       </GUI>
     </step>

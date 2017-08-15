@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <transformation>
   <info>
-    <name>patient-load</name>
+    <name>load-patient-identifier</name>
     <description/>
     <extended_description/>
     <trans_version/>
@@ -103,11 +103,11 @@
     </attributes>
   </connection>
   <order>
-  <hop> <from>Select from patient staging</from><to>Load Patients</to><enabled>Y</enabled> </hop>
+  <hop> <from>Read Patient Identifiers</from><to>Load Patient Identifiers</to><enabled>Y</enabled> </hop>
   </order>
   <step>
-    <name>Load Patients</name>
-    <type>ExecSQL</type>
+    <name>Load Patient Identifiers</name>
+    <type>MySQLBulkLoader</type>
     <description/>
     <distribute>Y</distribute>
     <custom_distribution/>
@@ -117,32 +117,70 @@
            <schema_name/>
            </partitioning>
     <connection>OpenMRS</connection>
-    <execute_each_row>Y</execute_each_row>
-    <single_statement>Y</single_statement>
-    <replace_variables>Y</replace_variables>
-    <quoteString>Y</quoteString>
-    <sql>call create_patient&#x28;&#x3f;&#x29;</sql>
-    <set_params>N</set_params>
-    <insert_field/>
-    <update_field/>
-    <delete_field/>
-    <read_field/>
-    <arguments>
-       <argument><name>source_patient_id</name></argument>
-    </arguments>
+    <schema/>
+    <table>patient_identifier</table>
+    <encoding/>
+    <delimiter>	</delimiter>
+    <enclosure>&#x22;</enclosure>
+    <escape_char>&#x5c;</escape_char>
+    <replace>N</replace>
+    <ignore>N</ignore>
+    <local>Y</local>
+    <fifo_file_name>&#x2f;tmp&#x2f;fifo</fifo_file_name>
+    <bulk_size/>
+      <mapping>
+        <stream_name>patient_id</stream_name>
+        <field_name>patient_id</field_name>
+        <field_format_ok>OK</field_format_ok>
+      </mapping>
+      <mapping>
+        <stream_name>uuid</stream_name>
+        <field_name>uuid</field_name>
+        <field_format_ok>OK</field_format_ok>
+      </mapping>
+      <mapping>
+        <stream_name>identifier_type</stream_name>
+        <field_name>identifier_type</field_name>
+        <field_format_ok>OK</field_format_ok>
+      </mapping>
+      <mapping>
+        <stream_name>location_id</stream_name>
+        <field_name>location_id</field_name>
+        <field_format_ok>OK</field_format_ok>
+      </mapping>
+      <mapping>
+        <stream_name>identifier</stream_name>
+        <field_name>identifier</field_name>
+        <field_format_ok>OK</field_format_ok>
+      </mapping>
+      <mapping>
+        <stream_name>preferred</stream_name>
+        <field_name>preferred</field_name>
+        <field_format_ok>OK</field_format_ok>
+      </mapping>
+      <mapping>
+        <stream_name>creator</stream_name>
+        <field_name>creator</field_name>
+        <field_format_ok>OK</field_format_ok>
+      </mapping>
+      <mapping>
+        <stream_name>date_created</stream_name>
+        <field_name>date_created</field_name>
+        <field_format_ok>OK</field_format_ok>
+      </mapping>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>352</xloc>
+      <xloc>336</xloc>
       <yloc>96</yloc>
       <draw>Y</draw>
       </GUI>
     </step>
 
   <step>
-    <name>Select from patient staging</name>
+    <name>Read Patient Identifiers</name>
     <type>TableInput</type>
     <description/>
-    <distribute>N</distribute>
+    <distribute>Y</distribute>
     <custom_distribution/>
     <copies>1</copies>
          <partitioning>
@@ -150,7 +188,7 @@
            <schema_name/>
            </partitioning>
     <connection>OpenMRS</connection>
-    <sql>SELECT source_patient_id FROM hivmigration_patients&#xa;</sql>
+    <sql>-- Patient Identifier&#xa;select&#xa;  p.person_id as patient_id,&#xa;  uuid&#x28;&#x29; as uuid,&#xa;  &#x28;SELECT patient_identifier_type_id from patient_identifier_type where name &#x3d; &#x27;HIVEMR-V1&#x27;&#x29; as identifier_type,&#xa;  &#x28;SELECT location_id from location where name &#x3d; &#x27;Unknown Location&#x27;&#x29; as location_id,&#xa;  p.source_patient_id as identifier,&#xa;  1 as preferred,&#xa;  u.user_id as creator,&#xa;  p.patient_created_date as date_created&#xa;from&#xa;  hivmigration_patients p&#xa;left join&#xa;  hivmigration_users hu on p.patient_created_by &#x3d; hu.source_user_id&#xa;left join&#xa;  users u on u.uuid &#x3d; hu.user_uuid&#xa;order by p.source_patient_id&#x3b;&#xa;</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
@@ -158,7 +196,7 @@
     <lazy_conversion_active>N</lazy_conversion_active>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>160</xloc>
+      <xloc>128</xloc>
       <yloc>96</yloc>
       <draw>Y</draw>
       </GUI>
