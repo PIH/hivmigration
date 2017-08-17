@@ -161,7 +161,7 @@
       <mapping>
         <stream_name>date_created</stream_name>
         <field_name>date_created</field_name>
-        <field_format_ok>OK</field_format_ok>
+        <field_format_ok>TIMESTAMP</field_format_ok>
       </mapping>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
@@ -183,7 +183,7 @@
            <schema_name/>
            </partitioning>
     <connection>OpenMRS</connection>
-    <sql>-- Person Name&#xa;select&#xa;  p.person_id,&#xa;  uuid&#x28;&#x29; as uuid,&#xa;  concat&#x28;p.first_name, if&#x28;p.first_name2 is null, &#x27;&#x27;, concat&#x28;&#x27; &#x27;, p.first_name2&#x29;&#x29;&#x29; as given_name,&#xa;  p.last_name as family_name,&#xa;  1 as preferred,&#xa;  u.user_id as creator,&#xa;  patient_created_date as date_created&#xa;from&#xa;  hivmigration_patients p&#xa;left join&#xa;  hivmigration_users hu on p.patient_created_by &#x3d; hu.source_user_id&#xa;left join&#xa;  users u on u.uuid &#x3d; hu.user_uuid&#xa;order by p.source_patient_id&#x3b;</sql>
+    <sql>-- Person Name&#xa;select&#xa;  p.person_id,&#xa;  uuid&#x28;&#x29; as uuid,&#xa;  concat&#x28;p.first_name, if&#x28;p.first_name2 is null, &#x27;&#x27;, concat&#x28;&#x27; &#x27;, p.first_name2&#x29;&#x29;&#x29; as given_name,&#xa;  p.last_name as family_name,&#xa;  1 as preferred,&#xa;  u.user_id as creator,&#xa;  date_format&#x28;p.patient_created_date, &#x27;&#x25;Y-&#x25;m-&#x25;d &#x25;T&#x27;&#x29; as date_created&#xa;from&#xa;  hivmigration_patients p&#xa;left join&#xa;  hivmigration_users hu on p.patient_created_by &#x3d; hu.source_user_id&#xa;left join&#xa;  users u on u.uuid &#x3d; hu.user_uuid&#xa;order by p.source_patient_id&#x3b;</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
