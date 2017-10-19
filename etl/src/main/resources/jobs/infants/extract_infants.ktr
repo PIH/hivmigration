@@ -437,38 +437,50 @@
   <notepads>
   </notepads>
   <connection>
-    <name>openmrs_hiv</name>
-    <server>localhost</server>
+    <name>OpenMRS</name>
+    <server>&#x24;&#x7b;openmrs.db.host&#x7d;</server>
     <type>MYSQL</type>
     <access>Native</access>
-    <database>ci_may_2017</database>
-    <port>3306</port>
-    <username>openmrs</username>
-    <password>Encrypted 2be98afc86aa7f2e4cb16be75d09fbdc9</password>
+    <database>&#x24;&#x7b;openmrs.db.name&#x7d;</database>
+    <port>&#x24;&#x7b;openmrs.db.port&#x7d;</port>
+    <username>&#x24;&#x7b;openmrs.db.user&#x7d;</username>
+    <password>&#x24;&#x7b;openmrs.db.password&#x7d;</password>
     <servername/>
     <data_tablespace/>
     <index_tablespace/>
     <attributes>
-      <attribute><code>PORT_NUMBER</code><attribute>3306</attribute></attribute>
+      <attribute><code>EXTRA_OPTION_MYSQL.defaultFetchSize</code><attribute>500</attribute></attribute>
+      <attribute><code>EXTRA_OPTION_MYSQL.useCompression</code><attribute>true</attribute></attribute>
+      <attribute><code>EXTRA_OPTION_MYSQL.useCursorFetch</code><attribute>true</attribute></attribute>
+      <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
+      <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
+      <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;openmrs.db.port&#x7d;</attribute></attribute>
+      <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
+      <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
+      <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
+      <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
+      <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
+      <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
     </attributes>
   </connection>
   <connection>
-    <name>oracle-local</name>
-    <server>localhost</server>
+    <name>Oracle</name>
+    <server>&#x24;&#x7b;oracle.host&#x7d;</server>
     <type>ORACLE</type>
     <access>Native</access>
-    <database>xe</database>
-    <port>1521</port>
-    <username>hiv</username>
-    <password>Encrypted 2be98afc86aa7f2e4cb79ce10be9aa6cc</password>
+    <database>&#x24;&#x7b;oracle.sid&#x7d;</database>
+    <port>&#x24;&#x7b;oracle.port&#x7d;</port>
+    <username>&#x24;&#x7b;oracle.username&#x7d;</username>
+    <password>&#x24;&#x7b;oracle.password&#x7d;</password>
     <servername/>
-    <data_tablespace>hiv</data_tablespace>
-    <index_tablespace>hiv</index_tablespace>
+    <data_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</data_tablespace>
+    <index_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</index_tablespace>
     <attributes>
       <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>1521</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;oracle.port&#x7d;</attribute></attribute>
       <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
       <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
       <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
@@ -494,7 +506,7 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <connection>oracle-local</connection>
+    <connection>Oracle</connection>
     <sql>select		i.INFANT_ID as SOURCE_INFANT_ID, &#xa;            i.MOTHER_PATIENT_ID,&#xa;            i.INFANT_CODE, &#xa;            i.FIRST_NAME, i.LAST_NAME, &#xa;            upper&#x28;i.GENDER&#x29; as GENDER, &#xa;			i.BIRTH_DATE AS BIRTHDATE  			&#xa;from		HIV_INFANTS i&#xa;order by  	i.INFANT_ID</sql>
     <limit>0</limit>
     <lookup/>
@@ -526,7 +538,7 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <connection>openmrs_hiv</connection>
+    <connection>OpenMRS</connection>
     <schema/>
     <table>hivmigration_infants</table>
     <commit>1000</commit>

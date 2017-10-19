@@ -386,7 +386,7 @@
       <name>If table exists</name>
       <description/>
       <type>TABLE_EXISTS</type>
-      <tablename>hivmigration_patients</tablename>
+      <tablename>hivmigration_infants</tablename>
       <schemaname/>
       <connection>OpenMRS</connection>
       <parallel>N</parallel>

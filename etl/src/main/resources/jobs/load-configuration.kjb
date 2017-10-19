@@ -311,7 +311,7 @@
       <name>Load configuration</name>
       <description/>
       <type>SET_VARIABLES</type>
-      <replacevars>Y</replacevars>
+      <replacevars>N</replacevars>
       <filename>&#x24;&#x7b;HIV_MIGRATION_HOME&#x7d;&#x2f;migration.properties</filename>
       <file_variable_type>JVM</file_variable_type>
       <fields>

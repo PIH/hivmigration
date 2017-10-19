@@ -555,7 +555,7 @@
       <schema_name/>
     </partitioning>
     <connection>OpenMRS</connection>
-    <sql>-- Person Name&#xa;select&#xa;  i.person_id,&#xa;  uuid&#x28;&#x29; as uuid,&#xa;  i.first_name as given_name,&#xa;  i.last_name as family_name,&#xa;  1 as preferred,&#xa;  1 as creator,&#xa;  current_timestamp&#x28;&#x29; as date_created&#xa;from&#xa;  hivmigration_infants i&#xa;order by i.source_infant_id&#x3b;</sql>
+    <sql>-- Person Name&#xa;select&#xa;  i.person_id,&#xa;  uuid&#x28;&#x29; as uuid,&#xa;  i.first_name as given_name,&#xa;  i.last_name as family_name,&#xa;  1 as preferred,&#xa;  1 as creator,&#xa;  date_format&#x28;curdate&#x28;&#x29;, &#x27;&#x25;Y-&#x25;m-&#x25;d &#x25;T&#x27;&#x29; as date_created&#xa;from&#xa;  hivmigration_infants i&#xa;order by i.source_infant_id&#x3b;</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>

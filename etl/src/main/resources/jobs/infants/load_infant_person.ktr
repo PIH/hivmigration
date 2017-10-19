@@ -545,7 +545,7 @@
       <schema_name/>
     </partitioning>
     <connection>OpenMRS</connection>
-    <sql>-- Person HIV Infants&#xa;select&#xa;  i.person_id,&#xa;  i.person_uuid as uuid,&#xa;  i.gender,&#xa;  i.birthdate,&#xa;   now&#x28;&#x29; as date_created&#xa;from&#xa;  hivmigration_infants i &#xa;order by i.source_infant_id&#x3b;&#xa;</sql>
+    <sql>-- Person HIV Infants&#xa;select&#xa;  i.person_id,&#xa;  i.person_uuid as uuid,&#xa;  i.gender,&#xa;  i.birthdate,&#xa;  date_format&#x28;curdate&#x28;&#x29;, &#x27;&#x25;Y-&#x25;m-&#x25;d &#x25;T&#x27;&#x29; as date_created&#xa;from&#xa;  hivmigration_infants i &#xa;order by i.source_infant_id&#x3b;&#xa;</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
