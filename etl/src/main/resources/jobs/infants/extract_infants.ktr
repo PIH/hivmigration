@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <transformation>
   <info>
-    <name>users-extract</name>
+    <name>infants-extract</name>
     <description/>
     <extended_description/>
     <trans_version/>
@@ -437,50 +437,38 @@
   <notepads>
   </notepads>
   <connection>
-    <name>OpenMRS</name>
-    <server>&#x24;&#x7b;openmrs.db.host&#x7d;</server>
+    <name>openmrs_hiv</name>
+    <server>localhost</server>
     <type>MYSQL</type>
     <access>Native</access>
-    <database>&#x24;&#x7b;openmrs.db.name&#x7d;</database>
-    <port>&#x24;&#x7b;openmrs.db.port&#x7d;</port>
-    <username>&#x24;&#x7b;openmrs.db.user&#x7d;</username>
-    <password>&#x24;&#x7b;openmrs.db.password&#x7d;</password>
+    <database>ci_may_2017</database>
+    <port>3306</port>
+    <username>openmrs</username>
+    <password>Encrypted 2be98afc86aa7f2e4cb16be75d09fbdc9</password>
     <servername/>
     <data_tablespace/>
     <index_tablespace/>
     <attributes>
-      <attribute><code>EXTRA_OPTION_MYSQL.defaultFetchSize</code><attribute>500</attribute></attribute>
-      <attribute><code>EXTRA_OPTION_MYSQL.useCompression</code><attribute>true</attribute></attribute>
-      <attribute><code>EXTRA_OPTION_MYSQL.useCursorFetch</code><attribute>true</attribute></attribute>
-      <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
-      <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
-      <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;openmrs.db.port&#x7d;</attribute></attribute>
-      <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
-      <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
-      <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
-      <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
-      <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
-      <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>3306</attribute></attribute>
     </attributes>
   </connection>
   <connection>
-    <name>Oracle</name>
-    <server>&#x24;&#x7b;oracle.host&#x7d;</server>
+    <name>oracle-local</name>
+    <server>localhost</server>
     <type>ORACLE</type>
     <access>Native</access>
-    <database>&#x24;&#x7b;oracle.sid&#x7d;</database>
-    <port>&#x24;&#x7b;oracle.port&#x7d;</port>
-    <username>&#x24;&#x7b;oracle.username&#x7d;</username>
-    <password>&#x24;&#x7b;oracle.password&#x7d;</password>
+    <database>xe</database>
+    <port>1521</port>
+    <username>hiv</username>
+    <password>Encrypted 2be98afc86aa7f2e4cb79ce10be9aa6cc</password>
     <servername/>
-    <data_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</data_tablespace>
-    <index_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</index_tablespace>
+    <data_tablespace>hiv</data_tablespace>
+    <index_tablespace>hiv</index_tablespace>
     <attributes>
       <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;oracle.port&#x7d;</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>1521</attribute></attribute>
       <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
       <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
       <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
@@ -490,13 +478,13 @@
   </connection>
   <order>
     <hop>
-      <from>Extract Users</from>
-      <to>Write to hivmigration_users</to>
+      <from>Extract Infants</from>
+      <to>Write to hivmigration_infants</to>
       <enabled>Y</enabled>
     </hop>
   </order>
   <step>
-    <name>Extract Users</name>
+    <name>Extract Infants</name>
     <type>TableInput</type>
     <description/>
     <distribute>Y</distribute>
@@ -506,8 +494,8 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <connection>Oracle</connection>
-    <sql>&#x2f;&#x2a;&#x2a;&#xa; &#x2a; User data in contained within the users, parties, and persons tables.  We are choosing not to include the following&#x3a;&#xa; &#x2a; 	url, screen_name, priv_name, priv_email, email_verified_p, email_bouncing_p, no_alerts_until, last_visit, second_to_last_visit, n_sessions, password_question, password_answer.&#xa; &#x2a; 	We considered including and migrating Password question and answer were but ultimately decided against it since they are not&#xa; &#x2a; 	encrypted and aren&#x27;t really needed for migration &#x28;users can regenerate their own in the new system&#x29;&#xa; &#x2a;&#x2f;&#xa;select	  u.USER_ID as SOURCE_USER_ID, p.EMAIL, n.FIRST_NAMES as FIRST_NAME, n.LAST_NAME, u.PASSWORD, u.SALT, mr.MEMBER_STATE&#xa;from	  users u, parties p, persons n, acs_rels ar, membership_rels mr&#xa;where	  u.USER_ID &#x3d; p.PARTY_ID&#xa;and		  u.USER_ID &#x3d; n.PERSON_ID&#xa;and       u.USER_ID &#x3d; ar.OBJECT_ID_TWO&#xa;and       ar.REL_ID &#x3d; mr.REL_ID&#xa;and       ar.REL_TYPE &#x3d; &#x27;membership_rel&#x27;&#xa;and       mr.MEMBER_STATE IS NOT NULL&#xa;order by  u.user_id</sql>
+    <connection>oracle-local</connection>
+    <sql>select		i.INFANT_ID as SOURCE_INFANT_ID, &#xa;            i.MOTHER_PATIENT_ID,&#xa;            i.INFANT_CODE, &#xa;            i.FIRST_NAME, i.LAST_NAME, &#xa;            upper&#x28;i.GENDER&#x29; as GENDER, &#xa;			i.BIRTH_DATE AS BIRTHDATE  			&#xa;from		HIV_INFANTS i&#xa;order by  	i.INFANT_ID</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
@@ -528,7 +516,7 @@
     </step>
 
   <step>
-    <name>Write to hivmigration_users</name>
+    <name>Write to hivmigration_infants</name>
     <type>TableOutput</type>
     <description/>
     <distribute>Y</distribute>
@@ -538,9 +526,9 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <connection>OpenMRS</connection>
+    <connection>openmrs_hiv</connection>
     <schema/>
-    <table>hivmigration_users</table>
+    <table>hivmigration_infants</table>
     <commit>1000</commit>
     <truncate>N</truncate>
     <ignore_errors>N</ignore_errors>
@@ -557,12 +545,16 @@
     <return_field/>
     <fields>
         <field>
-          <column_name>SOURCE_USER_ID</column_name>
-          <stream_name>SOURCE_USER_ID</stream_name>
+          <column_name>SOURCE_INFANT_ID</column_name>
+          <stream_name>SOURCE_INFANT_ID</stream_name>
         </field>
         <field>
-          <column_name>EMAIL</column_name>
-          <stream_name>EMAIL</stream_name>
+          <column_name>MOTHER_PATIENT_ID</column_name>
+          <stream_name>MOTHER_PATIENT_ID</stream_name>
+        </field>
+        <field>
+          <column_name>INFANT_CODE</column_name>
+          <stream_name>INFANT_CODE</stream_name>
         </field>
         <field>
           <column_name>FIRST_NAME</column_name>
@@ -573,16 +565,12 @@
           <stream_name>LAST_NAME</stream_name>
         </field>
         <field>
-          <column_name>PASSWORD</column_name>
-          <stream_name>PASSWORD</stream_name>
+          <column_name>GENDER</column_name>
+          <stream_name>GENDER</stream_name>
         </field>
         <field>
-          <column_name>SALT</column_name>
-          <stream_name>SALT</stream_name>
-        </field>
-        <field>
-          <column_name>MEMBER_STATE</column_name>
-          <stream_name>MEMBER_STATE</stream_name>
+          <column_name>BIRTHDATE</column_name>
+          <stream_name>BIRTHDATE</stream_name>
         </field>
     </fields>
     <cluster_schema/>

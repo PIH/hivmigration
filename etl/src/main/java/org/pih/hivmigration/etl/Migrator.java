@@ -159,7 +159,7 @@ public class Migrator {
                 for (Resource r : resources) {
                     if (r.exists() && r.isReadable() && r.contentLength() > 0) {
                         String urlPath = r.getURL().getPath();
-                        String prefixToLocate = "!/" + fromPath;
+                        String prefixToLocate = "/" + fromPath;
                         int startIndex = urlPath.indexOf(prefixToLocate);
                         if (startIndex > 0) {
                             String dirPath = urlPath.substring(startIndex+prefixToLocate.length());
