@@ -8,7 +8,7 @@
 .settings/*
 /.settings
 
-target/*
+target/
 common/.classpath
 common/.project
 common/.settings/*
