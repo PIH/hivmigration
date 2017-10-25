@@ -437,65 +437,66 @@
   <notepads>
   </notepads>
   <connection>
-      <name>OpenMRS</name>
-      <server>&#x24;&#x7b;mysql.host&#x7d;</server>
-      <type>MYSQL</type>
-      <access>Native</access>
-      <database>&#x24;&#x7b;mysql.database&#x7d;</database>
-      <port>&#x24;&#x7b;mysql.port&#x7d;</port>
-      <username>&#x24;&#x7b;mysql.username&#x7d;</username>
-      <password>&#x24;&#x7b;mysql.password&#x7d;</password>
-      <servername/>
-      <data_tablespace/>
-      <index_tablespace/>
-      <attributes>
-        <attribute><code>EXTRA_OPTION_MYSQL.defaultFetchSize</code><attribute>500</attribute></attribute>
-        <attribute><code>EXTRA_OPTION_MYSQL.useCursorFetch</code><attribute>true</attribute></attribute>
-        <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
-        <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
-        <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-        <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;mysql.port&#x7d;</attribute></attribute>
-        <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
-        <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
-        <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
-        <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
-        <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
-        <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
-      </attributes>
-    </connection>
-    <connection>
-      <name>Oracle</name>
-      <server>&#x24;&#x7b;oracle.host&#x7d;</server>
-      <type>ORACLE</type>
-      <access>Native</access>
-      <database>&#x24;&#x7b;oracle.sid&#x7d;</database>
-      <port>&#x24;&#x7b;oracle.port&#x7d;</port>
-      <username>&#x24;&#x7b;oracle.username&#x7d;</username>
-      <password>&#x24;&#x7b;oracle.password&#x7d;</password>
-      <servername/>
-      <data_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</data_tablespace>
-      <index_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</index_tablespace>
-      <attributes>
-        <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
-        <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
-        <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-        <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;oracle.port&#x7d;</attribute></attribute>
-        <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
-        <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
-        <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
-        <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
-        <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
-      </attributes>
-    </connection>
+    <name>OpenMRS</name>
+    <server>&#x24;&#x7b;openmrs.db.host&#x7d;</server>
+    <type>MYSQL</type>
+    <access>Native</access>
+    <database>&#x24;&#x7b;openmrs.db.name&#x7d;</database>
+    <port>&#x24;&#x7b;openmrs.db.port&#x7d;</port>
+    <username>&#x24;&#x7b;openmrs.db.user&#x7d;</username>
+    <password>&#x24;&#x7b;openmrs.db.password&#x7d;</password>
+    <servername/>
+    <data_tablespace/>
+    <index_tablespace/>
+    <attributes>
+      <attribute><code>EXTRA_OPTION_MYSQL.defaultFetchSize</code><attribute>500</attribute></attribute>
+      <attribute><code>EXTRA_OPTION_MYSQL.useCompression</code><attribute>true</attribute></attribute>
+      <attribute><code>EXTRA_OPTION_MYSQL.useCursorFetch</code><attribute>true</attribute></attribute>
+      <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
+      <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
+      <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;openmrs.db.port&#x7d;</attribute></attribute>
+      <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
+      <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
+      <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
+      <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
+      <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
+      <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
+    </attributes>
+  </connection>
+  <connection>
+    <name>Oracle</name>
+    <server>&#x24;&#x7b;oracle.host&#x7d;</server>
+    <type>ORACLE</type>
+    <access>Native</access>
+    <database>&#x24;&#x7b;oracle.sid&#x7d;</database>
+    <port>&#x24;&#x7b;oracle.port&#x7d;</port>
+    <username>&#x24;&#x7b;oracle.username&#x7d;</username>
+    <password>&#x24;&#x7b;oracle.password&#x7d;</password>
+    <servername/>
+    <data_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</data_tablespace>
+    <index_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</index_tablespace>
+    <attributes>
+      <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
+      <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
+      <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;oracle.port&#x7d;</attribute></attribute>
+      <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
+      <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
+      <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
+      <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
+      <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
+    </attributes>
+  </connection>
   <order>
     <hop>
-      <from>Extract Patients</from>
-      <to>Write to hivmigration_patients</to>
+      <from>Extract Program Data</from>
+      <to>Write to hivmigration_program</to>
       <enabled>Y</enabled>
     </hop>
   </order>
   <step>
-    <name>Extract Patients</name>
+    <name>Extract Program Data</name>
     <type>TableInput</type>
     <description/>
     <distribute>Y</distribute>
@@ -506,7 +507,7 @@
       <schema_name/>
     </partitioning>
     <connection>Oracle</connection>
-    <sql>select		d.PATIENT_ID as SOURCE_PATIENT_ID, d.PIH_ID, d.NIF_ID, d.NATIONAL_ID, d.FIRST_NAME, d.FIRST_NAME2, d.LAST_NAME, upper&#x28;d.GENDER&#x29; as GENDER, &#xa;			d.BIRTH_DATE AS BIRTHDATE, decode&#x28;d.BIRTH_DATE_EXACT_P, &#x27;f&#x27;, 1, &#x27;t&#x27;, 0, null&#x29; as BIRTHDATE_ESTIMATED, d.PHONE_NUMBER, &#xa;			d.BIRTH_PLACE, d.AGENT as ACCOMPAGNATEUR_NAME, d.PATIENT_CREATED_BY, d.PATIENT_CREATED_DATE&#xa;from		HIV_DEMOGRAPHICS d&#xa;order by  	d.PATIENT_ID</sql>
+    <sql>select		d.PATIENT_ID as SOURCE_PATIENT_ID, d.FIRST_NAME, d.LAST_NAME, upper&#x28;d.GENDER&#x29; as GENDER, &#xa;			d.BIRTH_DATE AS BIRTHDATE,  &#xa;			d.HEALTH_CENTER,&#xa;            d.TREATMENT_STATUS,&#xa;            d.TREATMENT_STATUS_DATE,&#xa;            d.TREATMENT_START_DATE,&#xa;            d.STARTING_HEALTH_CENTER,&#xa;            d.HEALTH_CENTER_TRANSFER_DATE                     &#xa;from		HIV_DEMOGRAPHICS_REAL d&#xa;order by  	d.PATIENT_ID</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
@@ -527,7 +528,7 @@
     </step>
 
   <step>
-    <name>Write to hivmigration_patients</name>
+    <name>Write to hivmigration_program</name>
     <type>TableOutput</type>
     <description/>
     <distribute>Y</distribute>
