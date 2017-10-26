@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <transformation>
   <info>
-    <name>patients-extract</name>
+    <name>programs-extract</name>
     <description/>
     <extended_description/>
     <trans_version/>
@@ -11,395 +11,34 @@
     <parameters>
     </parameters>
     <log>
-      <trans-log-table>
-        <connection/>
-        <schema/>
-        <table/>
-        <size_limit_lines/>
-        <interval/>
-        <timeout_days/>
-        <field>
-          <id>ID_BATCH</id>
-          <enabled>Y</enabled>
-          <name>ID_BATCH</name>
-        </field>
-        <field>
-          <id>CHANNEL_ID</id>
-          <enabled>Y</enabled>
-          <name>CHANNEL_ID</name>
-        </field>
-        <field>
-          <id>TRANSNAME</id>
-          <enabled>Y</enabled>
-          <name>TRANSNAME</name>
-        </field>
-        <field>
-          <id>STATUS</id>
-          <enabled>Y</enabled>
-          <name>STATUS</name>
-        </field>
-        <field>
-          <id>LINES_READ</id>
-          <enabled>Y</enabled>
-          <name>LINES_READ</name>
-          <subject/>
-        </field>
-        <field>
-          <id>LINES_WRITTEN</id>
-          <enabled>Y</enabled>
-          <name>LINES_WRITTEN</name>
-          <subject/>
-        </field>
-        <field>
-          <id>LINES_UPDATED</id>
-          <enabled>Y</enabled>
-          <name>LINES_UPDATED</name>
-          <subject/>
-        </field>
-        <field>
-          <id>LINES_INPUT</id>
-          <enabled>Y</enabled>
-          <name>LINES_INPUT</name>
-          <subject/>
-        </field>
-        <field>
-          <id>LINES_OUTPUT</id>
-          <enabled>Y</enabled>
-          <name>LINES_OUTPUT</name>
-          <subject/>
-        </field>
-        <field>
-          <id>LINES_REJECTED</id>
-          <enabled>Y</enabled>
-          <name>LINES_REJECTED</name>
-          <subject/>
-        </field>
-        <field>
-          <id>ERRORS</id>
-          <enabled>Y</enabled>
-          <name>ERRORS</name>
-        </field>
-        <field>
-          <id>STARTDATE</id>
-          <enabled>Y</enabled>
-          <name>STARTDATE</name>
-        </field>
-        <field>
-          <id>ENDDATE</id>
-          <enabled>Y</enabled>
-          <name>ENDDATE</name>
-        </field>
-        <field>
-          <id>LOGDATE</id>
-          <enabled>Y</enabled>
-          <name>LOGDATE</name>
-        </field>
-        <field>
-          <id>DEPDATE</id>
-          <enabled>Y</enabled>
-          <name>DEPDATE</name>
-        </field>
-        <field>
-          <id>REPLAYDATE</id>
-          <enabled>Y</enabled>
-          <name>REPLAYDATE</name>
-        </field>
-        <field>
-          <id>LOG_FIELD</id>
-          <enabled>Y</enabled>
-          <name>LOG_FIELD</name>
-        </field>
-        <field>
-          <id>EXECUTING_SERVER</id>
-          <enabled>N</enabled>
-          <name>EXECUTING_SERVER</name>
-        </field>
-        <field>
-          <id>EXECUTING_USER</id>
-          <enabled>N</enabled>
-          <name>EXECUTING_USER</name>
-        </field>
-        <field>
-          <id>CLIENT</id>
-          <enabled>N</enabled>
-          <name>CLIENT</name>
-        </field>
-      </trans-log-table>
-      <perf-log-table>
-        <connection/>
-        <schema/>
-        <table/>
-        <interval/>
-        <timeout_days/>
-        <field>
-          <id>ID_BATCH</id>
-          <enabled>Y</enabled>
-          <name>ID_BATCH</name>
-        </field>
-        <field>
-          <id>SEQ_NR</id>
-          <enabled>Y</enabled>
-          <name>SEQ_NR</name>
-        </field>
-        <field>
-          <id>LOGDATE</id>
-          <enabled>Y</enabled>
-          <name>LOGDATE</name>
-        </field>
-        <field>
-          <id>TRANSNAME</id>
-          <enabled>Y</enabled>
-          <name>TRANSNAME</name>
-        </field>
-        <field>
-          <id>STEPNAME</id>
-          <enabled>Y</enabled>
-          <name>STEPNAME</name>
-        </field>
-        <field>
-          <id>STEP_COPY</id>
-          <enabled>Y</enabled>
-          <name>STEP_COPY</name>
-        </field>
-        <field>
-          <id>LINES_READ</id>
-          <enabled>Y</enabled>
-          <name>LINES_READ</name>
-        </field>
-        <field>
-          <id>LINES_WRITTEN</id>
-          <enabled>Y</enabled>
-          <name>LINES_WRITTEN</name>
-        </field>
-        <field>
-          <id>LINES_UPDATED</id>
-          <enabled>Y</enabled>
-          <name>LINES_UPDATED</name>
-        </field>
-        <field>
-          <id>LINES_INPUT</id>
-          <enabled>Y</enabled>
-          <name>LINES_INPUT</name>
-        </field>
-        <field>
-          <id>LINES_OUTPUT</id>
-          <enabled>Y</enabled>
-          <name>LINES_OUTPUT</name>
-        </field>
-        <field>
-          <id>LINES_REJECTED</id>
-          <enabled>Y</enabled>
-          <name>LINES_REJECTED</name>
-        </field>
-        <field>
-          <id>ERRORS</id>
-          <enabled>Y</enabled>
-          <name>ERRORS</name>
-        </field>
-        <field>
-          <id>INPUT_BUFFER_ROWS</id>
-          <enabled>Y</enabled>
-          <name>INPUT_BUFFER_ROWS</name>
-        </field>
-        <field>
-          <id>OUTPUT_BUFFER_ROWS</id>
-          <enabled>Y</enabled>
-          <name>OUTPUT_BUFFER_ROWS</name>
-        </field>
-      </perf-log-table>
-      <channel-log-table>
-        <connection/>
-        <schema/>
-        <table/>
-        <timeout_days/>
-        <field>
-          <id>ID_BATCH</id>
-          <enabled>Y</enabled>
-          <name>ID_BATCH</name>
-        </field>
-        <field>
-          <id>CHANNEL_ID</id>
-          <enabled>Y</enabled>
-          <name>CHANNEL_ID</name>
-        </field>
-        <field>
-          <id>LOG_DATE</id>
-          <enabled>Y</enabled>
-          <name>LOG_DATE</name>
-        </field>
-        <field>
-          <id>LOGGING_OBJECT_TYPE</id>
-          <enabled>Y</enabled>
-          <name>LOGGING_OBJECT_TYPE</name>
-        </field>
-        <field>
-          <id>OBJECT_NAME</id>
-          <enabled>Y</enabled>
-          <name>OBJECT_NAME</name>
-        </field>
-        <field>
-          <id>OBJECT_COPY</id>
-          <enabled>Y</enabled>
-          <name>OBJECT_COPY</name>
-        </field>
-        <field>
-          <id>REPOSITORY_DIRECTORY</id>
-          <enabled>Y</enabled>
-          <name>REPOSITORY_DIRECTORY</name>
-        </field>
-        <field>
-          <id>FILENAME</id>
-          <enabled>Y</enabled>
-          <name>FILENAME</name>
-        </field>
-        <field>
-          <id>OBJECT_ID</id>
-          <enabled>Y</enabled>
-          <name>OBJECT_ID</name>
-        </field>
-        <field>
-          <id>OBJECT_REVISION</id>
-          <enabled>Y</enabled>
-          <name>OBJECT_REVISION</name>
-        </field>
-        <field>
-          <id>PARENT_CHANNEL_ID</id>
-          <enabled>Y</enabled>
-          <name>PARENT_CHANNEL_ID</name>
-        </field>
-        <field>
-          <id>ROOT_CHANNEL_ID</id>
-          <enabled>Y</enabled>
-          <name>ROOT_CHANNEL_ID</name>
-        </field>
-      </channel-log-table>
-      <step-log-table>
-        <connection/>
-        <schema/>
-        <table/>
-        <timeout_days/>
-        <field>
-          <id>ID_BATCH</id>
-          <enabled>Y</enabled>
-          <name>ID_BATCH</name>
-        </field>
-        <field>
-          <id>CHANNEL_ID</id>
-          <enabled>Y</enabled>
-          <name>CHANNEL_ID</name>
-        </field>
-        <field>
-          <id>LOG_DATE</id>
-          <enabled>Y</enabled>
-          <name>LOG_DATE</name>
-        </field>
-        <field>
-          <id>TRANSNAME</id>
-          <enabled>Y</enabled>
-          <name>TRANSNAME</name>
-        </field>
-        <field>
-          <id>STEPNAME</id>
-          <enabled>Y</enabled>
-          <name>STEPNAME</name>
-        </field>
-        <field>
-          <id>STEP_COPY</id>
-          <enabled>Y</enabled>
-          <name>STEP_COPY</name>
-        </field>
-        <field>
-          <id>LINES_READ</id>
-          <enabled>Y</enabled>
-          <name>LINES_READ</name>
-        </field>
-        <field>
-          <id>LINES_WRITTEN</id>
-          <enabled>Y</enabled>
-          <name>LINES_WRITTEN</name>
-        </field>
-        <field>
-          <id>LINES_UPDATED</id>
-          <enabled>Y</enabled>
-          <name>LINES_UPDATED</name>
-        </field>
-        <field>
-          <id>LINES_INPUT</id>
-          <enabled>Y</enabled>
-          <name>LINES_INPUT</name>
-        </field>
-        <field>
-          <id>LINES_OUTPUT</id>
-          <enabled>Y</enabled>
-          <name>LINES_OUTPUT</name>
-        </field>
-        <field>
-          <id>LINES_REJECTED</id>
-          <enabled>Y</enabled>
-          <name>LINES_REJECTED</name>
-        </field>
-        <field>
-          <id>ERRORS</id>
-          <enabled>Y</enabled>
-          <name>ERRORS</name>
-        </field>
-        <field>
-          <id>LOG_FIELD</id>
-          <enabled>N</enabled>
-          <name>LOG_FIELD</name>
-        </field>
-      </step-log-table>
-      <metrics-log-table>
-        <connection/>
-        <schema/>
-        <table/>
-        <timeout_days/>
-        <field>
-          <id>ID_BATCH</id>
-          <enabled>Y</enabled>
-          <name>ID_BATCH</name>
-        </field>
-        <field>
-          <id>CHANNEL_ID</id>
-          <enabled>Y</enabled>
-          <name>CHANNEL_ID</name>
-        </field>
-        <field>
-          <id>LOG_DATE</id>
-          <enabled>Y</enabled>
-          <name>LOG_DATE</name>
-        </field>
-        <field>
-          <id>METRICS_DATE</id>
-          <enabled>Y</enabled>
-          <name>METRICS_DATE</name>
-        </field>
-        <field>
-          <id>METRICS_CODE</id>
-          <enabled>Y</enabled>
-          <name>METRICS_CODE</name>
-        </field>
-        <field>
-          <id>METRICS_DESCRIPTION</id>
-          <enabled>Y</enabled>
-          <name>METRICS_DESCRIPTION</name>
-        </field>
-        <field>
-          <id>METRICS_SUBJECT</id>
-          <enabled>Y</enabled>
-          <name>METRICS_SUBJECT</name>
-        </field>
-        <field>
-          <id>METRICS_TYPE</id>
-          <enabled>Y</enabled>
-          <name>METRICS_TYPE</name>
-        </field>
-        <field>
-          <id>METRICS_VALUE</id>
-          <enabled>Y</enabled>
-          <name>METRICS_VALUE</name>
-        </field>
-      </metrics-log-table>
+<trans-log-table><connection/>
+<schema/>
+<table/>
+<size_limit_lines/>
+<interval/>
+<timeout_days/>
+<field><id>ID_BATCH</id><enabled>Y</enabled><name>ID_BATCH</name></field><field><id>CHANNEL_ID</id><enabled>Y</enabled><name>CHANNEL_ID</name></field><field><id>TRANSNAME</id><enabled>Y</enabled><name>TRANSNAME</name></field><field><id>STATUS</id><enabled>Y</enabled><name>STATUS</name></field><field><id>LINES_READ</id><enabled>Y</enabled><name>LINES_READ</name><subject/></field><field><id>LINES_WRITTEN</id><enabled>Y</enabled><name>LINES_WRITTEN</name><subject/></field><field><id>LINES_UPDATED</id><enabled>Y</enabled><name>LINES_UPDATED</name><subject/></field><field><id>LINES_INPUT</id><enabled>Y</enabled><name>LINES_INPUT</name><subject/></field><field><id>LINES_OUTPUT</id><enabled>Y</enabled><name>LINES_OUTPUT</name><subject/></field><field><id>LINES_REJECTED</id><enabled>Y</enabled><name>LINES_REJECTED</name><subject/></field><field><id>ERRORS</id><enabled>Y</enabled><name>ERRORS</name></field><field><id>STARTDATE</id><enabled>Y</enabled><name>STARTDATE</name></field><field><id>ENDDATE</id><enabled>Y</enabled><name>ENDDATE</name></field><field><id>LOGDATE</id><enabled>Y</enabled><name>LOGDATE</name></field><field><id>DEPDATE</id><enabled>Y</enabled><name>DEPDATE</name></field><field><id>REPLAYDATE</id><enabled>Y</enabled><name>REPLAYDATE</name></field><field><id>LOG_FIELD</id><enabled>Y</enabled><name>LOG_FIELD</name></field><field><id>EXECUTING_SERVER</id><enabled>N</enabled><name>EXECUTING_SERVER</name></field><field><id>EXECUTING_USER</id><enabled>N</enabled><name>EXECUTING_USER</name></field><field><id>CLIENT</id><enabled>N</enabled><name>CLIENT</name></field></trans-log-table>
+<perf-log-table><connection/>
+<schema/>
+<table/>
+<interval/>
+<timeout_days/>
+<field><id>ID_BATCH</id><enabled>Y</enabled><name>ID_BATCH</name></field><field><id>SEQ_NR</id><enabled>Y</enabled><name>SEQ_NR</name></field><field><id>LOGDATE</id><enabled>Y</enabled><name>LOGDATE</name></field><field><id>TRANSNAME</id><enabled>Y</enabled><name>TRANSNAME</name></field><field><id>STEPNAME</id><enabled>Y</enabled><name>STEPNAME</name></field><field><id>STEP_COPY</id><enabled>Y</enabled><name>STEP_COPY</name></field><field><id>LINES_READ</id><enabled>Y</enabled><name>LINES_READ</name></field><field><id>LINES_WRITTEN</id><enabled>Y</enabled><name>LINES_WRITTEN</name></field><field><id>LINES_UPDATED</id><enabled>Y</enabled><name>LINES_UPDATED</name></field><field><id>LINES_INPUT</id><enabled>Y</enabled><name>LINES_INPUT</name></field><field><id>LINES_OUTPUT</id><enabled>Y</enabled><name>LINES_OUTPUT</name></field><field><id>LINES_REJECTED</id><enabled>Y</enabled><name>LINES_REJECTED</name></field><field><id>ERRORS</id><enabled>Y</enabled><name>ERRORS</name></field><field><id>INPUT_BUFFER_ROWS</id><enabled>Y</enabled><name>INPUT_BUFFER_ROWS</name></field><field><id>OUTPUT_BUFFER_ROWS</id><enabled>Y</enabled><name>OUTPUT_BUFFER_ROWS</name></field></perf-log-table>
+<channel-log-table><connection/>
+<schema/>
+<table/>
+<timeout_days/>
+<field><id>ID_BATCH</id><enabled>Y</enabled><name>ID_BATCH</name></field><field><id>CHANNEL_ID</id><enabled>Y</enabled><name>CHANNEL_ID</name></field><field><id>LOG_DATE</id><enabled>Y</enabled><name>LOG_DATE</name></field><field><id>LOGGING_OBJECT_TYPE</id><enabled>Y</enabled><name>LOGGING_OBJECT_TYPE</name></field><field><id>OBJECT_NAME</id><enabled>Y</enabled><name>OBJECT_NAME</name></field><field><id>OBJECT_COPY</id><enabled>Y</enabled><name>OBJECT_COPY</name></field><field><id>REPOSITORY_DIRECTORY</id><enabled>Y</enabled><name>REPOSITORY_DIRECTORY</name></field><field><id>FILENAME</id><enabled>Y</enabled><name>FILENAME</name></field><field><id>OBJECT_ID</id><enabled>Y</enabled><name>OBJECT_ID</name></field><field><id>OBJECT_REVISION</id><enabled>Y</enabled><name>OBJECT_REVISION</name></field><field><id>PARENT_CHANNEL_ID</id><enabled>Y</enabled><name>PARENT_CHANNEL_ID</name></field><field><id>ROOT_CHANNEL_ID</id><enabled>Y</enabled><name>ROOT_CHANNEL_ID</name></field></channel-log-table>
+<step-log-table><connection/>
+<schema/>
+<table/>
+<timeout_days/>
+<field><id>ID_BATCH</id><enabled>Y</enabled><name>ID_BATCH</name></field><field><id>CHANNEL_ID</id><enabled>Y</enabled><name>CHANNEL_ID</name></field><field><id>LOG_DATE</id><enabled>Y</enabled><name>LOG_DATE</name></field><field><id>TRANSNAME</id><enabled>Y</enabled><name>TRANSNAME</name></field><field><id>STEPNAME</id><enabled>Y</enabled><name>STEPNAME</name></field><field><id>STEP_COPY</id><enabled>Y</enabled><name>STEP_COPY</name></field><field><id>LINES_READ</id><enabled>Y</enabled><name>LINES_READ</name></field><field><id>LINES_WRITTEN</id><enabled>Y</enabled><name>LINES_WRITTEN</name></field><field><id>LINES_UPDATED</id><enabled>Y</enabled><name>LINES_UPDATED</name></field><field><id>LINES_INPUT</id><enabled>Y</enabled><name>LINES_INPUT</name></field><field><id>LINES_OUTPUT</id><enabled>Y</enabled><name>LINES_OUTPUT</name></field><field><id>LINES_REJECTED</id><enabled>Y</enabled><name>LINES_REJECTED</name></field><field><id>ERRORS</id><enabled>Y</enabled><name>ERRORS</name></field><field><id>LOG_FIELD</id><enabled>N</enabled><name>LOG_FIELD</name></field></step-log-table>
+<metrics-log-table><connection/>
+<schema/>
+<table/>
+<timeout_days/>
+<field><id>ID_BATCH</id><enabled>Y</enabled><name>ID_BATCH</name></field><field><id>CHANNEL_ID</id><enabled>Y</enabled><name>CHANNEL_ID</name></field><field><id>LOG_DATE</id><enabled>Y</enabled><name>LOG_DATE</name></field><field><id>METRICS_DATE</id><enabled>Y</enabled><name>METRICS_DATE</name></field><field><id>METRICS_CODE</id><enabled>Y</enabled><name>METRICS_CODE</name></field><field><id>METRICS_DESCRIPTION</id><enabled>Y</enabled><name>METRICS_DESCRIPTION</name></field><field><id>METRICS_SUBJECT</id><enabled>Y</enabled><name>METRICS_SUBJECT</name></field><field><id>METRICS_TYPE</id><enabled>Y</enabled><name>METRICS_TYPE</name></field><field><id>METRICS_VALUE</id><enabled>Y</enabled><name>METRICS_VALUE</name></field></metrics-log-table>
     </log>
     <maxdate>
       <connection/>
@@ -427,10 +66,10 @@
     </slaveservers>
     <clusterschemas>
     </clusterschemas>
-    <created_user>-</created_user>
-    <created_date>2017&#x2f;05&#x2f;05 16&#x3a;39&#x3a;13.783</created_date>
-    <modified_user>-</modified_user>
-    <modified_date>2017&#x2f;05&#x2f;05 16&#x3a;39&#x3a;13.783</modified_date>
+  <created_user>-</created_user>
+  <created_date>2017&#x2f;05&#x2f;05 16&#x3a;39&#x3a;13.783</created_date>
+  <modified_user>-</modified_user>
+  <modified_date>2017&#x2f;05&#x2f;05 16&#x3a;39&#x3a;13.783</modified_date>
     <key_for_session_key>H4sIAAAAAAAAAAMAAAAAAAAAAAA&#x3d;</key_for_session_key>
     <is_key_private>N</is_key_private>
   </info>
@@ -438,13 +77,13 @@
   </notepads>
   <connection>
     <name>OpenMRS</name>
-    <server>&#x24;&#x7b;openmrs.db.host&#x7d;</server>
+    <server>&#x24;&#x7b;mysql.host&#x7d;</server>
     <type>MYSQL</type>
     <access>Native</access>
-    <database>&#x24;&#x7b;openmrs.db.name&#x7d;</database>
-    <port>&#x24;&#x7b;openmrs.db.port&#x7d;</port>
-    <username>&#x24;&#x7b;openmrs.db.user&#x7d;</username>
-    <password>&#x24;&#x7b;openmrs.db.password&#x7d;</password>
+    <database>&#x24;&#x7b;mysql.database&#x7d;</database>
+    <port>&#x24;&#x7b;mysql.port&#x7d;</port>
+    <username>&#x24;&#x7b;mysql.username&#x7d;</username>
+    <password>&#x24;&#x7b;mysql.password&#x7d;</password>
     <servername/>
     <data_tablespace/>
     <index_tablespace/>
@@ -455,7 +94,7 @@
       <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;openmrs.db.port&#x7d;</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;mysql.port&#x7d;</attribute></attribute>
       <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
       <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
       <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
@@ -489,58 +128,166 @@
     </attributes>
   </connection>
   <order>
-    <hop>
-      <from>Extract Program Data</from>
-      <to>Write to hivmigration_program</to>
-      <enabled>Y</enabled>
-    </hop>
+  <hop> <from>Extract Data</from><to>Compute Outcome</to><enabled>Y</enabled> </hop>
+  <hop> <from>Compute Outcome</from><to>Compute Outcome Date</to><enabled>Y</enabled> </hop>
+  <hop> <from>Compute Outcome Date</from><to>Check if single enrollment</to><enabled>Y</enabled> </hop>
+  <hop> <from>Check if single enrollment</from><to>Write single enrollment to hivmigration_programs</to><enabled>Y</enabled> </hop>
   </order>
   <step>
-    <name>Extract Program Data</name>
+    <name>Check if single enrollment</name>
+    <type>FilterRows</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+<send_true_to>Write single enrollment to hivmigration_programs</send_true_to>
+<send_false_to/>
+    <compare>
+<condition>
+ <negated>N</negated>
+ <leftvalue>STARTING_HEALTH_CENTER</leftvalue>
+ <function>&#x3d;</function>
+ <rightvalue>HEALTH_CENTER</rightvalue>
+ </condition>
+    </compare>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>352</xloc>
+      <yloc>144</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Compute Outcome</name>
+    <type>ValueMapper</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <field_to_use>TREATMENT_STATUS</field_to_use>
+    <target_field>OUTCOME</target_field>
+    <non_match_default/>
+    <fields>
+      <field>
+        <source_value>died</source_value>
+        <target_value>DIED</target_value>
+      </field>
+      <field>
+        <source_value>lost</source_value>
+        <target_value>ABANDONED</target_value>
+      </field>
+      <field>
+        <source_value>abandoned</source_value>
+        <target_value>ABANDONED</target_value>
+      </field>
+      <field>
+        <source_value>transferred_out</source_value>
+        <target_value>TRANSFERRED_OUT</target_value>
+      </field>
+      <field>
+        <source_value>treatment_refused</source_value>
+        <target_value>TREATMENT_STOPPED</target_value>
+      </field>
+      <field>
+        <source_value>treatment_stopped</source_value>
+        <target_value>TREATMENT_STOPPED</target_value>
+      </field>
+      <field>
+        <source_value>treatment_stopped_side_effects</source_value>
+        <target_value>TREATMENT_STOPPED</target_value>
+      </field>
+      <field>
+        <source_value>treatment_stopped_other</source_value>
+        <target_value>TREATMENT_STOPPED</target_value>
+      </field>
+    </fields>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>144</xloc>
+      <yloc>160</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Compute Outcome Date</name>
+    <type>ScriptValueMod</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <compatible>N</compatible>
+    <optimizationLevel>9</optimizationLevel>
+    <jsScripts>      <jsScript>        <jsScript_type>0</jsScript_type>
+        <jsScript_name>Script 1</jsScript_name>
+        <jsScript_script>&#x2f;&#x2f; Set outcome date to treatment status date if there is an outcome&#xa;&#x2f;&#x2f; If this date is null, use an approximation by taking 6 months from last visit&#xa;var OUTCOME_DATE &#x3d; null&#x3b;&#xa;if &#x28;OUTCOME &#x21;&#x3d; null&#x29; &#x7b;&#xa;	OUTCOME_DATE &#x3d; TREATMENT_STATUS_DATE&#x3b;&#xa;	if &#x28;OUTCOME_DATE &#x3d;&#x3d; null&#x29; &#x7b;&#xa;		if &#x28;LAST_VISIT_DATE &#x21;&#x3d; null&#x29; &#x7b;&#xa;			OUTCOME_DATE &#x3d; LAST_VISIT_DATE&#x3b;&#xa;			OUTCOME_DATE.setMonth&#x28;OUTCOME_DATE.getMonth&#x28;&#x29; &#x2b; 6&#x29;&#x3b;&#xa;		&#x7d;&#xa;	&#x7d;&#xa;&#x7d;&#xa;</jsScript_script>
+      </jsScript>    </jsScripts>    <fields>      <field>        <name>OUTCOME_DATE</name>
+        <rename>OUTCOME_DATE</rename>
+        <type>Date</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>    </fields>     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>144</xloc>
+      <yloc>256</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Extract Data</name>
     <type>TableInput</type>
     <description/>
     <distribute>Y</distribute>
     <custom_distribution/>
     <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
     <connection>Oracle</connection>
-    <sql>select		d.PATIENT_ID as SOURCE_PATIENT_ID, d.FIRST_NAME, d.LAST_NAME, upper&#x28;d.GENDER&#x29; as GENDER, &#xa;			d.BIRTH_DATE AS BIRTHDATE,  &#xa;			d.HEALTH_CENTER,&#xa;            d.TREATMENT_STATUS,&#xa;            d.TREATMENT_STATUS_DATE,&#xa;            d.TREATMENT_START_DATE,&#xa;            d.STARTING_HEALTH_CENTER,&#xa;            d.HEALTH_CENTER_TRANSFER_DATE                     &#xa;from		HIV_DEMOGRAPHICS_REAL d&#xa;order by  	d.PATIENT_ID</sql>
+    <sql>select 	&#xa;	d.patient_id as source_patient_id,&#xa;    nvl&#x28;d.starting_health_center, d.health_center&#x29; as starting_health_center,&#xa;    nvl&#x28;d.health_center, d.starting_health_center&#x29; as health_center,&#xa;	d.health_center_transfer_date,&#xa;	d.treatment_status,&#xa;	d.treatment_status_date,&#xa;	e.enrollment_date,&#xa;	r.start_date as art_start_date,&#xa;	v.last_visit_date&#xa;from&#xa;	hiv_demographics_real d, hiv_art_regimen_start_date r, hiv_patient_enrollment_dates e, hiv_last_visit_dates v&#xa;where	  &#xa;	d.patient_id &#x3d; e.patient_id&#xa;and&#xa;	d.patient_id &#x3d; r.patient_id&#x28;&#x2b;&#x29;&#xa;and&#xa;	d.patient_id &#x3d; v.patient_id&#x28;&#x2b;&#x29;&#xa;	&#xa;&#xa;</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
     <variables_active>N</variables_active>
     <lazy_conversion_active>N</lazy_conversion_active>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>112</xloc>
-      <yloc>96</yloc>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>144</xloc>
+      <yloc>64</yloc>
       <draw>Y</draw>
-    </GUI>
+      </GUI>
     </step>
 
   <step>
-    <name>Write to hivmigration_program</name>
+    <name>Write single enrollment to hivmigration_programs</name>
     <type>TableOutput</type>
     <description/>
     <distribute>Y</distribute>
     <custom_distribution/>
     <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
     <connection>OpenMRS</connection>
     <schema/>
-    <table>hivmigration_patients</table>
+    <table>hivmigration_programs</table>
     <commit>1000</commit>
     <truncate>N</truncate>
     <ignore_errors>N</ignore_errors>
@@ -557,83 +304,42 @@
     <return_field/>
     <fields>
         <field>
-          <column_name>SOURCE_PATIENT_ID</column_name>
+          <column_name>source_patient_id</column_name>
           <stream_name>SOURCE_PATIENT_ID</stream_name>
         </field>
         <field>
-          <column_name>PIH_ID</column_name>
-          <stream_name>PIH_ID</stream_name>
+          <column_name>location_id</column_name>
+          <stream_name>HEALTH_CENTER</stream_name>
         </field>
         <field>
-          <column_name>NIF_ID</column_name>
-          <stream_name>NIF_ID</stream_name>
+          <column_name>enrollment_date</column_name>
+          <stream_name>ENROLLMENT_DATE</stream_name>
         </field>
         <field>
-          <column_name>NATIONAL_ID</column_name>
-          <stream_name>NATIONAL_ID</stream_name>
+          <column_name>art_start_date</column_name>
+          <stream_name>ART_START_DATE</stream_name>
         </field>
         <field>
-          <column_name>FIRST_NAME</column_name>
-          <stream_name>FIRST_NAME</stream_name>
+          <column_name>outcome</column_name>
+          <stream_name>OUTCOME</stream_name>
         </field>
         <field>
-          <column_name>FIRST_NAME2</column_name>
-          <stream_name>FIRST_NAME2</stream_name>
-        </field>
-        <field>
-          <column_name>LAST_NAME</column_name>
-          <stream_name>LAST_NAME</stream_name>
-        </field>
-        <field>
-          <column_name>GENDER</column_name>
-          <stream_name>GENDER</stream_name>
-        </field>
-        <field>
-          <column_name>BIRTHDATE</column_name>
-          <stream_name>BIRTHDATE</stream_name>
-        </field>
-        <field>
-          <column_name>BIRTHDATE_ESTIMATED</column_name>
-          <stream_name>BIRTHDATE_ESTIMATED</stream_name>
-        </field>
-        <field>
-          <column_name>PHONE_NUMBER</column_name>
-          <stream_name>PHONE_NUMBER</stream_name>
-        </field>
-        <field>
-          <column_name>BIRTH_PLACE</column_name>
-          <stream_name>BIRTH_PLACE</stream_name>
-        </field>
-        <field>
-          <column_name>ACCOMPAGNATEUR_NAME</column_name>
-          <stream_name>ACCOMPAGNATEUR_NAME</stream_name>
-        </field>
-        <field>
-          <column_name>PATIENT_CREATED_BY</column_name>
-          <stream_name>PATIENT_CREATED_BY</stream_name>
-        </field>
-        <field>
-          <column_name>PATIENT_CREATED_DATE</column_name>
-          <stream_name>PATIENT_CREATED_DATE</stream_name>
+          <column_name>outcome_date</column_name>
+          <stream_name>OUTCOME_DATE</stream_name>
         </field>
     </fields>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>304</xloc>
-      <yloc>96</yloc>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>672</xloc>
+      <yloc>144</yloc>
       <draw>Y</draw>
-    </GUI>
+      </GUI>
     </step>
 
   <step_error_handling>
   </step_error_handling>
-  <slave-step-copy-partition-distribution>
-  </slave-step-copy-partition-distribution>
-  <slave_transformation>N</slave_transformation>
+   <slave-step-copy-partition-distribution>
+</slave-step-copy-partition-distribution>
+   <slave_transformation>N</slave_transformation>
+
 </transformation>
