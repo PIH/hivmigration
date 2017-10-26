@@ -128,10 +128,17 @@
     </attributes>
   </connection>
   <order>
-  <hop> <from>Extract Data</from><to>Compute Outcome</to><enabled>Y</enabled> </hop>
-  <hop> <from>Compute Outcome</from><to>Compute Outcome Date</to><enabled>Y</enabled> </hop>
-  <hop> <from>Compute Outcome Date</from><to>Check if single enrollment</to><enabled>Y</enabled> </hop>
+  <hop> <from>Compute Outcome</from><to>Compute Date Fields</to><enabled>Y</enabled> </hop>
   <hop> <from>Check if single enrollment</from><to>Write single enrollment to hivmigration_programs</to><enabled>Y</enabled> </hop>
+  <hop> <from>Check if single enrollment</from><to>Clone row</to><enabled>Y</enabled> </hop>
+  <hop> <from>Clone row</from><to>Split on starting and current enrollment</to><enabled>Y</enabled> </hop>
+  <hop> <from>Split on starting and current enrollment</from><to>Update values for initial enrollment</to><enabled>Y</enabled> </hop>
+  <hop> <from>Update values for initial enrollment</from><to>Write transfer out enrollment to hivmigration_programs</to><enabled>Y</enabled> </hop>
+  <hop> <from>Split on starting and current enrollment</from><to>Update values for current enrollment</to><enabled>Y</enabled> </hop>
+  <hop> <from>Update values for current enrollment</from><to>Write transfer in enrollment to hivmigration_programs</to><enabled>Y</enabled> </hop>
+  <hop> <from>Extract Data</from><to>Compute Outcome</to><enabled>Y</enabled> </hop>
+  <hop> <from>Update Enrollment Locations</from><to>Check if single enrollment</to><enabled>Y</enabled> </hop>
+  <hop> <from>Compute Date Fields</from><to>Update Enrollment Locations</to><enabled>Y</enabled> </hop>
   </order>
   <step>
     <name>Check if single enrollment</name>
@@ -145,12 +152,12 @@
            <schema_name/>
            </partitioning>
 <send_true_to>Write single enrollment to hivmigration_programs</send_true_to>
-<send_false_to/>
+<send_false_to>Clone row</send_false_to>
     <compare>
 <condition>
  <negated>N</negated>
  <leftvalue>STARTING_HEALTH_CENTER</leftvalue>
- <function>&#x3d;</function>
+ <function>IS NULL</function>
  <rightvalue>HEALTH_CENTER</rightvalue>
  </condition>
     </compare>
@@ -219,7 +226,7 @@
     </step>
 
   <step>
-    <name>Compute Outcome Date</name>
+    <name>Compute Date Fields</name>
     <type>ScriptValueMod</type>
     <description/>
     <distribute>Y</distribute>
@@ -233,9 +240,21 @@
     <optimizationLevel>9</optimizationLevel>
     <jsScripts>      <jsScript>        <jsScript_type>0</jsScript_type>
         <jsScript_name>Script 1</jsScript_name>
-        <jsScript_script>&#x2f;&#x2f; Set outcome date to treatment status date if there is an outcome&#xa;&#x2f;&#x2f; If this date is null, use an approximation by taking 6 months from last visit&#xa;var OUTCOME_DATE &#x3d; null&#x3b;&#xa;if &#x28;OUTCOME &#x21;&#x3d; null&#x29; &#x7b;&#xa;	OUTCOME_DATE &#x3d; TREATMENT_STATUS_DATE&#x3b;&#xa;	if &#x28;OUTCOME_DATE &#x3d;&#x3d; null&#x29; &#x7b;&#xa;		if &#x28;LAST_VISIT_DATE &#x21;&#x3d; null&#x29; &#x7b;&#xa;			OUTCOME_DATE &#x3d; LAST_VISIT_DATE&#x3b;&#xa;			OUTCOME_DATE.setMonth&#x28;OUTCOME_DATE.getMonth&#x28;&#x29; &#x2b; 6&#x29;&#x3b;&#xa;		&#x7d;&#xa;	&#x7d;&#xa;&#x7d;&#xa;</jsScript_script>
+        <jsScript_script>&#x2f;&#x2f; Set outcome date to treatment status date if there is an outcome&#xa;&#x2f;&#x2f; If this date is null, use an approximation by taking 6 months from last visit&#xa;var OUTCOME_DATE &#x3d; null&#x3b;&#xa;var ENROLLMENT_DATE &#x3d; MIN_VISIT_DATE&#x3b;&#xa;var artStartDate &#x3d; ART_START_DATE&#x3b;&#xa;&#xa;if &#x28;OUTCOME &#x21;&#x3d; null&#x29; &#x7b;&#xa;	OUTCOME_DATE &#x3d; TREATMENT_STATUS_DATE&#x3b;&#xa;	if &#x28;OUTCOME_DATE &#x3d;&#x3d; null&#x29; &#x7b;&#xa;		if &#x28;REGIMEN_OUTCOME_DATE &#x21;&#x3d; null&#x29; &#x7b;&#xa;			OUTCOME_DATE &#x3d; REGIMEN_OUTCOME_DATE&#x3b;&#xa;		&#x7d;&#xa;	&#x7d;&#xa;	else &#x7b;&#xa;		if &#x28;REGIMEN_OUTCOME_DATE &#x21;&#x3d; null &#x26;&#x26;&#xa;			REGIMEN_OUTCOME_DATE.getTime&#x28;&#x29; &#x3e; OUTCOME_DATE.getTime&#x28;&#x29;&#x29; &#x7b;&#xa;			OUTCOME_DATE &#x3d; REGIMEN_OUTCOME_DATE&#x3b;&#xa;		&#x7d;&#xa;	&#x7d;&#xa;	if &#x28;OUTCOME_DATE &#x3d;&#x3d; null&#x29; &#x7b;&#xa;		OUTCOME_DATE &#x3d; MAX_VISIT_DATE&#x3b;&#xa;		OUTCOME_DATE.setMonth&#x28;OUTCOME_DATE.getMonth&#x28;&#x29; &#x2b; 6&#x29;&#x3b;&#xa;	&#x7d;&#xa;&#xa;	&#x2f;&#x2f; There are a small number of cases in which ART starts after the outcome &#x28;4-5&#x29;&#xa;	&#x2f;&#x2f; These seem to be data quality issues, and only affect inactive patients&#xa;	&#x2f;&#x2f; Set ART Start Date to the Outcome Date in these cases&#xa;	if &#x28;artStartDate &#x21;&#x3d; null&#x29; &#x7b;&#xa;		if &#x28;artStartDate.getTime&#x28;&#x29; &#x3e; OUTCOME_DATE.getTime&#x28;&#x29;&#x29; &#x7b;&#xa;			artStartDate &#x3d; OUTCOME_DATE&#x3b;&#xa;		&#x7d;&#xa;	&#x7d;&#xa;&#x7d;&#xa;&#xa;&#x2f;&#x2f; Enrollment Date in program is earlier of minimum encounter and art start date&#xa;if &#x28;artStartDate &#x21;&#x3d; null &#x26;&#x26; artStartDate.getTime&#x28;&#x29; &#x3c; ENROLLMENT_DATE.getTime&#x28;&#x29;&#x29; &#x7b;&#xa;	ENROLLMENT_DATE &#x3d; artStartDate&#x3b;&#xa;&#x7d;&#xa;&#xa;&#x2f;&#x2f; If outcome date is earlier than enrollment date, set it to enrollment date&#xa;if &#x28;OUTCOME_DATE &#x21;&#x3d; null &#x26;&#x26; ENROLLMENT_DATE &#x21;&#x3d; null &#x26;&#x26;&#xa;	OUTCOME_DATE.getTime&#x28;&#x29; &#x3c; ENROLLMENT_DATE.getTime&#x28;&#x29;&#x29; &#x7b;&#xa;	OUTCOME_DATE &#x3d; ENROLLMENT_DATE&#x3b;&#xa;&#x7d;</jsScript_script>
       </jsScript>    </jsScripts>    <fields>      <field>        <name>OUTCOME_DATE</name>
         <rename>OUTCOME_DATE</rename>
+        <type>Date</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>N</replace>
+      </field>      <field>        <name>artStartDate</name>
+        <rename>ART_START_DATE</rename>
+        <type>Date</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>Y</replace>
+      </field>      <field>        <name>ENROLLMENT_DATE</name>
+        <rename>ENROLLMENT_DATE</rename>
         <type>Date</type>
         <length>-1</length>
         <precision>-1</precision>
@@ -243,7 +262,7 @@
       </field>    </fields>     <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
       <xloc>144</xloc>
-      <yloc>256</yloc>
+      <yloc>272</yloc>
       <draw>Y</draw>
       </GUI>
     </step>
@@ -260,7 +279,7 @@
            <schema_name/>
            </partitioning>
     <connection>Oracle</connection>
-    <sql>select 	&#xa;	d.patient_id as source_patient_id,&#xa;    nvl&#x28;d.starting_health_center, d.health_center&#x29; as starting_health_center,&#xa;    nvl&#x28;d.health_center, d.starting_health_center&#x29; as health_center,&#xa;	d.health_center_transfer_date,&#xa;	d.treatment_status,&#xa;	d.treatment_status_date,&#xa;	e.enrollment_date,&#xa;	r.start_date as art_start_date,&#xa;	v.last_visit_date&#xa;from&#xa;	hiv_demographics_real d, hiv_art_regimen_start_date r, hiv_patient_enrollment_dates e, hiv_last_visit_dates v&#xa;where	  &#xa;	d.patient_id &#x3d; e.patient_id&#xa;and&#xa;	d.patient_id &#x3d; r.patient_id&#x28;&#x2b;&#x29;&#xa;and&#xa;	d.patient_id &#x3d; v.patient_id&#x28;&#x2b;&#x29;&#xa;	&#xa;&#xa;</sql>
+    <sql>select 	&#xa;	d.patient_id as source_patient_id,&#xa;	d.starting_health_center,&#xa;	d.health_center,&#xa;	d.health_center_transfer_date,&#xa;	d.treatment_status,&#xa;	d.treatment_status_date,&#xa;	r.start_date as art_start_date,&#xa;	o.regimen_outcome,&#xa;	o.regimen_outcome_date,&#xa;	e.min_visit_date,&#xa;	e.max_visit_date&#xa;from&#xa;	hiv_demographics_real d, hiv_art_regimen_start_date r, hiv_reg_outcome_helper_dates o,&#xa;	&#x28;&#xa;		select 		patient_id, min&#x28;encounter_date&#x29; as min_visit_date, max&#x28;encounter_date&#x29; as max_visit_date &#xa;		from 		hiv_encounters &#xa;		where 		type in &#x28;&#x27;intake&#x27;,&#x27;followup&#x27;,&#x27;patient_contact&#x27;,&#x27;accompagnateur&#x27;&#x29; &#xa;		and			encounter_date is not null&#xa;		group by 	patient_id&#xa;	&#x29; e&#xa;where	  &#xa;	d.patient_id &#x3d; e.patient_id&#xa;and&#xa;	d.patient_id &#x3d; r.patient_id&#x28;&#x2b;&#x29;&#xa;and&#xa;	d.patient_id &#x3d; o.patient_id&#x28;&#x2b;&#x29;</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
@@ -330,8 +349,301 @@
     </fields>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>672</xloc>
+      <xloc>656</xloc>
       <yloc>144</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Clone row</name>
+    <type>CloneRow</type>
+    <description/>
+    <distribute>N</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <nrclones>1</nrclones>
+    <addcloneflag>N</addcloneflag>
+    <cloneflagfield/>
+    <nrcloneinfield>N</nrcloneinfield>
+    <nrclonefield>SOURCE_PATIENT_ID</nrclonefield>
+    <addclonenum>Y</addclonenum>
+    <clonenumfield>CLONE_NUM</clonenumfield>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>352</xloc>
+      <yloc>272</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Write transfer out enrollment to hivmigration_programs</name>
+    <type>TableOutput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <connection>OpenMRS</connection>
+    <schema/>
+    <table>hivmigration_programs</table>
+    <commit>1000</commit>
+    <truncate>N</truncate>
+    <ignore_errors>N</ignore_errors>
+    <use_batch>Y</use_batch>
+    <specify_fields>Y</specify_fields>
+    <partitioning_enabled>N</partitioning_enabled>
+    <partitioning_field/>
+    <partitioning_daily>N</partitioning_daily>
+    <partitioning_monthly>Y</partitioning_monthly>
+    <tablename_in_field>N</tablename_in_field>
+    <tablename_field/>
+    <tablename_in_table>Y</tablename_in_table>
+    <return_keys>N</return_keys>
+    <return_field/>
+    <fields>
+        <field>
+          <column_name>source_patient_id</column_name>
+          <stream_name>SOURCE_PATIENT_ID</stream_name>
+        </field>
+        <field>
+          <column_name>location_id</column_name>
+          <stream_name>STARTING_HEALTH_CENTER</stream_name>
+        </field>
+        <field>
+          <column_name>enrollment_date</column_name>
+          <stream_name>ENROLLMENT_DATE</stream_name>
+        </field>
+        <field>
+          <column_name>art_start_date</column_name>
+          <stream_name>ART_START_DATE</stream_name>
+        </field>
+        <field>
+          <column_name>outcome</column_name>
+          <stream_name>OUTCOME</stream_name>
+        </field>
+        <field>
+          <column_name>outcome_date</column_name>
+          <stream_name>OUTCOME_DATE</stream_name>
+        </field>
+    </fields>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>1088</xloc>
+      <yloc>176</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Split on starting and current enrollment</name>
+    <type>FilterRows</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+<send_true_to>Update values for initial enrollment</send_true_to>
+<send_false_to>Update values for current enrollment</send_false_to>
+    <compare>
+<condition>
+ <negated>N</negated>
+ <leftvalue>CLONE_NUM</leftvalue>
+ <function>&#x3d;</function>
+ <rightvalue/>
+ <value><name>constant</name><type>Integer</type><text>0</text><length>-1</length><precision>0</precision><isnull>N</isnull><mask>&#x23;&#x3b;-&#x23;</mask></value> </condition>
+    </compare>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>656</xloc>
+      <yloc>272</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Write transfer in enrollment to hivmigration_programs</name>
+    <type>TableOutput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <connection>OpenMRS</connection>
+    <schema/>
+    <table>hivmigration_programs</table>
+    <commit>1000</commit>
+    <truncate>N</truncate>
+    <ignore_errors>N</ignore_errors>
+    <use_batch>Y</use_batch>
+    <specify_fields>Y</specify_fields>
+    <partitioning_enabled>N</partitioning_enabled>
+    <partitioning_field/>
+    <partitioning_daily>N</partitioning_daily>
+    <partitioning_monthly>Y</partitioning_monthly>
+    <tablename_in_field>N</tablename_in_field>
+    <tablename_field/>
+    <tablename_in_table>Y</tablename_in_table>
+    <return_keys>N</return_keys>
+    <return_field/>
+    <fields>
+        <field>
+          <column_name>source_patient_id</column_name>
+          <stream_name>SOURCE_PATIENT_ID</stream_name>
+        </field>
+        <field>
+          <column_name>location_id</column_name>
+          <stream_name>HEALTH_CENTER</stream_name>
+        </field>
+        <field>
+          <column_name>enrollment_date</column_name>
+          <stream_name>ENROLLMENT_DATE</stream_name>
+        </field>
+        <field>
+          <column_name>art_start_date</column_name>
+          <stream_name>ART_START_DATE</stream_name>
+        </field>
+        <field>
+          <column_name>outcome</column_name>
+          <stream_name>OUTCOME</stream_name>
+        </field>
+        <field>
+          <column_name>outcome_date</column_name>
+          <stream_name>OUTCOME_DATE</stream_name>
+        </field>
+    </fields>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>1088</xloc>
+      <yloc>368</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Update values for initial enrollment</name>
+    <type>ScriptValueMod</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <compatible>N</compatible>
+    <optimizationLevel>9</optimizationLevel>
+    <jsScripts>      <jsScript>        <jsScript_type>0</jsScript_type>
+        <jsScript_name>Script 1</jsScript_name>
+        <jsScript_script>var new_outcome &#x3d; &#x27;TRANSFERRED_INTERNALLY&#x27;&#x3b;&#xa;var new_outcome_date &#x3d; HEALTH_CENTER_TRANSFER_DATE&#x3b;&#xa;var new_art_start_date &#x3d; null&#x3b;&#xa;if &#x28;ART_START_DATE &#x21;&#x3d; null &#x26;&#x26; new_outcome_date &#x21;&#x3d; null &#x26;&#x26;&#xa;	ART_START_DATE.getTime&#x28;&#x29; &#x3c;&#x3d; new_outcome_date.getTime&#x28;&#x29;&#x29; &#x7b;&#xa;	new_art_start_date &#x3d; ART_START_DATE&#x3b;&#xa;&#x7d;&#xa;</jsScript_script>
+      </jsScript>    </jsScripts>    <fields>      <field>        <name>new_outcome</name>
+        <rename>OUTCOME</rename>
+        <type>String</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>Y</replace>
+      </field>      <field>        <name>new_outcome_date</name>
+        <rename>OUTCOME_DATE</rename>
+        <type>Date</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>Y</replace>
+      </field>      <field>        <name>new_art_start_date</name>
+        <rename>ART_START_DATE</rename>
+        <type>Date</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>Y</replace>
+      </field>    </fields>     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>1088</xloc>
+      <yloc>80</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Update values for current enrollment</name>
+    <type>ScriptValueMod</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <compatible>N</compatible>
+    <optimizationLevel>9</optimizationLevel>
+    <jsScripts>      <jsScript>        <jsScript_type>0</jsScript_type>
+        <jsScript_name>Script 1</jsScript_name>
+        <jsScript_script>var new_enrollment_date &#x3d; HEALTH_CENTER_TRANSFER_DATE&#x3b;&#xa;var new_art_start_date &#x3d; ART_START_DATE&#x3b;&#xa;if &#x28;new_art_start_date &#x21;&#x3d; null &#x26;&#x26; new_enrollment_date &#x21;&#x3d; null &#x26;&#x26;&#xa;	new_art_start_date.getTime&#x28;&#x29; &#x3c; new_enrollment_date.getTime&#x28;&#x29;&#x29; &#x7b;&#xa;	new_art_start_date &#x3d; new_enrollment_date&#x3b;&#xa;&#x7d;&#xa;</jsScript_script>
+      </jsScript>    </jsScripts>    <fields>      <field>        <name>new_enrollment_date</name>
+        <rename>ENROLLMENT_DATE</rename>
+        <type>Date</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>Y</replace>
+      </field>      <field>        <name>new_art_start_date</name>
+        <rename>ART_START_DATE</rename>
+        <type>Date</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>Y</replace>
+      </field>    </fields>     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>1088</xloc>
+      <yloc>288</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Update Enrollment Locations</name>
+    <type>ScriptValueMod</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <compatible>N</compatible>
+    <optimizationLevel>9</optimizationLevel>
+    <jsScripts>      <jsScript>        <jsScript_type>0</jsScript_type>
+        <jsScript_name>Script 1</jsScript_name>
+        <jsScript_script>&#x2f;&#x2f; Set current health center, ignoring 42, which is &#x22;Non-ZL Site&#x22;&#xa;&#xa;var currentHc &#x3d; Number&#x28;HEALTH_CENTER&#x29;&#x3b;&#xa;var startingHc &#x3d; Number&#x28;STARTING_HEALTH_CENTER&#x29;&#x3b;&#xa;&#xa;if &#x28;currentHc &#x3d;&#x3d; null &#x7c;&#x7c; currentHc &#x3d;&#x3d; 42&#x29; &#x7b;&#xa;	currentHc &#x3d; startingHc&#x3b;&#xa;&#x7d;&#xa;&#xa;&#x2f;&#x2f; Determine if there is a different starting health center, with a known transfer date&#xa;if &#x28;startingHc &#x3d;&#x3d; currentHc &#x7c;&#x7c; startingHc &#x3d;&#x3d; 42&#x29; &#x7b;&#xa;	startingHc &#x3d; null&#x3b;&#xa;&#x7d;&#xa;if &#x28;HEALTH_CENTER_TRANSFER_DATE &#x3d;&#x3d; null&#x29; &#x7b;&#xa;	startingHc &#x3d; null&#x3b;&#xa;&#x7d;&#xa;else &#x7b;&#xa;	if &#x28;OUTCOME_DATE &#x21;&#x3d; null &#x26;&#x26; HEALTH_CENTER_TRANSFER_DATE.getTime&#x28;&#x29; &#x3e; OUTCOME_DATE.getTime&#x28;&#x29;&#x29; &#x7b;&#xa;  		startingHc &#x3d; null&#x3b;&#xa;	&#x7d;&#xa;	&#x2f;&#x2f; No transfers in prior to enrollment date are needed&#xa;	if &#x28;HEALTH_CENTER_TRANSFER_DATE.getTime&#x28;&#x29; &#x3c; ENROLLMENT_DATE.getTime&#x28;&#x29;&#x29; &#x7b;&#xa;		startingHc &#x3d; null&#x3b;&#xa;	&#x7d;&#xa;&#x7d;</jsScript_script>
+      </jsScript>    </jsScripts>    <fields>      <field>        <name>currentHc</name>
+        <rename>HEALTH_CENTER</rename>
+        <type>Integer</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>Y</replace>
+      </field>      <field>        <name>startingHc</name>
+        <rename>STARTING_HEALTH_CENTER</rename>
+        <type>Integer</type>
+        <length>-1</length>
+        <precision>-1</precision>
+        <replace>Y</replace>
+      </field>    </fields>     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>144</xloc>
+      <yloc>384</yloc>
       <draw>Y</draw>
       </GUI>
     </step>
