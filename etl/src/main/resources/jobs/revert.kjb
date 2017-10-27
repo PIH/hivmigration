@@ -13,32 +13,33 @@
     <parameters>
     </parameters>
   <connection>
-        <name>OpenMRS</name>
-        <server>&#x24;&#x7b;mysql.host&#x7d;</server>
-        <type>MYSQL</type>
-        <access>Native</access>
-        <database>&#x24;&#x7b;mysql.database&#x7d;</database>
-        <port>&#x24;&#x7b;mysql.port&#x7d;</port>
-        <username>&#x24;&#x7b;mysql.username&#x7d;</username>
-        <password>&#x24;&#x7b;mysql.password&#x7d;</password>
-        <servername/>
-        <data_tablespace/>
-        <index_tablespace/>
-        <attributes>
-          <attribute><code>EXTRA_OPTION_MYSQL.defaultFetchSize</code><attribute>500</attribute></attribute>
-          <attribute><code>EXTRA_OPTION_MYSQL.useCursorFetch</code><attribute>true</attribute></attribute>
-          <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
-          <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
-          <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-          <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;mysql.port&#x7d;</attribute></attribute>
-          <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
-          <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
-          <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
-          <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
-          <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
-          <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
-        </attributes>
-    </connection>
+    <name>OpenMRS</name>
+    <server>&#x24;&#x7b;mysql.host&#x7d;</server>
+    <type>MYSQL</type>
+    <access>Native</access>
+    <database>&#x24;&#x7b;mysql.database&#x7d;</database>
+    <port>&#x24;&#x7b;mysql.port&#x7d;</port>
+    <username>&#x24;&#x7b;mysql.username&#x7d;</username>
+    <password>&#x24;&#x7b;mysql.password&#x7d;</password>
+    <servername/>
+    <data_tablespace/>
+    <index_tablespace/>
+    <attributes>
+      <attribute><code>EXTRA_OPTION_MYSQL.defaultFetchSize</code><attribute>500</attribute></attribute>
+      <attribute><code>EXTRA_OPTION_MYSQL.useCompression</code><attribute>true</attribute></attribute>
+      <attribute><code>EXTRA_OPTION_MYSQL.useCursorFetch</code><attribute>true</attribute></attribute>
+      <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
+      <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
+      <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;mysql.port&#x7d;</attribute></attribute>
+      <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
+      <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
+      <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
+      <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
+      <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
+      <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
+    </attributes>
+  </connection>
     <slaveservers>
     </slaveservers>
       <job-log-table>
@@ -363,7 +364,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>480</xloc>
-      <yloc>96</yloc>
+      <yloc>192</yloc>
     </entry>
     <entry>
       <name>Load Configuration</name>
@@ -424,8 +425,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>272</xloc>
-      <yloc>384</yloc>
+      <xloc>96</xloc>
+      <yloc>464</yloc>
     </entry>
     <entry>
       <name>Revert Infants</name>
@@ -456,7 +457,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>480</xloc>
-      <yloc>384</yloc>
+      <yloc>464</yloc>
     </entry>
     <entry>
       <name>Delete relationships</name>
@@ -475,7 +476,7 @@
       <yloc>192</yloc>
     </entry>
     <entry>
-      <name>Table exists</name>
+      <name>hivmigration_infants exists</name>
       <description/>
       <type>TABLE_EXISTS</type>
       <tablename>hivmigration_infants</tablename>
@@ -486,6 +487,35 @@
       <nr>0</nr>
       <xloc>96</xloc>
       <yloc>192</yloc>
+    </entry>
+    <entry>
+      <name>Delete programs</name>
+      <description/>
+      <type>SQL</type>
+      <sql>delete from patient_state where patient_program_id in &#x28;&#xa;select patient_program_id from patient_program where patient_id in &#xa;&#x28;select person_id from hivmigration_patients where source_patient_id in &#x28;select source_patient_id from hivmigration_programs&#x29;&#x29;&#x29;&#x3b;&#xa;&#xa;delete from patient_program where patient_id in &#xa;&#x28;select person_id from hivmigration_patients where source_patient_id in &#x28;select source_patient_id from hivmigration_programs&#x29;&#x29;&#x3b;&#xa;</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>272</xloc>
+      <yloc>336</yloc>
+    </entry>
+    <entry>
+      <name>hivmigration_programs exists</name>
+      <description/>
+      <type>TABLE_EXISTS</type>
+      <tablename>hivmigration_programs</tablename>
+      <schemaname/>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>96</xloc>
+      <yloc>336</yloc>
     </entry>
   </entries>
   <hops>
@@ -517,17 +547,8 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Delete relationships</from>
-      <to>Revert Patients</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
       <from>Load Configuration</from>
-      <to>Table exists</to>
+      <to>hivmigration_infants exists</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -535,7 +556,7 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Table exists</from>
+      <from>hivmigration_infants exists</from>
       <to>Delete relationships</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
@@ -544,7 +565,43 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Table exists</from>
+      <from>Delete relationships</from>
+      <to>hivmigration_programs exists</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>hivmigration_infants exists</from>
+      <to>hivmigration_programs exists</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>N</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>hivmigration_programs exists</from>
+      <to>Delete programs</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Delete programs</from>
+      <to>Revert Patients</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>hivmigration_programs exists</from>
       <to>Revert Patients</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
