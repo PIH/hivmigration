@@ -56,6 +56,8 @@ BEGIN
 			SET patient_outcome = @outcome_died;
 		WHEN 'TRANSFERRED_OUT' THEN
 			SET patient_outcome = @outcome_transferred_out;
+		WHEN 'TRANSFERRED_INTERNALLY' THEN
+			SET patient_outcome = @outcome_transferred_out;
 		WHEN 'TREATMENT_STOPPED' THEN
 			SET patient_outcome = @outcome_treatment_stopped;
         ELSE
