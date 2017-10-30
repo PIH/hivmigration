@@ -398,8 +398,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>464</xloc>
-      <yloc>496</yloc>
+      <xloc>672</xloc>
+      <yloc>512</yloc>
     </entry>
     <entry>
       <name>Create Staging Tables</name>
@@ -430,14 +430,14 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>208</xloc>
-      <yloc>272</yloc>
+      <xloc>80</xloc>
+      <yloc>288</yloc>
     </entry>
     <entry>
-      <name>Drop enroll_to_hiv_program SP</name>
+      <name>Drop add_patient_program SP</name>
       <description/>
       <type>SQL</type>
-      <sql>drop procedure if exists enroll_to_hiv_program</sql>
+      <sql>drop procedure if exists add_patient_program</sql>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>F</sqlfromfile>
       <sqlfilename/>
@@ -447,39 +447,74 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>208</xloc>
-      <yloc>368</yloc>
+      <yloc>384</yloc>
     </entry>
     <entry>
-      <name>Create patient programs</name>
-      <description/>
-      <type>SQL</type>
-      <sql>CALL &#x60;enroll_to_hiv_program&#x60;&#x28;&#x29;&#x3b;</sql>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>F</sqlfromfile>
-      <sqlfilename/>
-      <sendOneStatement>F</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>672</xloc>
-      <yloc>496</yloc>
-    </entry>
-    <entry>
-      <name>Create SP</name>
+      <name>Create add_patient_program SP</name>
       <description/>
       <type>SQL</type>
       <sql/>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>T</sqlfromfile>
-      <sqlfilename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;load_enroll_to_hiv_program_sp.sql</sqlfilename>
+      <sqlfilename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;create_add_patient_program_sp.sql</sqlfilename>
       <sendOneStatement>T</sendOneStatement>
       <connection>OpenMRS</connection>
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>208</xloc>
-      <yloc>480</yloc>
+      <yloc>512</yloc>
+    </entry>
+    <entry>
+      <name>Create Outcome Lookup schema</name>
+      <description/>
+      <type>SQL</type>
+      <sql/>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>T</sqlfromfile>
+      <sqlfilename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;hivmigration_outcome_lookup.sql</sqlfilename>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>352</xloc>
+      <yloc>288</yloc>
+    </entry>
+    <entry>
+      <name>Load Patient Programs</name>
+      <description/>
+      <type>TRANS</type>
+      <specification_method>filename</specification_method>
+      <trans_object_id/>
+      <filename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;load_patient_programs.ktr</filename>
+      <transname/>
+      <arg_from_previous>N</arg_from_previous>
+      <params_from_previous>N</params_from_previous>
+      <exec_per_row>N</exec_per_row>
+      <clear_rows>N</clear_rows>
+      <clear_files>N</clear_files>
+      <set_logfile>N</set_logfile>
+      <logfile/>
+      <logext/>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <loglevel>Basic</loglevel>
+      <cluster>N</cluster>
+      <slave_server_name/>
+      <set_append_logfile>N</set_append_logfile>
+      <wait_until_finished>Y</wait_until_finished>
+      <follow_abort_remote>N</follow_abort_remote>
+      <create_parent_folder>N</create_parent_folder>
+      <logging_remote_work>N</logging_remote_work>
+      <parameters>
+        <pass_all_parameters>Y</pass_all_parameters>
+      </parameters>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>672</xloc>
+      <yloc>336</yloc>
     </entry>
   </entries>
   <hops>
@@ -511,8 +546,17 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Create Healthcenter Schema</from>
-      <to>Drop enroll_to_hiv_program SP</to>
+      <from>Drop add_patient_program SP</from>
+      <to>Create add_patient_program SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Create add_patient_program SP</from>
+      <to>Extract</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -521,7 +565,7 @@
     </hop>
     <hop>
       <from>Extract</from>
-      <to>Create patient programs</to>
+      <to>Load Patient Programs</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -529,8 +573,8 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Drop enroll_to_hiv_program SP</from>
-      <to>Create SP</to>
+      <from>Create Healthcenter Schema</from>
+      <to>Create Outcome Lookup schema</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -538,8 +582,8 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Create SP</from>
-      <to>Extract</to>
+      <from>Create Outcome Lookup schema</from>
+      <to>Drop add_patient_program SP</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>

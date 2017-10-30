@@ -7,6 +7,7 @@ create table hivmigration_health_center (
 	name varchar(72)
 );
 
+insert into hivmigration_health_center(health_center_id, location_id, name) values(0, 1, "Unknown Location");
 insert into hivmigration_health_center(health_center_id, location_id, name) values(3, 3, "BOUCAN_CARRE");
 insert into hivmigration_health_center(health_center_id, location_id, name) values(4, 4, "CANGE");
 insert into hivmigration_health_center(health_center_id, location_id, name) values(5, 2, "BELLADERES");

@@ -496,7 +496,7 @@
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>F</sqlfromfile>
       <sqlfilename/>
-      <sendOneStatement>F</sendOneStatement>
+      <sendOneStatement>T</sendOneStatement>
       <connection>OpenMRS</connection>
       <parallel>N</parallel>
       <draw>Y</draw>
