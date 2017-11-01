@@ -363,8 +363,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>480</xloc>
-      <yloc>192</yloc>
+      <xloc>464</xloc>
+      <yloc>336</yloc>
     </entry>
     <entry>
       <name>Load Configuration</name>
@@ -426,7 +426,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>96</xloc>
-      <yloc>464</yloc>
+      <yloc>544</yloc>
     </entry>
     <entry>
       <name>Revert Infants</name>
@@ -456,8 +456,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>480</xloc>
-      <yloc>464</yloc>
+      <xloc>464</xloc>
+      <yloc>544</yloc>
     </entry>
     <entry>
       <name>Delete relationships</name>
@@ -496,13 +496,26 @@
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>F</sqlfromfile>
       <sqlfilename/>
-      <sendOneStatement>T</sendOneStatement>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>272</xloc>
+      <yloc>352</yloc>
+    </entry>
+    <entry>
+      <name>hivmigration_patients exists</name>
+      <description/>
+      <type>TABLE_EXISTS</type>
+      <tablename>hivmigration_patients</tablename>
+      <schemaname/>
       <connection>OpenMRS</connection>
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>96</xloc>
-      <yloc>304</yloc>
+      <yloc>352</yloc>
     </entry>
   </entries>
   <hops>
@@ -561,7 +574,7 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Delete relationships</from>
+      <from>hivmigration_patients exists</from>
       <to>Delete programs</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
@@ -570,8 +583,26 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
+      <from>Delete relationships</from>
+      <to>hivmigration_patients exists</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
       <from>hivmigration_infants exists</from>
-      <to>Delete programs</to>
+      <to>hivmigration_patients exists</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>N</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>hivmigration_patients exists</from>
+      <to>Revert Patients</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
