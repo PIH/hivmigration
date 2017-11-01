@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <transformation>
   <info>
-    <name>Load Patient Programs</name>
+    <name>Load Patient State</name>
     <description/>
     <extended_description/>
     <trans_version/>
@@ -428,10 +428,10 @@
     <clusterschemas>
     </clusterschemas>
     <created_user>-</created_user>
-    <created_date>2017&#x2f;10&#x2f;30 13&#x3a;58&#x3a;17.088</created_date>
+    <created_date>2017&#x2f;11&#x2f;01 19&#x3a;40&#x3a;18.255</created_date>
     <modified_user>-</modified_user>
-    <modified_date>2017&#x2f;10&#x2f;30 13&#x3a;58&#x3a;17.088</modified_date>
-    <key_for_session_key>H4sIAAAAAAAAAAMAAAAAAAAAAAA&#x3d;</key_for_session_key>
+    <modified_date>2017&#x2f;11&#x2f;01 19&#x3a;40&#x3a;18.255</modified_date>
+    <key_for_session_key/>
     <is_key_private>N</is_key_private>
   </info>
   <notepads>
@@ -466,13 +466,45 @@
   </connection>
   <order>
     <hop>
-      <from>Select hivmigration programs</from>
-      <to>Load Patient Programs</to>
+      <from>Select hivmigration patient state</from>
+      <to>Load Patient State</to>
       <enabled>Y</enabled>
     </hop>
   </order>
   <step>
-    <name>Load Patient Programs</name>
+    <name>Select hivmigration patient state</name>
+    <type>TableInput</type>
+    <description/>
+    <distribute>N</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <connection>OpenMRS</connection>
+    <sql>select h.patient_program_id,  2 as state, h.enrollment_date as start_date, h.art_start_date	as end_date&#xa;	, 1 as creator, date_format&#x28;curdate&#x28;&#x29;, &#x27;&#x25;Y-&#x25;m-&#x25;d &#x25;T&#x27;&#x29; as date_created, uuid&#x28;&#x29; as uuid&#xa;from hivmigration_programs h &#xa;where &#x28; &#x28;art_start_date is not null&#x29; and &#x28;art_start_date &#x3e; enrollment_date&#x29;&#x29;&#x3b;&#xa;</sql>
+    <limit>0</limit>
+    <lookup/>
+    <execute_each_row>N</execute_each_row>
+    <variables_active>N</variables_active>
+    <lazy_conversion_active>N</lazy_conversion_active>
+    <cluster_schema/>
+    <remotesteps>
+      <input>
+      </input>
+      <output>
+      </output>
+    </remotesteps>
+    <GUI>
+      <xloc>160</xloc>
+      <yloc>160</yloc>
+      <draw>Y</draw>
+    </GUI>
+    </step>
+
+  <step>
+    <name>Load Patient State</name>
     <type>MySQLBulkLoader</type>
     <description/>
     <distribute>Y</distribute>
@@ -484,7 +516,7 @@
     </partitioning>
     <connection>OpenMRS</connection>
     <schema/>
-    <table>patient_program</table>
+    <table>patient_state</table>
     <encoding/>
     <delimiter>	</delimiter>
     <enclosure>&#x22;</enclosure>
@@ -500,38 +532,23 @@
         <field_format_ok>OK</field_format_ok>
       </mapping>
       <mapping>
-        <stream_name>patient_id</stream_name>
-        <field_name>person_id</field_name>
+        <stream_name>state</stream_name>
+        <field_name>state</field_name>
         <field_format_ok>OK</field_format_ok>
       </mapping>
       <mapping>
-        <stream_name>program_id</stream_name>
-        <field_name>2</field_name>
+        <stream_name>start_date</stream_name>
+        <field_name>start_date</field_name>
         <field_format_ok>OK</field_format_ok>
       </mapping>
       <mapping>
-        <stream_name>date_enrolled</stream_name>
-        <field_name>enrollment_date</field_name>
-        <field_format_ok>OK</field_format_ok>
-      </mapping>
-      <mapping>
-        <stream_name>date_completed</stream_name>
-        <field_name>outcome_date</field_name>
-        <field_format_ok>OK</field_format_ok>
-      </mapping>
-      <mapping>
-        <stream_name>location_id</stream_name>
-        <field_name>omrs_location_id</field_name>
-        <field_format_ok>OK</field_format_ok>
-      </mapping>
-      <mapping>
-        <stream_name>outcome_concept_id</stream_name>
-        <field_name>outcome_concept_id</field_name>
+        <stream_name>end_date</stream_name>
+        <field_name>end_date</field_name>
         <field_format_ok>OK</field_format_ok>
       </mapping>
       <mapping>
         <stream_name>creator</stream_name>
-        <field_name>1</field_name>
+        <field_name>creator</field_name>
         <field_format_ok>OK</field_format_ok>
       </mapping>
       <mapping>
@@ -552,40 +569,8 @@
       </output>
     </remotesteps>
     <GUI>
-      <xloc>464</xloc>
-      <yloc>224</yloc>
-      <draw>Y</draw>
-    </GUI>
-    </step>
-
-  <step>
-    <name>Select hivmigration programs</name>
-    <type>TableInput</type>
-    <description/>
-    <distribute>N</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
-    <connection>OpenMRS</connection>
-    <sql>select h.patient_program_id, p.person_id, 2, h.enrollment_date, h.outcome_date&#xa;	, h.omrs_location_id&#xa;	, o.outcome_concept_id, 1, date_format&#x28;curdate&#x28;&#x29;, &#x27;&#x25;Y-&#x25;m-&#x25;d &#x25;T&#x27;&#x29; as date_created&#xa;	, uuid&#x28;&#x29; as uuid&#xa;from hivmigration_programs h &#xa;inner join hivmigration_patients p on h.source_patient_id &#x3d; p.source_patient_id &#xa;left outer join hivmigration_outcome o on h.outcome &#x3d; o.outcome&#x3b; &#xa;</sql>
-    <limit>0</limit>
-    <lookup/>
-    <execute_each_row>N</execute_each_row>
-    <variables_active>N</variables_active>
-    <lazy_conversion_active>N</lazy_conversion_active>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>240</xloc>
-      <yloc>224</yloc>
+      <xloc>384</xloc>
+      <yloc>160</yloc>
       <draw>Y</draw>
     </GUI>
     </step>
