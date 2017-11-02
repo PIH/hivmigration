@@ -418,22 +418,6 @@
       <yloc>144</yloc>
     </entry>
     <entry>
-      <name>Create Healthcenter Schema</name>
-      <description/>
-      <type>SQL</type>
-      <sql/>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>T</sqlfromfile>
-      <sqlfilename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;health_center_schema.sql</sqlfilename>
-      <sendOneStatement>F</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>208</xloc>
-      <yloc>288</yloc>
-    </entry>
-    <entry>
       <name>Create Outcome Lookup schema</name>
       <description/>
       <type>SQL</type>
@@ -447,7 +431,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>208</xloc>
-      <yloc>432</yloc>
+      <yloc>288</yloc>
     </entry>
     <entry>
       <name>Load Patient Programs</name>
@@ -645,24 +629,6 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Create Staging Tables</from>
-      <to>Create Healthcenter Schema</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>Create Healthcenter Schema</from>
-      <to>Create Outcome Lookup schema</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
       <from>Set next patient_program_id</from>
       <to>Extract</to>
       <from_nr>0</from_nr>
@@ -710,6 +676,15 @@
     <hop>
       <from>Create Outcome Lookup schema</from>
       <to>Set next patient_program_id</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Create Staging Tables</from>
+      <to>Create Outcome Lookup schema</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
