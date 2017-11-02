@@ -116,7 +116,7 @@ public class Migrator {
             }
 
             Job job = new Job(null, jobMeta);
-            job.setLogLevel(LogLevel.valueOf(jobProperties.getProperty(LOG_LEVEL, "BASIC")));
+            job.setLogLevel(LogLevel.valueOf(jobProperties.getProperty(LOG_LEVEL, "DETAILED")));
 
             StopWatch stopWatch = new StopWatch();
             stopWatch.start();
