@@ -399,7 +399,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>672</xloc>
-      <yloc>512</yloc>
+      <yloc>560</yloc>
     </entry>
     <entry>
       <name>Create Staging Tables</name>
@@ -430,40 +430,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>80</xloc>
+      <xloc>208</xloc>
       <yloc>288</yloc>
-    </entry>
-    <entry>
-      <name>Drop add_patient_program SP</name>
-      <description/>
-      <type>SQL</type>
-      <sql>drop procedure if exists add_patient_program</sql>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>F</sqlfromfile>
-      <sqlfilename/>
-      <sendOneStatement>T</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>208</xloc>
-      <yloc>384</yloc>
-    </entry>
-    <entry>
-      <name>Create add_patient_program SP</name>
-      <description/>
-      <type>SQL</type>
-      <sql/>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>T</sqlfromfile>
-      <sqlfilename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;create_add_patient_program_sp.sql</sqlfilename>
-      <sendOneStatement>T</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>208</xloc>
-      <yloc>512</yloc>
     </entry>
     <entry>
       <name>Create Outcome Lookup schema</name>
@@ -478,8 +446,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>352</xloc>
-      <yloc>288</yloc>
+      <xloc>208</xloc>
+      <yloc>432</yloc>
     </entry>
     <entry>
       <name>Load Patient Programs</name>
@@ -548,8 +516,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>432</xloc>
-      <yloc>512</yloc>
+      <xloc>208</xloc>
+      <yloc>560</yloc>
     </entry>
     <entry>
       <name>Add OpenMRS location_id</name>
@@ -686,35 +654,8 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Drop add_patient_program SP</from>
-      <to>Create add_patient_program SP</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
       <from>Create Healthcenter Schema</from>
       <to>Create Outcome Lookup schema</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>Create Outcome Lookup schema</from>
-      <to>Drop add_patient_program SP</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>Create add_patient_program SP</from>
-      <to>Set next patient_program_id</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -760,6 +701,15 @@
     <hop>
       <from>Load pre-ART Patient State</from>
       <to>Load on-ART patient state</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Create Outcome Lookup schema</from>
+      <to>Set next patient_program_id</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
