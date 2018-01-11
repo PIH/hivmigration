@@ -1,7 +1,7 @@
 drop table if exists hivmigration_outcome;
 
 create table hivmigration_outcome (
-    id int PRIMARY KEY AUTO_INCREMENT,
+  id int PRIMARY KEY AUTO_INCREMENT,
 	outcome varchar(255),
 	outcome_concept_id int
 );

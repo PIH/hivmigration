@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <transformation>
   <info>
-    <name>set_next_patient_program_id</name>
+    <name>encounters-extract</name>
     <description/>
     <extended_description/>
     <trans_version/>
@@ -67,81 +67,42 @@
     <clusterschemas>
     </clusterschemas>
   <created_user>-</created_user>
-  <created_date>2017&#x2f;11&#x2f;01 14&#x3a;13&#x3a;57.272</created_date>
+  <created_date>2017&#x2f;05&#x2f;05 16&#x3a;39&#x3a;13.783</created_date>
   <modified_user>-</modified_user>
-  <modified_date>2017&#x2f;11&#x2f;01 14&#x3a;13&#x3a;57.272</modified_date>
+  <modified_date>2017&#x2f;05&#x2f;05 16&#x3a;39&#x3a;13.783</modified_date>
     <key_for_session_key>H4sIAAAAAAAAAAMAAAAAAAAAAAA&#x3d;</key_for_session_key>
     <is_key_private>N</is_key_private>
   </info>
   <notepads>
   </notepads>
   <connection>
-    <name>OpenMRS</name>
-    <server>&#x24;&#x7b;mysql.host&#x7d;</server>
-    <type>MYSQL</type>
+    <name>Oracle</name>
+    <server>&#x24;&#x7b;oracle.host&#x7d;</server>
+    <type>ORACLE</type>
     <access>Native</access>
-    <database>&#x24;&#x7b;mysql.database&#x7d;</database>
-    <port>&#x24;&#x7b;mysql.port&#x7d;</port>
-    <username>&#x24;&#x7b;mysql.username&#x7d;</username>
-    <password>&#x24;&#x7b;mysql.password&#x7d;</password>
+    <database>&#x24;&#x7b;oracle.sid&#x7d;</database>
+    <port>&#x24;&#x7b;oracle.port&#x7d;</port>
+    <username>&#x24;&#x7b;oracle.username&#x7d;</username>
+    <password>&#x24;&#x7b;oracle.password&#x7d;</password>
     <servername/>
-    <data_tablespace/>
-    <index_tablespace/>
+    <data_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</data_tablespace>
+    <index_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</index_tablespace>
     <attributes>
-      <attribute><code>EXTRA_OPTION_MYSQL.defaultFetchSize</code><attribute>500</attribute></attribute>
-      <attribute><code>EXTRA_OPTION_MYSQL.useCompression</code><attribute>true</attribute></attribute>
-      <attribute><code>EXTRA_OPTION_MYSQL.useCursorFetch</code><attribute>true</attribute></attribute>
-      <attribute><code>EXTRA_OPTION_MYSQL.zeroDateTimeBehavior</code><attribute>convertToNull</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;mysql.port&#x7d;</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;oracle.port&#x7d;</attribute></attribute>
       <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
       <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
-      <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
       <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
       <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
       <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
     </attributes>
   </connection>
   <order>
-  <hop> <from>Get max patient_program_id</from><to>Alter patient_program autoincrement</to><enabled>Y</enabled> </hop>
   </order>
   <step>
-    <name>Alter patient_program autoincrement</name>
-    <type>ExecSQL</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-         <partitioning>
-           <method>none</method>
-           <schema_name/>
-           </partitioning>
-    <connection>OpenMRS</connection>
-    <execute_each_row>Y</execute_each_row>
-    <single_statement>N</single_statement>
-    <replace_variables>N</replace_variables>
-    <quoteString>N</quoteString>
-    <sql>ALTER TABLE hivmigration_programs AUTO_INCREMENT &#x3d; &#x3f;&#x3b;</sql>
-    <set_params>N</set_params>
-    <insert_field/>
-    <update_field/>
-    <delete_field/>
-    <read_field/>
-    <arguments>
-       <argument><name>next_patient_program_id</name></argument>
-    </arguments>
-     <cluster_schema/>
- <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>528</xloc>
-      <yloc>80</yloc>
-      <draw>Y</draw>
-      </GUI>
-    </step>
-
-  <step>
-    <name>Get max patient_program_id</name>
+    <name>Extract Data</name>
     <type>TableInput</type>
     <description/>
     <distribute>Y</distribute>
@@ -151,8 +112,8 @@
            <method>none</method>
            <schema_name/>
            </partitioning>
-    <connection>OpenMRS</connection>
-    <sql>select ifnull&#x28;max&#x28;patient_program_id&#x29;&#x2b;1, 1&#x29; as next_patient_program_id from patient_program&#x3b;</sql>
+    <connection>Oracle</connection>
+    <sql>select&#xa;	e.patient_id as source_patient_id,	&#xa;	e.encounter_id as source_encounter_id,&#xa;	e.entry_date,&#xa;	e.encounter_date,&#xa;	e.entered_by,&#xa;	e.type,&#xa;	e.encounter_site,&#xa;	e.performed_by,&#xa;	e.comments,&#xa;	e.note_title,&#xa;	e.response_to&#xa;from&#xa;	hiv_encounters e&#xa;</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
@@ -160,8 +121,8 @@
     <lazy_conversion_active>N</lazy_conversion_active>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>112</xloc>
-      <yloc>80</yloc>
+      <xloc>144</xloc>
+      <yloc>64</yloc>
       <draw>Y</draw>
       </GUI>
     </step>

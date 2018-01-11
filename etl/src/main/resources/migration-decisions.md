@@ -47,3 +47,6 @@ TODO:
 ** current_health_center and starting_health_center are both non-null, and not the same, and not equal to 42 (Non-ZL Site)
 ** health_center_transfer_date exists and is not before the enrollment date
 * Otherwise, creates 1 enrollment
+
+**Encounters**
+* TODO: comments, note_title, response_to
