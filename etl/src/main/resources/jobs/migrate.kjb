@@ -82,7 +82,7 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>464</xloc>
+      <xloc>544</xloc>
       <yloc>64</yloc>
       </entry>
     <entry>
@@ -144,9 +144,9 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>240</xloc>
-      <yloc>160</yloc>
-      </entry>
+      <xloc>400</xloc>
+      <yloc>64</yloc>
+    </entry>
     <entry>
       <name>Migrate Patients</name>
       <description/>
@@ -175,9 +175,9 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>624</xloc>
+      <xloc>688</xloc>
       <yloc>64</yloc>
-      </entry>
+    </entry>
     <entry>
       <name>Migrate Infants</name>
       <description/>
@@ -206,9 +206,9 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>784</xloc>
+      <xloc>832</xloc>
       <yloc>64</yloc>
-      </entry>
+    </entry>
     <entry>
       <name>Migrate Programs</name>
       <description/>
@@ -237,51 +237,27 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>944</xloc>
-      <yloc>64</yloc>
-      </entry>
+      <xloc>832</xloc>
+      <yloc>240</yloc>
+    </entry>
     <entry>
-      <name>Load Metadata</name>
+      <name>Create Healthcenter Schema</name>
       <description/>
-      <type>JOB</type>
-      <specification_method>filename</specification_method>
-      <job_object_id/>
-      <filename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;metadata&#x2f;load-metadata.kjb</filename>
-      <jobname/>
-      <arg_from_previous>N</arg_from_previous>
-      <params_from_previous>N</params_from_previous>
-      <exec_per_row>N</exec_per_row>
-      <set_logfile>N</set_logfile>
-      <logfile/>
-      <logext/>
-      <add_date>N</add_date>
-      <add_time>N</add_time>
-      <loglevel>Nothing</loglevel>
-      <slave_server_name/>
-      <wait_until_finished>Y</wait_until_finished>
-      <follow_abort_remote>N</follow_abort_remote>
-      <expand_remote_job>N</expand_remote_job>
-      <create_parent_folder>N</create_parent_folder>
-      <pass_export>N</pass_export>
-      <parameters>        <pass_all_parameters>Y</pass_all_parameters>
-      </parameters>      <set_append_logfile>N</set_append_logfile>
+      <type>SQL</type>
+      <sql/>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>T</sqlfromfile>
+      <sqlfilename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;metadata&#x2f;health_center_schema.sql</sqlfilename>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>OpenMRS</connection>
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>240</xloc>
-      <yloc>256</yloc>
-      </entry>
+      <xloc>484</xloc>
+      <yloc>188</yloc>
+    </entry>
   </entries>
   <hops>
-    <hop>
-      <from>Load Configuration</from>
-      <to>Revert Data</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
     <hop>
       <from>START</from>
       <to>Load Configuration</to>
@@ -290,6 +266,15 @@
       <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
+    </hop>
+    <hop>
+      <from>Load Configuration</from>
+      <to>Revert Data</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
     </hop>
     <hop>
       <from>Migrate Users</from>
@@ -320,7 +305,7 @@
     </hop>
     <hop>
       <from>Revert Data</from>
-      <to>Load Metadata</to>
+      <to>Create Healthcenter Schema</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -328,7 +313,7 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Load Metadata</from>
+      <from>Create Healthcenter Schema</from>
       <to>Migrate Users</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <transformation>
   <info>
-    <name>extract_patient_addresses</name>
+    <name>load-patient-addresses</name>
     <description/>
     <extended_description/>
     <trans_version/>
@@ -428,9 +428,9 @@
     <clusterschemas>
     </clusterschemas>
     <created_user>-</created_user>
-    <created_date>2018&#x2f;01&#x2f;12 15&#x3a;05&#x3a;59.151</created_date>
+    <created_date>2018&#x2f;01&#x2f;16 13&#x3a;55&#x3a;26.499</created_date>
     <modified_user>-</modified_user>
-    <modified_date>2018&#x2f;01&#x2f;12 15&#x3a;05&#x3a;59.151</modified_date>
+    <modified_date>2018&#x2f;01&#x2f;16 13&#x3a;55&#x3a;26.499</modified_date>
     <key_for_session_key>H4sIAAAAAAAAAAMAAAAAAAAAAAA&#x3d;</key_for_session_key>
     <is_key_private>N</is_key_private>
   </info>
@@ -465,45 +465,11 @@
       <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
     </attributes>
   </connection>
-  <connection>
-    <name>Oracle</name>
-    <server>&#x24;&#x7b;oracle.host&#x7d;</server>
-    <type>ORACLE</type>
-    <access>Native</access>
-    <database>&#x24;&#x7b;oracle.sid&#x7d;</database>
-    <port>&#x24;&#x7b;oracle.port&#x7d;</port>
-    <username>&#x24;&#x7b;oracle.username&#x7d;</username>
-    <password>&#x24;&#x7b;oracle.password&#x7d;</password>
-    <servername/>
-    <data_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</data_tablespace>
-    <index_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</index_tablespace>
-    <attributes>
-      <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
-      <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
-      <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;oracle.port&#x7d;</attribute></attribute>
-      <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
-      <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
-      <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
-      <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
-      <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
-    </attributes>
-  </connection>
   <order>
-    <hop>
-      <from>Extract Addresses</from>
-      <to>Lookup patient_id</to>
-      <enabled>Y</enabled>
-    </hop>
-    <hop>
-      <from>Lookup patient_id</from>
-      <to>Write to hivmigration_patient_addresses</to>
-      <enabled>Y</enabled>
-    </hop>
   </order>
   <step>
-    <name>Extract Addresses</name>
-    <type>TableInput</type>
+    <name>Load Person Addresses</name>
+    <type>ExecSQL</type>
     <description/>
     <distribute>Y</distribute>
     <custom_distribution/>
@@ -512,13 +478,19 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <connection>Oracle</connection>
-    <sql>select	a.address_id as address_id, a.patient_id as source_patient_id, a.type as address_type&#xa;        , a.entry_date, a.address, nvl&#x28;l.department, a.department&#x29; as department,&#xa;		nvl&#x28;l.commune, a.commune&#x29; as commune, nvl&#x28;l.section_communale, a.section&#x29; as section, nvl&#x28;l.locality, a.locality&#x29; as locality&#xa;from		HIV_DEMOGRAPHICS d, hiv_addresses a, hiv_locality l&#xa;where		d.patient_id &#x3d; a.patient_id and a.locality_id &#x3d; l.locality_id&#x28;&#x2b;&#x29; and d.TREATMENT_STATUS &#x21;&#x3d; &#x27;test&#x27; &#xa;order by 	a.patient_id, decode&#x28;a.type, &#x27;current&#x27;, 1, 0&#x29; desc, a.entry_date desc</sql>
-    <limit>0</limit>
-    <lookup/>
+    <connection>OpenMRS</connection>
     <execute_each_row>N</execute_each_row>
-    <variables_active>N</variables_active>
-    <lazy_conversion_active>N</lazy_conversion_active>
+    <single_statement>N</single_statement>
+    <replace_variables>N</replace_variables>
+    <quoteString>N</quoteString>
+    <sql>insert into person_address&#x28;person_id, preferred, address1, address2, city_village, state_province, country, creator, date_created, address3, uuid&#x29; &#xa;SELECT person_id, &#xa;    case when &#x28;address_type &#x3d; &#x27;current&#x27;&#x29; then &#xa;        1 &#xa;     else 0&#xa;	end as &#x27;preferred&#x27;&#xa;	, locality as address1	&#xa;	, address as address2&#xa;	, commune as city_village    &#xa;	, department as state_province&#xa;    , &#x27;Haiti&#x27; as country	&#xa;    , 1 as creator&#xa;    , entry_date as date_created&#xa;	, section as address3&#xa;	, uuid&#x28;&#x29; as uuid&#xa;FROM hivmigration_patient_addresses &#xa;order by person_id &#xa;&#xa;&#xa;&#xa;&#xa;</sql>
+    <set_params>N</set_params>
+    <insert_field/>
+    <update_field/>
+    <delete_field/>
+    <read_field/>
+    <arguments>
+    </arguments>
     <cluster_schema/>
     <remotesteps>
       <input>
@@ -528,139 +500,7 @@
     </remotesteps>
     <GUI>
       <xloc>144</xloc>
-      <yloc>160</yloc>
-      <draw>Y</draw>
-    </GUI>
-    </step>
-
-  <step>
-    <name>Write to hivmigration_patient_addresses</name>
-    <type>TableOutput</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
-    <connection>OpenMRS</connection>
-    <schema/>
-    <table>hivmigration_patient_addresses</table>
-    <commit>1000</commit>
-    <truncate>N</truncate>
-    <ignore_errors>N</ignore_errors>
-    <use_batch>Y</use_batch>
-    <specify_fields>Y</specify_fields>
-    <partitioning_enabled>N</partitioning_enabled>
-    <partitioning_field/>
-    <partitioning_daily>N</partitioning_daily>
-    <partitioning_monthly>Y</partitioning_monthly>
-    <tablename_in_field>N</tablename_in_field>
-    <tablename_field/>
-    <tablename_in_table>Y</tablename_in_table>
-    <return_keys>N</return_keys>
-    <return_field/>
-    <fields>
-        <field>
-          <column_name>ADDRESS_ID</column_name>
-          <stream_name>ADDRESS_ID</stream_name>
-        </field>
-        <field>
-          <column_name>SOURCE_PATIENT_ID</column_name>
-          <stream_name>SOURCE_PATIENT_ID</stream_name>
-        </field>
-        <field>
-          <column_name>person_id</column_name>
-          <stream_name>person_id</stream_name>
-        </field>
-        <field>
-          <column_name>ADDRESS_TYPE</column_name>
-          <stream_name>ADDRESS_TYPE</stream_name>
-        </field>
-        <field>
-          <column_name>ENTRY_DATE</column_name>
-          <stream_name>ENTRY_DATE</stream_name>
-        </field>
-        <field>
-          <column_name>ADDRESS</column_name>
-          <stream_name>ADDRESS</stream_name>
-        </field>
-        <field>
-          <column_name>DEPARTMENT</column_name>
-          <stream_name>DEPARTMENT</stream_name>
-        </field>
-        <field>
-          <column_name>COMMUNE</column_name>
-          <stream_name>COMMUNE</stream_name>
-        </field>
-        <field>
-          <column_name>SECTION</column_name>
-          <stream_name>SECTION</stream_name>
-        </field>
-        <field>
-          <column_name>LOCALITY</column_name>
-          <stream_name>LOCALITY</stream_name>
-        </field>
-    </fields>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>496</xloc>
-      <yloc>160</yloc>
-      <draw>Y</draw>
-    </GUI>
-    </step>
-
-  <step>
-    <name>Lookup patient_id</name>
-    <type>DBLookup</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-    <partitioning>
-      <method>none</method>
-      <schema_name/>
-    </partitioning>
-    <connection>OpenMRS</connection>
-    <cache>Y</cache>
-    <cache_load_all>Y</cache_load_all>
-    <cache_size>0</cache_size>
-    <lookup>
-      <schema/>
-      <table>hivmigration_patients</table>
-      <orderby/>
-      <fail_on_multiple>N</fail_on_multiple>
-      <eat_row_on_failure>N</eat_row_on_failure>
-      <key>
-        <name>SOURCE_PATIENT_ID</name>
-        <field>SOURCE_PATIENT_ID</field>
-        <condition>&#x3d;</condition>
-        <name2/>
-      </key>
-      <value>
-        <name>person_id</name>
-        <rename>person_id</rename>
-        <default/>
-        <type>Integer</type>
-      </value>
-    </lookup>
-    <cluster_schema/>
-    <remotesteps>
-      <input>
-      </input>
-      <output>
-      </output>
-    </remotesteps>
-    <GUI>
-      <xloc>320</xloc>
-      <yloc>288</yloc>
+      <yloc>80</yloc>
       <draw>Y</draw>
     </GUI>
     </step>

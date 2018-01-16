@@ -3,6 +3,7 @@ drop table if exists hivmigration_patient_addresses;
 create table hivmigration_patient_addresses (
   address_id int PRIMARY KEY,
   source_patient_id int,
+  person_id int,
   address_type NVARCHAR(8),
   entry_date date,
   address NVARCHAR(512),
