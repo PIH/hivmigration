@@ -790,7 +790,7 @@
       <type>TRANS</type>
       <specification_method>filename</specification_method>
       <trans_object_id/>
-      <filename>&#x2f;Users&#x2f;cosmin&#x2f;Project&#x2f;hivmigration&#x2f;etl&#x2f;src&#x2f;main&#x2f;resources&#x2f;jobs&#x2f;patients&#x2f;extract_patient_addresses.ktr</filename>
+      <filename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;extract_patient_addresses.ktr</filename>
       <transname/>
       <arg_from_previous>N</arg_from_previous>
       <params_from_previous>N</params_from_previous>
@@ -825,7 +825,7 @@
       <type>TRANS</type>
       <specification_method>filename</specification_method>
       <trans_object_id/>
-      <filename>&#x2f;Users&#x2f;cosmin&#x2f;Project&#x2f;hivmigration&#x2f;etl&#x2f;src&#x2f;main&#x2f;resources&#x2f;jobs&#x2f;patients&#x2f;load-patient-addresses.ktr</filename>
+      <filename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;load-patient-addresses.ktr</filename>
       <transname/>
       <arg_from_previous>N</arg_from_previous>
       <params_from_previous>N</params_from_previous>
