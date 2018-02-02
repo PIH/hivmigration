@@ -104,6 +104,7 @@
   </connection>
   <order>
   <hop> <from>Get max ids</from><to>Alter autoincrements</to><enabled>Y</enabled> </hop>
+  <hop> <from>Get max ids</from><to>Set zlemrid autoincrement</to><enabled>Y</enabled> </hop>
   </order>
   <step>
     <name>Alter autoincrements</name>
@@ -142,7 +143,7 @@
     <name>Get max ids</name>
     <type>TableInput</type>
     <description/>
-    <distribute>Y</distribute>
+    <distribute>N</distribute>
     <custom_distribution/>
     <copies>1</copies>
          <partitioning>
@@ -160,6 +161,39 @@
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
       <xloc>128</xloc>
       <yloc>64</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Set zlemrid autoincrement</name>
+    <type>ExecSQL</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <connection>OpenMRS</connection>
+    <execute_each_row>Y</execute_each_row>
+    <single_statement>N</single_statement>
+    <replace_variables>N</replace_variables>
+    <quoteString>N</quoteString>
+    <sql>ALTER TABLE hivmigration_zlemrid AUTO_INCREMENT &#x3d; &#x3f;&#x3b;</sql>
+    <set_params>N</set_params>
+    <insert_field/>
+    <update_field/>
+    <delete_field/>
+    <read_field/>
+    <arguments>
+       <argument><name>next_person_id</name></argument>
+    </arguments>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>304</xloc>
+      <yloc>176</yloc>
       <draw>Y</draw>
       </GUI>
     </step>

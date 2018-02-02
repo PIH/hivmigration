@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <transformation>
   <info>
-    <name>load-patient-identifier</name>
+    <name>Load ZL Identifiers</name>
     <description/>
     <extended_description/>
     <trans_version/>
@@ -67,43 +67,44 @@
     <clusterschemas>
     </clusterschemas>
   <created_user>-</created_user>
-  <created_date>2017&#x2f;05&#x2f;05 16&#x3a;39&#x3a;13.783</created_date>
+  <created_date>2018&#x2f;02&#x2f;02 09&#x3a;53&#x3a;32.874</created_date>
   <modified_user>-</modified_user>
-  <modified_date>2017&#x2f;05&#x2f;05 16&#x3a;39&#x3a;13.783</modified_date>
-    <key_for_session_key>H4sIAAAAAAAAAAMAAAAAAAAAAAA&#x3d;</key_for_session_key>
+  <modified_date>2018&#x2f;02&#x2f;02 09&#x3a;53&#x3a;32.874</modified_date>
+    <key_for_session_key/>
     <is_key_private>N</is_key_private>
   </info>
   <notepads>
   </notepads>
   <connection>
-    <name>OpenMRS</name>
-    <server>&#x24;&#x7b;mysql.host&#x7d;</server>
-    <type>MYSQL</type>
-    <access>Native</access>
-    <database>&#x24;&#x7b;mysql.database&#x7d;</database>
-    <port>&#x24;&#x7b;mysql.port&#x7d;</port>
-    <username>&#x24;&#x7b;mysql.username&#x7d;</username>
-    <password>&#x24;&#x7b;mysql.password&#x7d;</password>
-    <servername/>
-    <data_tablespace/>
-    <index_tablespace/>
-    <attributes>
-      <attribute><code>EXTRA_OPTION_MYSQL.defaultFetchSize</code><attribute>500</attribute></attribute>
-      <attribute><code>EXTRA_OPTION_MYSQL.useCursorFetch</code><attribute>true</attribute></attribute>
-      <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
-      <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
-      <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;mysql.port&#x7d;</attribute></attribute>
-      <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
-      <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
-      <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
-      <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
-      <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
-      <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
-    </attributes>
-  </connection>
+      <name>OpenMRS</name>
+      <server>&#x24;&#x7b;mysql.host&#x7d;</server>
+      <type>MYSQL</type>
+      <access>Native</access>
+      <database>&#x24;&#x7b;mysql.database&#x7d;</database>
+      <port>&#x24;&#x7b;mysql.port&#x7d;</port>
+      <username>&#x24;&#x7b;mysql.username&#x7d;</username>
+      <password>&#x24;&#x7b;mysql.password&#x7d;</password>
+      <servername/>
+      <data_tablespace/>
+      <index_tablespace/>
+      <attributes>
+        <attribute><code>EXTRA_OPTION_MYSQL.defaultFetchSize</code><attribute>500</attribute></attribute>
+        <attribute><code>EXTRA_OPTION_MYSQL.useCompression</code><attribute>true</attribute></attribute>
+        <attribute><code>EXTRA_OPTION_MYSQL.useCursorFetch</code><attribute>true</attribute></attribute>
+        <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
+        <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
+        <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
+        <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;mysql.port&#x7d;</attribute></attribute>
+        <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
+        <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
+        <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
+        <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
+        <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
+        <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
+      </attributes>
+    </connection>
   <order>
-  <hop> <from>Read Patient Identifiers</from><to>Load Patient Identifiers</to><enabled>Y</enabled> </hop>
+  <hop> <from>Read ZL Identifiers</from><to>Load Patient Identifiers</to><enabled>Y</enabled> </hop>
   </order>
   <step>
     <name>Load Patient Identifiers</name>
@@ -170,14 +171,14 @@
       </mapping>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>336</xloc>
-      <yloc>96</yloc>
+      <xloc>400</xloc>
+      <yloc>112</yloc>
       <draw>Y</draw>
       </GUI>
     </step>
 
   <step>
-    <name>Read Patient Identifiers</name>
+    <name>Read ZL Identifiers</name>
     <type>TableInput</type>
     <description/>
     <distribute>Y</distribute>
@@ -188,7 +189,7 @@
            <schema_name/>
            </partitioning>
     <connection>OpenMRS</connection>
-    <sql>-- Patient Identifier&#xa;select&#xa;  p.person_id as patient_id,&#xa;  uuid&#x28;&#x29; as uuid,&#xa;  &#x28;SELECT patient_identifier_type_id from patient_identifier_type where name &#x3d; &#x27;HIVEMR-V1&#x27;&#x29; as identifier_type,&#xa;  &#x28;SELECT location_id from location where name &#x3d; &#x27;Unknown Location&#x27;&#x29; as location_id,&#xa;  p.source_patient_id as identifier,&#xa;  0 as preferred,&#xa;  u.user_id as creator,&#xa;  date_format&#x28;p.patient_created_date, &#x27;&#x25;Y-&#x25;m-&#x25;d &#x25;T&#x27;&#x29; as date_created&#xa;from&#xa;  hivmigration_patients p&#xa;left join&#xa;  hivmigration_users hu on p.patient_created_by &#x3d; hu.source_user_id&#xa;left join&#xa;  users u on u.uuid &#x3d; hu.user_uuid&#xa;order by p.source_patient_id&#x3b;&#xa;</sql>
+    <sql>-- Patient Identifier&#xa;select&#xa;  p.person_id as patient_id,&#xa;  uuid&#x28;&#x29; as uuid,&#xa;  &#x28;SELECT patient_identifier_type_id from patient_identifier_type where name &#x3d; &#x27;ZL EMR ID&#x27;&#x29; as identifier_type,&#xa;  &#x28;SELECT location_id from location where name &#x3d; &#x27;Unknown Location&#x27;&#x29; as location_id,&#xa;  z.zl_emr_id as identifier,&#xa;  1 as preferred,&#xa;  u.user_id as creator,&#xa;  date_format&#x28;p.patient_created_date, &#x27;&#x25;Y-&#x25;m-&#x25;d &#x25;T&#x27;&#x29; as date_created&#xa;from&#xa;  hivmigration_patients p&#xa;join &#xa;  hivmigration_zlemrid z on p.person_id &#x3d; z.person_id&#xa;left join&#xa;  hivmigration_users hu on p.patient_created_by &#x3d; hu.source_user_id&#xa;left join&#xa;  users u on u.uuid &#x3d; hu.user_uuid&#xa;order by p.source_patient_id&#x3b;&#xa;</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
@@ -196,8 +197,8 @@
     <lazy_conversion_active>N</lazy_conversion_active>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>128</xloc>
-      <yloc>96</yloc>
+      <xloc>160</xloc>
+      <yloc>112</yloc>
       <draw>Y</draw>
       </GUI>
     </step>
