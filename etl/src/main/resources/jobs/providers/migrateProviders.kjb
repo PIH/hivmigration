@@ -39,7 +39,6 @@
           <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
         </attributes>
       </connection>
-    <connection>
     <slaveservers>
     </slaveservers>
 <job-log-table><connection/>
