@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <transformation>
   <info>
-    <name>encounters-extract</name>
+    <name>staging_setup</name>
     <description/>
     <extended_description/>
     <trans_version/>
     <trans_type>Normal</trans_type>
-    <trans_status>0</trans_status>
     <directory>&#x2f;</directory>
     <parameters>
     </parameters>
@@ -67,9 +66,9 @@
     <clusterschemas>
     </clusterschemas>
   <created_user>-</created_user>
-  <created_date>2017&#x2f;05&#x2f;05 16&#x3a;39&#x3a;13.783</created_date>
+  <created_date>2018&#x2f;02&#x2f;06 11&#x3a;37&#x3a;03.756</created_date>
   <modified_user>-</modified_user>
-  <modified_date>2017&#x2f;05&#x2f;05 16&#x3a;39&#x3a;13.783</modified_date>
+  <modified_date>2018&#x2f;02&#x2f;06 11&#x3a;37&#x3a;03.756</modified_date>
     <key_for_session_key>H4sIAAAAAAAAAAMAAAAAAAAAAAA&#x3d;</key_for_session_key>
     <is_key_private>N</is_key_private>
   </info>
@@ -77,23 +76,24 @@
   </notepads>
   <connection>
     <name>OpenMRS</name>
-    <server>&#x24;&#x7b;mysql.host&#x7d;</server>
+    <server>&#x24;&#x7b;openmrs.db.host&#x7d;</server>
     <type>MYSQL</type>
     <access>Native</access>
-    <database>&#x24;&#x7b;mysql.database&#x7d;</database>
-    <port>&#x24;&#x7b;mysql.port&#x7d;</port>
-    <username>&#x24;&#x7b;mysql.username&#x7d;</username>
-    <password>&#x24;&#x7b;mysql.password&#x7d;</password>
+    <database>&#x24;&#x7b;openmrs.db.name&#x7d;</database>
+    <port>&#x24;&#x7b;openmrs.db.port&#x7d;</port>
+    <username>&#x24;&#x7b;openmrs.db.user&#x7d;</username>
+    <password>&#x24;&#x7b;openmrs.db.password&#x7d;</password>
     <servername/>
     <data_tablespace/>
     <index_tablespace/>
     <attributes>
       <attribute><code>EXTRA_OPTION_MYSQL.defaultFetchSize</code><attribute>500</attribute></attribute>
+      <attribute><code>EXTRA_OPTION_MYSQL.useCompression</code><attribute>true</attribute></attribute>
       <attribute><code>EXTRA_OPTION_MYSQL.useCursorFetch</code><attribute>true</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;mysql.port&#x7d;</attribute></attribute>
+      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;openmrs.db.port&#x7d;</attribute></attribute>
       <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
       <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
       <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
@@ -102,62 +102,12 @@
       <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
     </attributes>
   </connection>
-  <connection>
-    <name>Oracle</name>
-    <server>&#x24;&#x7b;oracle.host&#x7d;</server>
-    <type>ORACLE</type>
-    <access>Native</access>
-    <database>&#x24;&#x7b;oracle.sid&#x7d;</database>
-    <port>&#x24;&#x7b;oracle.port&#x7d;</port>
-    <username>&#x24;&#x7b;oracle.username&#x7d;</username>
-    <password>&#x24;&#x7b;oracle.password&#x7d;</password>
-    <servername/>
-    <data_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</data_tablespace>
-    <index_tablespace>&#x24;&#x7b;oracle.tablespace&#x7d;</index_tablespace>
-    <attributes>
-      <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
-      <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
-      <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
-      <attribute><code>PORT_NUMBER</code><attribute>&#x24;&#x7b;oracle.port&#x7d;</attribute></attribute>
-      <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
-      <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
-      <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
-      <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
-      <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
-    </attributes>
-  </connection>
   <order>
-  <hop> <from>Extract HIV Encounters</from><to>Write to hivmigration_encounters</to><enabled>Y</enabled> </hop>
+  <hop> <from>Get max ids</from><to>Alter autoincrements</to><enabled>Y</enabled> </hop>
   </order>
   <step>
-    <name>Extract HIV Encounters</name>
-    <type>TableInput</type>
-    <description/>
-    <distribute>Y</distribute>
-    <custom_distribution/>
-    <copies>1</copies>
-         <partitioning>
-           <method>none</method>
-           <schema_name/>
-           </partitioning>
-    <connection>Oracle</connection>
-    <sql>select&#xa;	e.patient_id as source_patient_id,	&#xa;	e.encounter_id as source_encounter_id,&#xa;	e.entry_date,&#xa;	e.encounter_date,&#xa;	e.entered_by,&#xa;	e.type,&#xa;	e.encounter_site,&#xa;	e.performed_by,&#xa;	e.comments,&#xa;	e.note_title,&#xa;	e.response_to&#xa;from&#xa;	hiv_encounters e&#xa;</sql>
-    <limit>0</limit>
-    <lookup/>
-    <execute_each_row>N</execute_each_row>
-    <variables_active>N</variables_active>
-    <lazy_conversion_active>N</lazy_conversion_active>
-     <cluster_schema/>
- <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>240</xloc>
-      <yloc>144</yloc>
-      <draw>Y</draw>
-      </GUI>
-    </step>
-
-  <step>
-    <name>Write to hivmigration_encounters</name>
-    <type>TableOutput</type>
+    <name>Alter autoincrements</name>
+    <type>ExecSQL</type>
     <description/>
     <distribute>Y</distribute>
     <custom_distribution/>
@@ -167,72 +117,49 @@
            <schema_name/>
            </partitioning>
     <connection>OpenMRS</connection>
-    <schema/>
-    <table>hivmigration_encounters</table>
-    <commit>1000</commit>
-    <truncate>N</truncate>
-    <ignore_errors>N</ignore_errors>
-    <use_batch>Y</use_batch>
-    <specify_fields>Y</specify_fields>
-    <partitioning_enabled>N</partitioning_enabled>
-    <partitioning_field/>
-    <partitioning_daily>N</partitioning_daily>
-    <partitioning_monthly>Y</partitioning_monthly>
-    <tablename_in_field>N</tablename_in_field>
-    <tablename_field/>
-    <tablename_in_table>Y</tablename_in_table>
-    <return_keys>N</return_keys>
-    <return_field/>
-    <fields>
-        <field>
-          <column_name>source_encounter_id</column_name>
-          <stream_name>SOURCE_ENCOUNTER_ID</stream_name>
-        </field>
-        <field>
-          <column_name>source_patient_id</column_name>
-          <stream_name>SOURCE_PATIENT_ID</stream_name>
-        </field>
-        <field>
-          <column_name>source_encounter_type</column_name>
-          <stream_name>TYPE</stream_name>
-        </field>
-        <field>
-          <column_name>source_creator_id</column_name>
-          <stream_name>ENTERED_BY</stream_name>
-        </field>
-        <field>
-          <column_name>encounter_date</column_name>
-          <stream_name>ENCOUNTER_DATE</stream_name>
-        </field>
-        <field>
-          <column_name>date_created</column_name>
-          <stream_name>ENTRY_DATE</stream_name>
-        </field>
-        <field>
-          <column_name>comments</column_name>
-          <stream_name>COMMENTS</stream_name>
-        </field>
-        <field>
-          <column_name>performed_by</column_name>
-          <stream_name>PERFORMED_BY</stream_name>
-        </field>
-        <field>
-          <column_name>source_location_id</column_name>
-          <stream_name>ENCOUNTER_SITE</stream_name>
-        </field>
-        <field>
-          <column_name>note_title</column_name>
-          <stream_name>NOTE_TITLE</stream_name>
-        </field>
-        <field>
-          <column_name>response_to</column_name>
-          <stream_name>RESPONSE_TO</stream_name>
-        </field>
-    </fields>
+    <execute_each_row>Y</execute_each_row>
+    <single_statement>N</single_statement>
+    <replace_variables>N</replace_variables>
+    <quoteString>N</quoteString>
+    <sql>ALTER TABLE hivmigration_encounters AUTO_INCREMENT &#x3d; &#x3f;&#x3b;</sql>
+    <set_params>N</set_params>
+    <insert_field/>
+    <update_field/>
+    <delete_field/>
+    <read_field/>
+    <arguments>
+       <argument><name>next_encounter_id</name></argument>
+    </arguments>
      <cluster_schema/>
  <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
-      <xloc>496</xloc>
-      <yloc>144</yloc>
+      <xloc>400</xloc>
+      <yloc>80</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
+  <step>
+    <name>Get max ids</name>
+    <type>TableInput</type>
+    <description/>
+    <distribute>N</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <connection>OpenMRS</connection>
+    <sql>select ifnull&#x28;max&#x28;encounter_id&#x29;&#x2b;1, 1&#x29; as next_encounter_id from encounter&#x3b;</sql>
+    <limit>0</limit>
+    <lookup/>
+    <execute_each_row>N</execute_each_row>
+    <variables_active>N</variables_active>
+    <lazy_conversion_active>N</lazy_conversion_active>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>192</xloc>
+      <yloc>80</yloc>
       <draw>Y</draw>
       </GUI>
     </step>
