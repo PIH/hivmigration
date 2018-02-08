@@ -19,5 +19,7 @@ create table hivmigration_patients (
   patient_created_by int,
   patient_created_date timestamp,
   outcome varchar(255),
-  outcome_date date
+  outcome_date date,
+  KEY `source_patient_id_idx` (`source_patient_id`),
+  UNIQUE KEY `person_uuid_idx` (`person_uuid`)
 );

@@ -10,5 +10,7 @@ create table hivmigration_users (
 	last_name varchar(100),
 	password varchar(255),
 	salt varchar(255),
-	member_state varchar(100)
+	member_state varchar(100),
+	KEY `source_user_id_idx` (`source_user_id`),
+  UNIQUE KEY `user_uuid_idx` (`user_uuid`)
 );
