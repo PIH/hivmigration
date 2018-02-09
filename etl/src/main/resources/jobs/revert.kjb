@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <job>
   <name>revert</name>
-  <description/>
-  <extended_description/>
-  <job_version/>
-  <job_status>0</job_status>
+    <description/>
+    <extended_description/>
+    <job_version/>
+    <job_status>0</job_status>
   <directory>&#x2f;</directory>
   <created_user>-</created_user>
   <created_date>2017&#x2f;05&#x2f;05 16&#x3a;31&#x3a;10.301</created_date>
@@ -111,8 +111,144 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>464</xloc>
-      <yloc>336</yloc>
+      <xloc>1104</xloc>
+      <yloc>384</yloc>
+      </entry>
+    <entry>
+      <name>Delete Patient Addresses</name>
+      <description/>
+      <type>SQL</type>
+      <sql/>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>736</xloc>
+      <yloc>576</yloc>
+      </entry>
+    <entry>
+      <name>hivmigration_patients exists</name>
+      <description/>
+      <type>TABLE_EXISTS</type>
+      <tablename>hivmigration_patients</tablename>
+      <schemaname/>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>736</xloc>
+      <yloc>400</yloc>
+      </entry>
+    <entry>
+      <name>Delete programs</name>
+      <description/>
+      <type>SQL</type>
+      <sql>delete from patient_state where patient_program_id in &#x28;select patient_program_id from patient_program where patient_id in &#x28;select person_id from hivmigration_patients&#x29;&#x29;&#x3b;&#xa;delete from patient_program where patient_id in &#x28;select person_id from hivmigration_patients&#x29;&#x3b;&#xa;</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>912</xloc>
+      <yloc>400</yloc>
+      </entry>
+    <entry>
+      <name>hivmigration_infants exists</name>
+      <description/>
+      <type>TABLE_EXISTS</type>
+      <tablename>hivmigration_infants</tablename>
+      <schemaname/>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>736</xloc>
+      <yloc>240</yloc>
+      </entry>
+    <entry>
+      <name>Delete relationships</name>
+      <description/>
+      <type>SQL</type>
+      <sql>delete from relationship where person_b in &#x28;select person_id from hivmigration_infants&#x29; or person_a in &#x28;select person_id from hivmigration_infants&#x29;&#x3b;&#xa;delete from relationship where person_b in &#x28;select person_id from hivmigration_patients&#x29; or person_a in &#x28;select person_id from hivmigration_patients&#x29;&#x3b;</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>912</xloc>
+      <yloc>240</yloc>
+      </entry>
+    <entry>
+      <name>Revert Infants</name>
+      <description/>
+      <type>JOB</type>
+      <specification_method>filename</specification_method>
+      <job_object_id/>
+      <filename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;infants&#x2f;revert.kjb</filename>
+      <jobname/>
+      <arg_from_previous>N</arg_from_previous>
+      <params_from_previous>N</params_from_previous>
+      <exec_per_row>N</exec_per_row>
+      <set_logfile>N</set_logfile>
+      <logfile/>
+      <logext/>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <loglevel>Nothing</loglevel>
+      <slave_server_name/>
+      <wait_until_finished>Y</wait_until_finished>
+      <follow_abort_remote>N</follow_abort_remote>
+      <expand_remote_job>N</expand_remote_job>
+      <create_parent_folder>N</create_parent_folder>
+      <pass_export>N</pass_export>
+      <parameters>        <pass_all_parameters>Y</pass_all_parameters>
+      </parameters>      <set_append_logfile>N</set_append_logfile>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>1104</xloc>
+      <yloc>736</yloc>
+      </entry>
+    <entry>
+      <name>Revert Patients</name>
+      <description/>
+      <type>JOB</type>
+      <specification_method>filename</specification_method>
+      <job_object_id/>
+      <filename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;patients&#x2f;revert.kjb</filename>
+      <jobname/>
+      <arg_from_previous>N</arg_from_previous>
+      <params_from_previous>N</params_from_previous>
+      <exec_per_row>N</exec_per_row>
+      <set_logfile>N</set_logfile>
+      <logfile/>
+      <logext/>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <loglevel>Nothing</loglevel>
+      <slave_server_name/>
+      <wait_until_finished>Y</wait_until_finished>
+      <follow_abort_remote>N</follow_abort_remote>
+      <expand_remote_job>N</expand_remote_job>
+      <create_parent_folder>N</create_parent_folder>
+      <pass_export>N</pass_export>
+      <parameters>        <pass_all_parameters>Y</pass_all_parameters>
+      </parameters>      <set_append_logfile>N</set_append_logfile>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>736</xloc>
+      <yloc>736</yloc>
       </entry>
     <entry>
       <name>Load Configuration</name>
@@ -146,12 +282,12 @@
       <yloc>64</yloc>
       </entry>
     <entry>
-      <name>Revert Patients</name>
+      <name>Revert Encounters</name>
       <description/>
       <type>JOB</type>
       <specification_method>filename</specification_method>
       <job_object_id/>
-      <filename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;patients&#x2f;revert.kjb</filename>
+      <filename>&#x2f;home&#x2f;mgoodrich&#x2f;hivemr&#x2f;hivmigration&#x2f;etl&#x2f;src&#x2f;main&#x2f;resources&#x2f;jobs&#x2f;encounters&#x2f;revert.kjb</filename>
       <jobname/>
       <arg_from_previous>N</arg_from_previous>
       <params_from_previous>N</params_from_previous>
@@ -173,16 +309,16 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>96</xloc>
-      <yloc>688</yloc>
-    </entry>
+      <xloc>496</xloc>
+      <yloc>64</yloc>
+      </entry>
     <entry>
-      <name>Revert Infants</name>
+      <name>Revert Visits</name>
       <description/>
       <type>JOB</type>
       <specification_method>filename</specification_method>
       <job_object_id/>
-      <filename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;infants&#x2f;revert.kjb</filename>
+      <filename>&#x2f;home&#x2f;mgoodrich&#x2f;hivemr&#x2f;hivmigration&#x2f;etl&#x2f;src&#x2f;main&#x2f;resources&#x2f;jobs&#x2f;visits&#x2f;revert.kjb</filename>
       <jobname/>
       <arg_from_previous>N</arg_from_previous>
       <params_from_previous>N</params_from_previous>
@@ -204,94 +340,11 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>464</xloc>
-      <yloc>688</yloc>
-    </entry>
-    <entry>
-      <name>Delete relationships</name>
-      <description/>
-      <type>SQL</type>
-      <sql>delete from relationship where person_b in &#x28;select person_id from hivmigration_infants&#x29; or person_a in &#x28;select person_id from hivmigration_infants&#x29;&#x3b;&#xa;delete from relationship where person_b in &#x28;select person_id from hivmigration_patients&#x29; or person_a in &#x28;select person_id from hivmigration_patients&#x29;&#x3b;</sql>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>F</sqlfromfile>
-      <sqlfilename/>
-      <sendOneStatement>F</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>272</xloc>
-      <yloc>192</yloc>
+      <xloc>736</xloc>
+      <yloc>64</yloc>
       </entry>
-    <entry>
-      <name>hivmigration_infants exists</name>
-      <description/>
-      <type>TABLE_EXISTS</type>
-      <tablename>hivmigration_infants</tablename>
-      <schemaname/>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>96</xloc>
-      <yloc>192</yloc>
-      </entry>
-    <entry>
-      <name>Delete programs</name>
-      <description/>
-      <type>SQL</type>
-      <sql>delete from patient_state where patient_program_id in &#x28;select patient_program_id from patient_program where patient_id in &#x28;select person_id from hivmigration_patients&#x29;&#x29;&#x3b;&#xa;delete from patient_program where patient_id in &#x28;select person_id from hivmigration_patients&#x29;&#x3b;&#xa;</sql>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>F</sqlfromfile>
-      <sqlfilename/>
-      <sendOneStatement>F</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>272</xloc>
-      <yloc>352</yloc>
-      </entry>
-    <entry>
-      <name>hivmigration_patients exists</name>
-      <description/>
-      <type>TABLE_EXISTS</type>
-      <tablename>hivmigration_patients</tablename>
-      <schemaname/>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>96</xloc>
-      <yloc>352</yloc>
-    </entry>
-    <entry>
-      <name>Delete Patient Addresses</name>
-      <description/>
-      <type>SQL</type>
-      <sql/>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>F</sqlfromfile>
-      <sqlfilename/>
-      <sendOneStatement>F</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>96</xloc>
-      <yloc>528</yloc>
-    </entry>
   </entries>
   <hops>
-    <hop>
-      <from>START</from>
-      <to>Load Configuration</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>Y</unconditional>
-    </hop>
     <hop>
       <from>Revert Patients</from>
       <to>Revert Infants</to>
@@ -304,15 +357,6 @@
     <hop>
       <from>Revert Infants</from>
       <to>Revert Users</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>Load Configuration</from>
-      <to>hivmigration_infants exists</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -374,8 +418,44 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
+      <from>START</from>
+      <to>Load Configuration</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
+    </hop>
+    <hop>
       <from>Delete Patient Addresses</from>
       <to>Revert Patients</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Load Configuration</from>
+      <to>Revert Encounters</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Revert Encounters</from>
+      <to>Revert Visits</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Revert Visits</from>
+      <to>hivmigration_infants exists</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -385,4 +465,5 @@
   </hops>
   <notepads>
   </notepads>
+
 </job>

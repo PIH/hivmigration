@@ -21,6 +21,7 @@ create table hivmigration_encounters (
   KEY `patient_id_idx` (`patient_id`),
   KEY `source_patient_id_idx` (`source_patient_id`),
   KEY `source_creator_id_idx` (`source_creator_id`),
+  KEY `encounter_date_idx` (`encounter_date`),
   UNIQUE KEY `uuid_idx` (`encounter_uuid`)
 );
 
