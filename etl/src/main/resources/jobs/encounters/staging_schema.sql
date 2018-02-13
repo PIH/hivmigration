@@ -20,6 +20,7 @@ create table hivmigration_encounters (
   response_to int,
   KEY `patient_id_idx` (`patient_id`),
   KEY `source_patient_id_idx` (`source_patient_id`),
+  KEY `source_encounter_id_idx` (`source_encounter_id`),
   KEY `source_creator_id_idx` (`source_creator_id`),
   KEY `source_location_id_idx` (`source_location_id`),
   KEY `encounter_date_idx` (`encounter_date`),

@@ -14,6 +14,7 @@ create table hivmigration_lab_results (
   value_boolean BOOLEAN,
   vl_beyond_detectable_limit BOOLEAN,
   vl_detectable_lower_limit DOUBLE,
-  uuid char(38)
+  uuid char(38),
+  KEY `source_encounter_id_idx` (`source_encounter_id`)
 );
 
