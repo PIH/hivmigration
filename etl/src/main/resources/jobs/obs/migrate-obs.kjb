@@ -193,8 +193,8 @@
       </parameters>      <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>128</xloc>
-      <yloc>288</yloc>
+      <xloc>288</xloc>
+      <yloc>208</yloc>
       </entry>
     <entry>
       <name>Add Obs UUID</name>
@@ -209,8 +209,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>128</xloc>
-      <yloc>400</yloc>
+      <xloc>112</xloc>
+      <yloc>320</yloc>
       </entry>
     <entry>
       <name>Create insert_vl SP</name>
@@ -225,8 +225,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>448</xloc>
-      <yloc>400</yloc>
+      <xloc>528</xloc>
+      <yloc>320</yloc>
       </entry>
     <entry>
       <name>Run insert_vl SP</name>
@@ -258,8 +258,8 @@
       </parameters>      <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>624</xloc>
-      <yloc>400</yloc>
+      <xloc>784</xloc>
+      <yloc>320</yloc>
       </entry>
     <entry>
       <name>Drop insert_vl SP</name>
@@ -274,8 +274,200 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>288</xloc>
+      <xloc>272</xloc>
+      <yloc>320</yloc>
+      </entry>
+    <entry>
+      <name>Create insert_cd4_results SP</name>
+      <description/>
+      <type>SQL</type>
+      <sql/>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>T</sqlfromfile>
+      <sqlfilename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;insert_cd4_results.sql</sqlfilename>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>528</xloc>
       <yloc>400</yloc>
+      </entry>
+    <entry>
+      <name>Drop insert_cd4_results SP</name>
+      <description/>
+      <type>SQL</type>
+      <sql>drop procedure if exists insert_cd4_results</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>272</xloc>
+      <yloc>416</yloc>
+      </entry>
+    <entry>
+      <name>Run insert_cd4_results SP</name>
+      <description/>
+      <type>SQL</type>
+      <sql>call insert_cd4_results&#x28;&#x29;</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>784</xloc>
+      <yloc>416</yloc>
+      </entry>
+    <entry>
+      <name>Create insert_hematocrit_results SP</name>
+      <description/>
+      <type>SQL</type>
+      <sql/>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>T</sqlfromfile>
+      <sqlfilename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;insert_hematocrit_results.sql</sqlfilename>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>528</xloc>
+      <yloc>496</yloc>
+      </entry>
+    <entry>
+      <name>Drop insert_hematocrit_results SP</name>
+      <description/>
+      <type>SQL</type>
+      <sql>drop procedure if exists insert_hematocrit_results</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>271</xloc>
+      <yloc>503</yloc>
+      </entry>
+    <entry>
+      <name>Run insert_hematocrit_results SP</name>
+      <description/>
+      <type>SQL</type>
+      <sql>call insert_hematocrit_results&#x28;&#x29;</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>784</xloc>
+      <yloc>496</yloc>
+      </entry>
+    <entry>
+      <name>Create insert_ppd_results</name>
+      <description/>
+      <type>SQL</type>
+      <sql/>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>T</sqlfromfile>
+      <sqlfilename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;insert_ppd_results.sql</sqlfilename>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>528</xloc>
+      <yloc>576</yloc>
+      </entry>
+    <entry>
+      <name>Drop insert_ppd_results SP</name>
+      <description/>
+      <type>SQL</type>
+      <sql>drop procedure if exists insert_ppd_results</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>272</xloc>
+      <yloc>576</yloc>
+      </entry>
+    <entry>
+      <name>Run insert_ppd_results SP</name>
+      <description/>
+      <type>SQL</type>
+      <sql>call insert_ppd_results&#x28;&#x29;</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>768</xloc>
+      <yloc>576</yloc>
+      </entry>
+    <entry>
+      <name>Create insert_test_rapid_results SP</name>
+      <description/>
+      <type>SQL</type>
+      <sql/>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>T</sqlfromfile>
+      <sqlfilename>&#x24;&#x7b;Internal.Job.Filename.Directory&#x7d;&#x2f;insert_test_rapid_results.sql</sqlfilename>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>512</xloc>
+      <yloc>672</yloc>
+      </entry>
+    <entry>
+      <name>Drop insert_test_rapid_results SP</name>
+      <description/>
+      <type>SQL</type>
+      <sql>drop procedure if exists insert_test_rapid_results</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>272</xloc>
+      <yloc>672</yloc>
+      </entry>
+    <entry>
+      <name>Run insert_test_rapid_results SP</name>
+      <description/>
+      <type>SQL</type>
+      <sql>call insert_test_rapid_results&#x28;&#x29;</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>768</xloc>
+      <yloc>672</yloc>
       </entry>
   </entries>
   <hops>
@@ -345,6 +537,114 @@
     <hop>
       <from>Create insert_vl SP</from>
       <to>Run insert_vl SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Add Obs UUID</from>
+      <to>Drop insert_cd4_results SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Drop insert_cd4_results SP</from>
+      <to>Create insert_cd4_results SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Create insert_cd4_results SP</from>
+      <to>Run insert_cd4_results SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Add Obs UUID</from>
+      <to>Drop insert_hematocrit_results SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Drop insert_hematocrit_results SP</from>
+      <to>Create insert_hematocrit_results SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Create insert_hematocrit_results SP</from>
+      <to>Run insert_hematocrit_results SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Add Obs UUID</from>
+      <to>Drop insert_ppd_results SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Drop insert_ppd_results SP</from>
+      <to>Create insert_ppd_results</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Create insert_ppd_results</from>
+      <to>Run insert_ppd_results SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Add Obs UUID</from>
+      <to>Drop insert_test_rapid_results SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Drop insert_test_rapid_results SP</from>
+      <to>Create insert_test_rapid_results SP</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Create insert_test_rapid_results SP</from>
+      <to>Run insert_test_rapid_results SP</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>

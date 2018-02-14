@@ -18,7 +18,7 @@ BEGIN
   insert into obs(obs_id, person_id, concept_id, encounter_id, obs_datetime, location_id, creator, date_created, voided, uuid)
     select r.obs_id, p.person_id, hiv_vl_construct, e.encounter_id, r.obs_datetime, e.location_id, 1, now(), 0, r.uuid
     from hivmigration_lab_results r join hivmigration_patients p on r.source_patient_id = p.source_patient_id
-      join hivmigration_encounters e on r.source_encounter_id = e.source_encounter_id;
+      join hivmigration_encounters e on r.source_encounter_id = e.source_encounter_id where r.test_type ='viral_load';
 
   -- Specimen Number
   select concept_id INTO specimen_number from concept where uuid='162086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
@@ -26,7 +26,7 @@ BEGIN
   insert into obs(person_id, concept_id, encounter_id, obs_datetime, location_id, obs_group_id, value_text, creator, date_created, voided, uuid)
     select p.person_id, specimen_number, e.encounter_id, r.obs_datetime, e.location_id, r.obs_id, r.sample_id,1, now(), 0, uuid()
     from hivmigration_lab_results r join hivmigration_patients p on r.source_patient_id = p.source_patient_id
-      join hivmigration_encounters e on r.source_encounter_id = e.source_encounter_id;
+      join hivmigration_encounters e on r.source_encounter_id = e.source_encounter_id where r.test_type ='viral_load';
 
 
   -- HIV Viral Load Numeric Value
@@ -36,7 +36,7 @@ BEGIN
     select p.person_id, hvl_value, e.encounter_id, r.obs_datetime, e.location_id, r.obs_id, r.value_numeric,1, now(), 0, uuid()
     from hivmigration_lab_results r join hivmigration_patients p on r.source_patient_id = p.source_patient_id
       join hivmigration_encounters e on r.source_encounter_id = e.source_encounter_id
-    where r.value_numeric is not null;
+    where r.value_numeric is not null and r.test_type ='viral_load';
 
   -- HIV Viral Load Qualitative
   select concept_id INTO hvl_qualitative from concept where uuid='1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
@@ -46,7 +46,7 @@ BEGIN
     select p.person_id, hvl_qualitative, e.encounter_id, r.obs_datetime, e.location_id, r.obs_id, not_detected,1, now(), 0, uuid()
     from hivmigration_lab_results r join hivmigration_patients p on r.source_patient_id = p.source_patient_id
       join hivmigration_encounters e on r.source_encounter_id = e.source_encounter_id
-    where r.vl_beyond_detectable_limit = 1;
+    where r.vl_beyond_detectable_limit = 1 and r.test_type ='viral_load';
 
   -- Detectable Lower Limit
   select concept_id INTO detectable_lower_limit from concept where uuid='53cb83ed-5d55-4b63-922f-d6b8fc67a5f8';
@@ -55,7 +55,7 @@ BEGIN
     select p.person_id, detectable_lower_limit, e.encounter_id, r.obs_datetime, e.location_id, r.obs_id, r.vl_detectable_lower_limit,1, now(), 0, uuid()
     from hivmigration_lab_results r join hivmigration_patients p on r.source_patient_id = p.source_patient_id
       join hivmigration_encounters e on r.source_encounter_id = e.source_encounter_id
-    where r.vl_detectable_lower_limit is not null;
+    where r.vl_detectable_lower_limit is not null and r.test_type ='viral_load';
 
   -- HIV VL Test Name ExaVir
   select concept_id INTO test_name from concept where uuid='162087AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
@@ -65,6 +65,6 @@ BEGIN
     select p.person_id, test_name, e.encounter_id, r.obs_datetime, e.location_id, r.obs_id, exa_vir,1, now(), 0, uuid()
     from hivmigration_lab_results r join hivmigration_patients p on r.source_patient_id = p.source_patient_id
       join hivmigration_encounters e on r.source_encounter_id = e.source_encounter_id
-    where r.test_name = 'exavir';
+    where r.test_name = 'exavir' and r.test_type ='viral_load';
 
 END

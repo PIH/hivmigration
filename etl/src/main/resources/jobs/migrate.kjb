@@ -406,7 +406,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>656</xloc>
-      <yloc>544</yloc>
+      <yloc>624</yloc>
       </entry>
   </entries>
   <hops>
@@ -494,6 +494,15 @@
     <hop>
       <from>Migrate Encounters</from>
       <to>Create Visits</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>Create Visits</from>
+      <to>Migrate Obs</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>

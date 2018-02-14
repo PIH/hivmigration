@@ -13,4 +13,5 @@ SET @encounter_type_specimen_collection = (select encounter_type_id from encount
 insert into hivmigration_encounter_type(encounter_type, encounter_type_id) values("intake", @encounter_type_intake);
 insert into hivmigration_encounter_type(encounter_type, encounter_type_id) values("followup", @encounter_type_followup);
 insert into hivmigration_encounter_type(encounter_type, encounter_type_id) values("lab_result", @encounter_type_specimen_collection);
+insert into hivmigration_encounter_type(encounter_type, encounter_type_id) values("anlap_lab_result", @encounter_type_specimen_collection);
 
