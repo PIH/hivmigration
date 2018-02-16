@@ -9,4 +9,3 @@ delete from person_address where person_id in (select person_id from hivmigratio
 delete from person_name where person_id in (select person_id from hivmigration_patients);
 delete from person where person_id in (select person_id from hivmigration_patients);
 
-drop table hivmigration_patients;

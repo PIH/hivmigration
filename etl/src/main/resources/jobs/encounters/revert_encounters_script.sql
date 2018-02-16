@@ -1,2 +1,2 @@
 
-delete from encounter where uuid in (select encounter_uuid from hivmigration_encounters);
+delete from encounter where patient_id in (select person_id from hivmigration_patients);
