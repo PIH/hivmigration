@@ -114,7 +114,7 @@
            <schema_name/>
            </partitioning>
     <connection>Oracle</connection>
-    <sql>select   e.patient_id as source_patient_id,&#xa;         e.ENCOUNTER_ID as source_encounter_id, &#xa;         r.RESULT_ID as source_result_id,&#xa;         r.sample_id, &#xa;         lower&#x28;t.name&#x29; as test_type,&#xa;         r.TEST_TYPE as test_name, &#xa;         to_char&#x28;e.encounter_date, &#x27;yyyy-mm-dd&#x27;&#x29; as obs_datetime,&#xa;         value as value_numeric, &#xa;         value_string as value_text,   &#xa;         case when &#x28;value_p&#x3d;&#x27;t&#x27;&#x29; then &#x28; 1&#x29; 	&#xa;			else 0&#xa;            end as value_boolean,                &#xa;         case when &#x28;r.RESULT_UNDETECTABLE&#x3d;&#x27;t&#x27;&#x29; then &#x28; 1&#x29; 	&#xa;			else 0&#xa;            end as vl_beyond_detectable_limit,                  &#xa;         r.RESULT_UNDETECTABLE_RANGE as vl_detectable_lower_limit&#xa;from     hiv_demographics_real d, hiv_encounters e, hiv_lab_results r, hiv_lab_tests t&#xa;where    d.patient_id &#x3d; e.patient_id&#xa;and      e.encounter_id &#x3d; r.encounter_id&#xa;and      r.lab_test_id &#x3d; t.lab_test_id  &#xa;order by d.patient_id desc, e.encounter_id desc</sql>
+    <sql>select   e.patient_id as source_patient_id,&#xa;         e.ENCOUNTER_ID as source_encounter_id, &#xa;         r.RESULT_ID as source_result_id,&#xa;         r.sample_id, &#xa;         lower&#x28;t.name&#x29; as test_type,&#xa;         to_char&#x28;e.encounter_date, &#x27;yyyy-mm-dd&#x27;&#x29; as obs_datetime,&#xa;         value as value_numeric, &#xa;         value_string as value_text,   &#xa;         case when &#x28;value_p&#x3d;&#x27;t&#x27;&#x29; then &#x28; 1&#x29; 	&#xa;			else 0&#xa;            end as value_boolean,                &#xa;         case when &#x28;r.RESULT_UNDETECTABLE&#x3d;&#x27;t&#x27;&#x29; then &#x28; 1&#x29; 	&#xa;			else 0&#xa;            end as vl_beyond_detectable_limit,                  &#xa;         r.RESULT_UNDETECTABLE_RANGE as vl_detectable_lower_limit&#xa;from     hiv_demographics_real d, hiv_encounters e, hiv_lab_results r, hiv_lab_tests t&#xa;where    d.patient_id &#x3d; e.patient_id&#xa;and      e.encounter_id &#x3d; r.encounter_id&#xa;and      r.lab_test_id &#x3d; t.lab_test_id  &#xa;order by d.patient_id desc, e.encounter_id desc</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
@@ -176,10 +176,6 @@
         <field>
           <column_name>TEST_TYPE</column_name>
           <stream_name>TEST_TYPE</stream_name>
-        </field>
-        <field>
-          <column_name>TEST_NAME</column_name>
-          <stream_name>TEST_NAME</stream_name>
         </field>
         <field>
           <column_name>OBS_DATETIME</column_name>

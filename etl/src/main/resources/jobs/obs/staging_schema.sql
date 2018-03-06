@@ -7,7 +7,6 @@ create table hivmigration_lab_results (
   source_result_id int,
   sample_id VARCHAR(20),
   test_type VARCHAR(16), -- viral_load, CD4, tr, ppd, hematocrit
-  test_name VARCHAR(16), -- ExaVir, other
   obs_datetime date,
   value_numeric DOUBLE,
   value_text VARCHAR(100),
