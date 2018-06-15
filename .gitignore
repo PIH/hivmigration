@@ -18,3 +18,6 @@ export/.classpath
 export/.project
 export/.settings/*
 export/target/*
+
+migration.properties.dominic
+migration.properties.orig
