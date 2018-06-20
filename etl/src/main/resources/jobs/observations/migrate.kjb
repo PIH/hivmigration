@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <job>
-  <name>migrate</name>
+  <name>observations-migrate</name>
   <description/>
   <extended_description/>
   <job_version/>
+  <job_status>0</job_status>
   <directory>/</directory>
   <created_user>-</created_user>
   <created_date>2018/06/14 18:26:21.382</created_date>
@@ -445,7 +446,7 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>464</xloc>
-      <yloc>352</yloc>
+      <yloc>336</yloc>
     </entry>
     <entry>
       <name>Add UUIDS</name>
@@ -460,8 +461,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>608</xloc>
-      <yloc>352</yloc>
+      <xloc>640</xloc>
+      <yloc>336</yloc>
     </entry>
   </entries>
   <hops>
@@ -484,8 +485,8 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Create Staging Table</from>
-      <to>Extract</to>
+      <from>Extract</from>
+      <to>Add UUIDS</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -493,8 +494,8 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Extract</from>
-      <to>Add UUIDS</to>
+      <from>Create Staging Table</from>
+      <to>Extract</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>

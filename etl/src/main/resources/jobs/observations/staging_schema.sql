@@ -1,7 +1,6 @@
 drop table if exists hivmigration_observations;
 
 create table hivmigration_observations (
-  observation_id int PRIMARY KEY AUTO_INCREMENT,
   source_observation_id int,
   source_encounter_id int,
   observation varchar(100),

@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <job>
-  <name>medpickup-migrate</name>
+  <name>revert-observations</name>
   <description/>
   <extended_description/>
   <job_version/>
-  <job_status>0</job_status>
   <directory>/</directory>
   <created_user>-</created_user>
-  <created_date>2018/06/11 18:57:52.867</created_date>
+  <created_date>2018/06/20 17:27:04.572</created_date>
   <modified_user>-</modified_user>
-  <modified_date>2018/06/11 18:57:52.867</modified_date>
+  <modified_date>2018/06/20 17:27:04.572</modified_date>
   <parameters>
     </parameters>
   <connection>
@@ -359,11 +358,11 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>160</xloc>
-      <yloc>80</yloc>
+      <xloc>80</xloc>
+      <yloc>64</yloc>
     </entry>
     <entry>
-      <name>Load Configuration</name>
+      <name>Load Configurations</name>
       <description/>
       <type>JOB</type>
       <specification_method>filename</specification_method>
@@ -385,7 +384,7 @@
       <expand_remote_job>N</expand_remote_job>
       <create_parent_folder>N</create_parent_folder>
       <pass_export>N</pass_export>
-      <run_configuration/>
+      <run_configuration>Pentaho local</run_configuration>
       <parameters>
         <pass_all_parameters>Y</pass_all_parameters>
       </parameters>
@@ -393,78 +392,43 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>320</xloc>
-      <yloc>80</yloc>
+      <xloc>224</xloc>
+      <yloc>64</yloc>
     </entry>
     <entry>
-      <name>create load_accompagnateur_name</name>
+      <name>If table exists</name>
+      <description/>
+      <type>TABLE_EXISTS</type>
+      <tablename>hivmigration_observations</tablename>
+      <schemaname/>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>400</xloc>
+      <yloc>64</yloc>
+    </entry>
+    <entry>
+      <name>Delete previously migrated data</name>
       <description/>
       <type>SQL</type>
       <sql/>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>T</sqlfromfile>
-      <sqlfilename>${Internal.Job.Filename.Directory}/load_accompagnateur_name.sql</sqlfilename>
-      <sendOneStatement>T</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>896</xloc>
-      <yloc>208</yloc>
-    </entry>
-    <entry>
-      <name>Ensure accompagnateur concept exists</name>
-      <description/>
-      <type>SQL</type>
-      <sql/>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>T</sqlfromfile>
-      <sqlfilename>${Internal.Job.Filename.Directory}/concepts/create_accompagnateur_name_concept.sql</sqlfilename>
+      <sqlfilename>${Internal.Job.Filename.Directory}/revert_observations_script.sql</sqlfilename>
       <sendOneStatement>F</sendOneStatement>
       <connection>OpenMRS</connection>
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>576</xloc>
-      <yloc>80</yloc>
-    </entry>
-    <entry>
-      <name>drop load_accompagnateur_name</name>
-      <description/>
-      <type>SQL</type>
-      <sql>drop procedure if exists load_accompagnateur_name</sql>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>F</sqlfromfile>
-      <sqlfilename/>
-      <sendOneStatement>F</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>896</xloc>
-      <yloc>80</yloc>
-    </entry>
-    <entry>
-      <name>Run load_accompagnateur_name</name>
-      <description/>
-      <type>SQL</type>
-      <sql>call load_accompagnateur_name()</sql>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>F</sqlfromfile>
-      <sqlfilename/>
-      <sendOneStatement>F</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>576</xloc>
-      <yloc>208</yloc>
+      <xloc>608</xloc>
+      <yloc>64</yloc>
     </entry>
   </entries>
   <hops>
     <hop>
       <from>START</from>
-      <to>Load Configuration</to>
+      <to>Load Configurations</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -472,8 +436,8 @@
       <unconditional>Y</unconditional>
     </hop>
     <hop>
-      <from>Load Configuration</from>
-      <to>Ensure accompagnateur concept exists</to>
+      <from>Load Configurations</from>
+      <to>If table exists</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -481,26 +445,8 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Ensure accompagnateur concept exists</from>
-      <to>drop load_accompagnateur_name</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>drop load_accompagnateur_name</from>
-      <to>create load_accompagnateur_name</to>
-      <from_nr>0</from_nr>
-      <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-    </hop>
-    <hop>
-      <from>create load_accompagnateur_name</from>
-      <to>Run load_accompagnateur_name</to>
+      <from>If table exists</from>
+      <to>Delete previously migrated data</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>

@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <job>
-  <name>medpickup-migrate</name>
+  <name>load-routines</name>
   <description/>
   <extended_description/>
   <job_version/>
-  <job_status>0</job_status>
   <directory>/</directory>
   <created_user>-</created_user>
-  <created_date>2018/06/11 18:57:52.867</created_date>
+  <created_date>2018/06/20 15:07:44.696</created_date>
   <modified_user>-</modified_user>
-  <modified_date>2018/06/11 18:57:52.867</modified_date>
+  <modified_date>2018/06/20 15:07:44.696</modified_date>
   <parameters>
     </parameters>
   <connection>
@@ -343,6 +342,22 @@
   <shared_objects_file/>
   <entries>
     <entry>
+      <name>create ensure_concept</name>
+      <description/>
+      <type>SQL</type>
+      <sql/>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>T</sqlfromfile>
+      <sqlfilename>${Internal.Job.Filename.Directory}/ensure_concept.sql</sqlfilename>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>720</xloc>
+      <yloc>64</yloc>
+    </entry>
+    <entry>
       <name>START</name>
       <description/>
       <type>SPECIAL</type>
@@ -359,8 +374,40 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>160</xloc>
-      <yloc>80</yloc>
+      <xloc>176</xloc>
+      <yloc>64</yloc>
+    </entry>
+    <entry>
+      <name>create ensure_concept_answer</name>
+      <description/>
+      <type>SQL</type>
+      <sql/>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>T</sqlfromfile>
+      <sqlfilename>${Internal.Job.Filename.Directory}/ensure_concept_answer.sql</sqlfilename>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>448</xloc>
+      <yloc>176</yloc>
+    </entry>
+    <entry>
+      <name>create ensure_concept_set_members</name>
+      <description/>
+      <type>SQL</type>
+      <sql/>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>T</sqlfromfile>
+      <sqlfilename>${Internal.Job.Filename.Directory}/ensure_concept_set_members.sql</sqlfilename>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>192</xloc>
+      <yloc>288</yloc>
     </entry>
     <entry>
       <name>Load Configuration</name>
@@ -393,46 +440,14 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>320</xloc>
-      <yloc>80</yloc>
+      <xloc>336</xloc>
+      <yloc>64</yloc>
     </entry>
     <entry>
-      <name>create load_accompagnateur_name</name>
+      <name>drop ensure_concept</name>
       <description/>
       <type>SQL</type>
-      <sql/>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>T</sqlfromfile>
-      <sqlfilename>${Internal.Job.Filename.Directory}/load_accompagnateur_name.sql</sqlfilename>
-      <sendOneStatement>T</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>896</xloc>
-      <yloc>208</yloc>
-    </entry>
-    <entry>
-      <name>Ensure accompagnateur concept exists</name>
-      <description/>
-      <type>SQL</type>
-      <sql/>
-      <useVariableSubstitution>F</useVariableSubstitution>
-      <sqlfromfile>T</sqlfromfile>
-      <sqlfilename>${Internal.Job.Filename.Directory}/concepts/create_accompagnateur_name_concept.sql</sqlfilename>
-      <sendOneStatement>F</sendOneStatement>
-      <connection>OpenMRS</connection>
-      <parallel>N</parallel>
-      <draw>Y</draw>
-      <nr>0</nr>
-      <xloc>576</xloc>
-      <yloc>80</yloc>
-    </entry>
-    <entry>
-      <name>drop load_accompagnateur_name</name>
-      <description/>
-      <type>SQL</type>
-      <sql>drop procedure if exists load_accompagnateur_name</sql>
+      <sql>drop procedure if exists ensure_concept</sql>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>F</sqlfromfile>
       <sqlfilename/>
@@ -441,14 +456,14 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>896</xloc>
-      <yloc>80</yloc>
+      <xloc>528</xloc>
+      <yloc>64</yloc>
     </entry>
     <entry>
-      <name>Run load_accompagnateur_name</name>
+      <name>drop ensure_concept_answer</name>
       <description/>
       <type>SQL</type>
-      <sql>call load_accompagnateur_name()</sql>
+      <sql>drop procedure if exists ensure_concept_answer</sql>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>F</sqlfromfile>
       <sqlfilename/>
@@ -457,8 +472,24 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>576</xloc>
-      <yloc>208</yloc>
+      <xloc>720</xloc>
+      <yloc>176</yloc>
+    </entry>
+    <entry>
+      <name>drop ensure_concept_set_members</name>
+      <description/>
+      <type>SQL</type>
+      <sql>drop procedure if exists ensure_concept_set_members</sql>
+      <useVariableSubstitution>F</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>OpenMRS</connection>
+      <parallel>N</parallel>
+      <draw>Y</draw>
+      <nr>0</nr>
+      <xloc>192</xloc>
+      <yloc>176</yloc>
     </entry>
   </entries>
   <hops>
@@ -473,7 +504,7 @@
     </hop>
     <hop>
       <from>Load Configuration</from>
-      <to>Ensure accompagnateur concept exists</to>
+      <to>drop ensure_concept</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -481,8 +512,8 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Ensure accompagnateur concept exists</from>
-      <to>drop load_accompagnateur_name</to>
+      <from>drop ensure_concept</from>
+      <to>create ensure_concept</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -490,8 +521,8 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>drop load_accompagnateur_name</from>
-      <to>create load_accompagnateur_name</to>
+      <from>create ensure_concept</from>
+      <to>drop ensure_concept_answer</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -499,8 +530,26 @@
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>create load_accompagnateur_name</from>
-      <to>Run load_accompagnateur_name</to>
+      <from>drop ensure_concept_answer</from>
+      <to>create ensure_concept_answer</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>create ensure_concept_answer</from>
+      <to>drop ensure_concept_set_members</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>drop ensure_concept_set_members</from>
+      <to>create ensure_concept_set_members</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -510,20 +559,4 @@
   </hops>
   <notepads>
   </notepads>
-  <attributes>
-    <group>
-      <name>METASTORE.pentaho</name>
-      <attribute>
-        <key>Default Run Configuration</key>
-        <value>{"namespace":"pentaho","id":"Default Run Configuration","name":"Default Run Configuration","description":"Defines a default run configuration","metaStoreName":null}</value>
-      </attribute>
-    </group>
-    <group>
-      <name>{"_":"Embedded MetaStore Elements","namespace":"pentaho","type":"Default Run Configuration"}</name>
-      <attribute>
-        <key>Pentaho local</key>
-        <value>{"children":[{"children":[],"id":"server","value":null},{"children":[],"id":"clustered","value":"N"},{"children":[],"id":"name","value":"Pentaho local"},{"children":[],"id":"description","value":null},{"children":[],"id":"pentaho","value":"N"},{"children":[],"id":"readOnly","value":"Y"},{"children":[],"id":"sendResources","value":"N"},{"children":[],"id":"logRemoteExecutionLocally","value":"N"},{"children":[],"id":"remote","value":"N"},{"children":[],"id":"local","value":"Y"},{"children":[],"id":"showTransformations","value":"N"}],"id":"Pentaho local","value":null,"name":"Pentaho local","owner":null,"ownerPermissionsList":[]}</value>
-      </attribute>
-    </group>
-  </attributes>
 </job>
