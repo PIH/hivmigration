@@ -371,7 +371,7 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>96</xloc>
+      <xloc>64</xloc>
       <yloc>64</yloc>
     </entry>
     <entry>
@@ -765,7 +765,7 @@
       <yloc>464</yloc>
     </entry>
     <entry>
-      <name>Migrate Medpickps</name>
+      <name>Migrate Medpickups</name>
       <description/>
       <type>JOB</type>
       <specification_method>filename</specification_method>
@@ -804,7 +804,7 @@
       <type>JOB</type>
       <specification_method>filename</specification_method>
       <job_object_id/>
-      <filename>${Internal.Job.Directory.Name}/db_routines/load-routines.kjb</filename>
+      <filename>${Internal.Job.Filename.Directory}/db_routines/load-routines.kjb</filename>
       <jobname/>
       <arg_from_previous>N</arg_from_previous>
       <params_from_previous>N</params_from_previous>
@@ -920,13 +920,13 @@
       <to>Migrate Observations</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
-      <enabled>Y</enabled>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
+      <enabled>N</enabled>
+      <evaluation>N</evaluation>
+      <unconditional>Y</unconditional>
     </hop>
     <hop>
       <from>Migrate Observations</from>
-      <to>Migrate Medpickps</to>
+      <to>Migrate Medpickups</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -947,7 +947,7 @@
       <to>Load Configuration</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
     </hop>
@@ -959,6 +959,15 @@
       <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
+    </hop>
+    <hop>
+      <from>START</from>
+      <to>Migrate Lab Results</to>
+      <from_nr>0</from_nr>
+      <to_nr>0</to_nr>
+      <enabled>Y</enabled>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
     </hop>
   </hops>
   <notepads>

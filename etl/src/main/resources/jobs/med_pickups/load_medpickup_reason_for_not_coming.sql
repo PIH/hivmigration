@@ -1,9 +1,9 @@
-create procedure load_accompagnateur_name()
+create procedure load_medpickup_reason_for_not_coming()
 begin
-  declare chw_name_concept int;
+  declare reason_for_not_coming_concept int;
 
-  select concept_id into chw_name_concept from concept
-  where uuid = '164141AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+  select concept_id into reason_for_not_coming_concept from concept
+  where uuid = '7af8ecdd-7a49-11e8-8624-54ee75ef41c2';
 
   insert into obs(
      person_id,
@@ -18,7 +18,7 @@ begin
      value_text
   )
   select p.person_id,
-    chw_name_concept,
+    reason_for_not_coming_concept,
     e.encounter_id,
     case
       when o.entry_date is not null then o.entry_date
@@ -33,9 +33,6 @@ begin
   from hivmigration_observations o
   join hivmigration_encounters e on o.source_encounter_id = e.source_encounter_id
   join hivmigration_patients p on e.source_patient_id = p.source_patient_id
-  where o.observation = 'accompagnateur_name'
-  and e.source_encounter_type = 'accompagnateur';
+  where o.observation = 'accompagnateur_reason_for_not_coming'
+        and e.source_encounter_type = 'accompagnateur';
 end;
-
-
-
