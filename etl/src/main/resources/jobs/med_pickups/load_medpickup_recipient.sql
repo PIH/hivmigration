@@ -41,6 +41,7 @@ begin
   where o.observation = 'accompagnateur_name'
         and e.source_encounter_type = 'accompagnateur'
         and lower(o.value) not in ('lui meme', 'elle meme', 'soi meme', 'soi-meme');
+  -- other possible values to filter by: Auto-medication, Automedicatio, AUTOMEDICATION, Auto-Med, AutoMed
 
   -- record patients who picked up their own meds
   insert into obs(

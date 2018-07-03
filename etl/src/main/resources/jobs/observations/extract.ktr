@@ -572,8 +572,7 @@
 	value,
 	entry_date
 from
-	hiv_observations
-</sql>
+	hiv_observations</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
