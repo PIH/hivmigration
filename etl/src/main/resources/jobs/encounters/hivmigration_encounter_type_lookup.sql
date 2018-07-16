@@ -17,4 +17,7 @@ insert into hivmigration_encounter_type(encounter_type, encounter_type_id) value
 insert into hivmigration_encounter_type(encounter_type, encounter_type_id) values("anlap_lab_result", @encounter_type_specimen_collection);
 insert into hivmigration_encounter_type(encounter_type, encounter_type_id) values("accompagnateur", @encounter_type_medicaments_administres);
 
-
+-- encounters with height/weight measurements
+insert into hivmigration_encounter_type(encounter_type, encounter_type_id) values("anlap_vital_signs", @encounter_type_intake);
+insert into hivmigration_encounter_type(encounter_type, encounter_type_id) values("patient_contact", @encounter_type_intake);
+insert into hivmigration_encounter_type(encounter_type, encounter_type_id) values("food_study", @encounter_type_intake);
