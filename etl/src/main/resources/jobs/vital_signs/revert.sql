@@ -1,0 +1,1 @@
+delete from obs where uuid in (select vital_sign_uuid from hivmigration_vital_signs);
