@@ -491,7 +491,7 @@
       <name>Add UUIDs to staging table</name>
       <description/>
       <type>SQL</type>
-      <sql>update hivmigration_exam_extra set vital_sign_uuid = uuid()</sql>
+      <sql>update hivmigration_exam_extra set exam_extra_uuid = uuid()</sql>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>F</sqlfromfile>
       <sqlfilename/>
@@ -576,7 +576,7 @@
       <to>Extract extra Exam info to staging table</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
-      <enabled>N</enabled>
+      <enabled>Y</enabled>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
     </hop>

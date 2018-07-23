@@ -408,7 +408,7 @@
       <name>If table exists</name>
       <description/>
       <type>TABLE_EXISTS</type>
-      <tablename>hivmigration_extra_exam</tablename>
+      <tablename>hivmigration_exam_extra</tablename>
       <schemaname/>
       <connection>OpenMRS</connection>
       <parallel>N</parallel>

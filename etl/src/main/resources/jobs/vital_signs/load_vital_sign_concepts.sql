@@ -58,10 +58,10 @@ begin
   select p.person_id,
     weight_concept,
     e.encounter_id,
+    e.encounter_date,
     e.location_id,
     1,
     now(),
-    e.encounter_date,
     0,
     v.vital_sign_uuid,
     case

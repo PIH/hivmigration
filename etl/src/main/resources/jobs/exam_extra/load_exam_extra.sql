@@ -32,6 +32,6 @@ begin
   join hivmigration_patients p on e.source_patient_id = p.source_patient_id
   where v.next_exam_date is not null
   and DATEDIFF(v.next_exam_date, now()) > 0
-  and DATEDIFF(v.next_exam_date, now()) < 3650 -- fetch appts in the next 10 years
+  and DATEDIFF(v.next_exam_date, now()) < 3650; -- fetch appts in the next 10 years
 
 end;
