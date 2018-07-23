@@ -65,7 +65,7 @@ begin
     0,
     v.vital_sign_uuid,
     case
-      when v.result_unit = 'lbs' then v.result * 0.453592
+      when v.result_unit = 'lbs' then round(v.result * 0.453592, 1)
       else v.result
     end
   from hivmigration_vital_signs v
