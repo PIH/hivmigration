@@ -618,7 +618,7 @@ delete from patient_program where patient_id in (select person_id from hivmigrat
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>496</xloc>
+      <xloc>480</xloc>
       <yloc>64</yloc>
     </entry>
     <entry>
@@ -686,8 +686,8 @@ delete from patient_program where patient_id in (select person_id from hivmigrat
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>416</xloc>
-      <yloc>240</yloc>
+      <xloc>272</xloc>
+      <yloc>352</yloc>
     </entry>
     <entry>
       <name>Revert Observations</name>
@@ -721,7 +721,7 @@ delete from patient_program where patient_id in (select person_id from hivmigrat
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>272</xloc>
-      <yloc>240</yloc>
+      <yloc>224</yloc>
     </entry>
     <entry>
       <name>Revert Vital Signs</name>
@@ -754,8 +754,8 @@ delete from patient_program where patient_id in (select person_id from hivmigrat
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>1104</xloc>
-      <yloc>256</yloc>
+      <xloc>480</xloc>
+      <yloc>352</yloc>
     </entry>
     <entry>
       <name>Revert Exam Extra Info</name>
@@ -788,8 +788,8 @@ delete from patient_program where patient_id in (select person_id from hivmigrat
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>1104</xloc>
-      <yloc>112</yloc>
+      <xloc>480</xloc>
+      <yloc>224</yloc>
     </entry>
   </entries>
   <hops>
@@ -920,8 +920,8 @@ delete from patient_program where patient_id in (select person_id from hivmigrat
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Revert Lab Results</from>
-      <to>Revert Encounters</to>
+      <from>Revert Vital Signs</from>
+      <to>Revert Exam Extra Info</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
@@ -929,7 +929,7 @@ delete from patient_program where patient_id in (select person_id from hivmigrat
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Revert Users</from>
+      <from>Revert Lab Results</from>
       <to>Revert Vital Signs</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
@@ -938,8 +938,8 @@ delete from patient_program where patient_id in (select person_id from hivmigrat
       <unconditional>N</unconditional>
     </hop>
     <hop>
-      <from>Revert Vital Signs</from>
-      <to>Revert Exam Extra Info</to>
+      <from>Revert Exam Extra Info</from>
+      <to>Revert Encounters</to>
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
