@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <job>
-  <name>migrate</name>
+  <name>migrate_vital_signs</name>
   <description/>
   <extended_description/>
   <job_version/>
+  <job_status>0</job_status>
   <directory>/</directory>
   <created_user>-</created_user>
-  <created_date>2018/07/12 14:17:05.425</created_date>
+  <created_date>2018/08/02 12:54:45.674</created_date>
   <modified_user>-</modified_user>
-  <modified_date>2018/07/12 14:17:05.425</modified_date>
+  <modified_date>2018/08/02 12:54:45.674</modified_date>
   <parameters>
     </parameters>
   <connection>
@@ -24,18 +25,6 @@
     <data_tablespace/>
     <index_tablespace/>
     <attributes>
-      <attribute>
-        <code>EXTRA_OPTION_MYSQL.defaultFetchSize</code>
-        <attribute>500</attribute>
-      </attribute>
-      <attribute>
-        <code>EXTRA_OPTION_MYSQL.useCompression</code>
-        <attribute>true</attribute>
-      </attribute>
-      <attribute>
-        <code>EXTRA_OPTION_MYSQL.useCursorFetch</code>
-        <attribute>true</attribute>
-      </attribute>
       <attribute>
         <code>FORCE_IDENTIFIERS_TO_LOWERCASE</code>
         <attribute>N</attribute>
@@ -592,8 +581,8 @@
       <from_nr>0</from_nr>
       <to_nr>0</to_nr>
       <enabled>Y</enabled>
-      <evaluation>N</evaluation>
-      <unconditional>Y</unconditional>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
     </hop>
     <hop>
       <from>Drop load_vital_signs()</from>
@@ -616,20 +605,4 @@
   </hops>
   <notepads>
   </notepads>
-  <attributes>
-    <group>
-      <name>METASTORE.pentaho</name>
-      <attribute>
-        <key>Default Run Configuration</key>
-        <value>{"namespace":"pentaho","id":"Default Run Configuration","name":"Default Run Configuration","description":"Defines a default run configuration","metaStoreName":null}</value>
-      </attribute>
-    </group>
-    <group>
-      <name>{"_":"Embedded MetaStore Elements","namespace":"pentaho","type":"Default Run Configuration"}</name>
-      <attribute>
-        <key>Pentaho local</key>
-        <value>{"children":[{"children":[],"id":"server","value":null},{"children":[],"id":"clustered","value":"N"},{"children":[],"id":"name","value":"Pentaho local"},{"children":[],"id":"description","value":null},{"children":[],"id":"pentaho","value":"N"},{"children":[],"id":"readOnly","value":"Y"},{"children":[],"id":"sendResources","value":"N"},{"children":[],"id":"logRemoteExecutionLocally","value":"N"},{"children":[],"id":"remote","value":"N"},{"children":[],"id":"local","value":"Y"},{"children":[],"id":"showTransformations","value":"N"}],"id":"Pentaho local","value":null,"name":"Pentaho local","owner":null,"ownerPermissionsList":[]}</value>
-      </attribute>
-    </group>
-  </attributes>
 </job>

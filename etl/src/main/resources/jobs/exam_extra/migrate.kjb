@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <job>
-  <name>migrate</name>
+  <name>migrate exam extra</name>
   <description/>
   <extended_description/>
   <job_version/>
+  <job_status>0</job_status>
   <directory>/</directory>
   <created_user>-</created_user>
-  <created_date>2018/07/16 12:45:22.857</created_date>
+  <created_date>2018/08/02 16:20:45.571</created_date>
   <modified_user>-</modified_user>
-  <modified_date>2018/07/16 12:45:22.857</modified_date>
+  <modified_date>2018/08/02 16:20:45.571</modified_date>
   <parameters>
     </parameters>
   <connection>
@@ -24,30 +25,6 @@
     <data_tablespace/>
     <index_tablespace/>
     <attributes>
-      <attribute>
-        <code>EXTRA_OPTION_MYSQL.defaultFetchSize</code>
-        <attribute>500</attribute>
-      </attribute>
-      <attribute>
-        <code>EXTRA_OPTION_MYSQL.rewriteBatchedStatements</code>
-        <attribute>true</attribute>
-      </attribute>
-      <attribute>
-        <code>EXTRA_OPTION_MYSQL.tcpKeepAlive</code>
-        <attribute>true</attribute>
-      </attribute>
-      <attribute>
-        <code>EXTRA_OPTION_MYSQL.useCompression</code>
-        <attribute>true</attribute>
-      </attribute>
-      <attribute>
-        <code>EXTRA_OPTION_MYSQL.useCursorFetch</code>
-        <attribute>true</attribute>
-      </attribute>
-      <attribute>
-        <code>EXTRA_OPTION_MYSQL.useServerPrepStmts</code>
-        <attribute>false</attribute>
-      </attribute>
       <attribute>
         <code>FORCE_IDENTIFIERS_TO_LOWERCASE</code>
         <attribute>N</attribute>
@@ -382,8 +359,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>96</xloc>
-      <yloc>64</yloc>
+      <xloc>272</xloc>
+      <yloc>128</yloc>
     </entry>
     <entry>
       <name>Load Configuration</name>
@@ -416,8 +393,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>336</xloc>
-      <yloc>64</yloc>
+      <xloc>512</xloc>
+      <yloc>128</yloc>
     </entry>
     <entry>
       <name>Ensure concepts exist</name>
@@ -432,8 +409,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>592</xloc>
-      <yloc>240</yloc>
+      <xloc>768</xloc>
+      <yloc>304</yloc>
     </entry>
     <entry>
       <name>Create Staging Table</name>
@@ -448,8 +425,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>592</xloc>
-      <yloc>64</yloc>
+      <xloc>768</xloc>
+      <yloc>128</yloc>
     </entry>
     <entry>
       <name>Extract extra Exam info to staging table</name>
@@ -484,8 +461,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>896</xloc>
-      <yloc>64</yloc>
+      <xloc>1072</xloc>
+      <yloc>128</yloc>
     </entry>
     <entry>
       <name>Add UUIDs to staging table</name>
@@ -500,8 +477,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>896</xloc>
-      <yloc>240</yloc>
+      <xloc>1072</xloc>
+      <yloc>304</yloc>
     </entry>
     <entry>
       <name>Create load_exam_extra()</name>
@@ -516,8 +493,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>96</xloc>
-      <yloc>240</yloc>
+      <xloc>272</xloc>
+      <yloc>304</yloc>
     </entry>
     <entry>
       <name>Call load_exam_extra()</name>
@@ -532,8 +509,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>96</xloc>
-      <yloc>384</yloc>
+      <xloc>272</xloc>
+      <yloc>448</yloc>
     </entry>
     <entry>
       <name>Drop load_exam_extra()</name>
@@ -548,8 +525,8 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>336</xloc>
-      <yloc>240</yloc>
+      <xloc>512</xloc>
+      <yloc>304</yloc>
     </entry>
   </entries>
   <hops>
@@ -628,20 +605,4 @@
   </hops>
   <notepads>
   </notepads>
-  <attributes>
-    <group>
-      <name>METASTORE.pentaho</name>
-      <attribute>
-        <key>Default Run Configuration</key>
-        <value>{"namespace":"pentaho","id":"Default Run Configuration","name":"Default Run Configuration","description":"Defines a default run configuration","metaStoreName":null}</value>
-      </attribute>
-    </group>
-    <group>
-      <name>{"_":"Embedded MetaStore Elements","namespace":"pentaho","type":"Default Run Configuration"}</name>
-      <attribute>
-        <key>Pentaho local</key>
-        <value>{"children":[{"children":[],"id":"server","value":null},{"children":[],"id":"clustered","value":"N"},{"children":[],"id":"name","value":"Pentaho local"},{"children":[],"id":"description","value":null},{"children":[],"id":"pentaho","value":"N"},{"children":[],"id":"readOnly","value":"Y"},{"children":[],"id":"sendResources","value":"N"},{"children":[],"id":"logRemoteExecutionLocally","value":"N"},{"children":[],"id":"remote","value":"N"},{"children":[],"id":"local","value":"Y"},{"children":[],"id":"showTransformations","value":"N"}],"id":"Pentaho local","value":null,"name":"Pentaho local","owner":null,"ownerPermissionsList":[]}</value>
-      </attribute>
-    </group>
-  </attributes>
 </job>
