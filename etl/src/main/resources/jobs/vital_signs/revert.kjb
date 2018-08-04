@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <job>
-  <name>Revert Migrated Vital Signs</name>
+  <name>Revert Migrated Visits</name>
   <description/>
   <extended_description/>
   <job_version/>
-  <job_status>0</job_status>
   <directory>/</directory>
   <created_user>-</created_user>
   <created_date>2018/02/08 14:51:39.524</created_date>
