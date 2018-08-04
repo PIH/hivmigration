@@ -570,7 +570,11 @@
 	RESULT, 
 	RESULT_UNIT 
 from HIV_EXAM_VITAL_SIGNS
-where SIGN in ('height', 'weight', 'bmi')</sql>
+where SIGN in ('height', 'weight', 'bmi')
+AND ENCOUNTER_ID IN (
+	SELECT ENCOUNTER_ID FROM HIV_ENCOUNTERS
+	WHERE ENCOUNTER_DATE > to_date('01-01-2017', 'MM-DD-YYYY')
+)</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>

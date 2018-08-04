@@ -590,7 +590,10 @@
     <connection>HIVEMR</connection>
     <sql>select ENCOUNTER_ID, NEXT_EXAM_DATE from HIV_EXAM_EXTRA
 where to_date(NEXT_EXAM_DATE) is not null
-</sql>
+AND ENCOUNTER_ID IN (
+	SELECT ENCOUNTER_ID FROM HIV_ENCOUNTERS
+	WHERE ENCOUNTER_DATE > to_date('01-01-2017', 'MM-DD-YYYY')
+)</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>
