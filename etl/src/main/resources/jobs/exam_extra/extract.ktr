@@ -592,7 +592,7 @@
 where to_date(NEXT_EXAM_DATE) is not null
 AND ENCOUNTER_ID IN (
 	SELECT ENCOUNTER_ID FROM HIV_ENCOUNTERS
-	WHERE ENCOUNTER_DATE > to_date('01-01-2017', 'MM-DD-YYYY')
+	WHERE ENCOUNTER_DATE > to_date('01-01-2018', 'MM-DD-YYYY')
 )</sql>
     <limit>0</limit>
     <lookup/>

@@ -585,7 +585,7 @@
 	entry_date
 from
 	hiv_observations
-where entry_date >= to_date('01-01-2017', 'MM-DD-YYYY')</sql>
+where entry_date >= to_date('01-01-2018', 'MM-DD-YYYY')</sql>
     <limit>0</limit>
     <lookup/>
     <execute_each_row>N</execute_each_row>

@@ -578,7 +578,7 @@ from
 	 from encounter
 	 where uuid in (select encounter_uuid from hivmigration_encounters)
 	 ) as e
-where e.encounter_datetime >= '2017-01-01'
+where e.encounter_datetime >= '2018-01-01'
 group by
   e.patient_id, e.encounter_datetime
 

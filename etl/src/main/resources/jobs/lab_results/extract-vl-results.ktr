@@ -588,7 +588,7 @@ from     hiv_demographics_real d, hiv_encounters e, hiv_lab_results r, hiv_lab_t
 where    d.patient_id = e.patient_id
 and      e.encounter_id = r.encounter_id
 and      r.lab_test_id = t.lab_test_id  
-and  	e.encounter_date >= to_date('01-01-2017', 'MM-DD-YYYY')
+and  	e.encounter_date >= to_date('01-01-2018', 'MM-DD-YYYY')
 order by d.patient_id desc, e.encounter_id desc</sql>
     <limit>0</limit>
     <lookup/>
