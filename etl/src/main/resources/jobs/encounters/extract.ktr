@@ -583,7 +583,6 @@
 	e.response_to
 from
 	hiv_encounters e
-where e.encounter_date >= to_date('01-01-2018', 'MM-DD-YYYY')
 </sql>
     <limit>0</limit>
     <lookup/>
