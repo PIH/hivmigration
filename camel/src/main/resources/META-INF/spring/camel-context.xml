@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+  <bean id="changeProcessor" class="org.pih.hivmigration.ChangeProcessor"/>
+
+  <bean name="hivemrOracleDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="driverClassName" value="oracle.jdbc.OracleDriver" />
+    <property name="url" value="jdbc:oracle:thin:@localhost:1521:XE" />
+    <property name="username" value="hiv" />
+    <property name="password" value="hiv" />
+  </bean>
+
+  <camel:camelContext xmlns="http://camel.apache.org/schema/spring">
+
+    <route id="poll-change-log">
+      <from uri="timer://timer1?period=1m"/>
+      <setBody>
+        <constant>
+          select * from hiv_change_log where status = 'NEW' order by id
+        </constant>
+      </setBody>
+      <to uri="jdbc:hivemrOracleDataSource"/>
+      <split>
+        <simple>${body}</simple>
+        <to uri="bean:changeProcessor"/>
+        <to uri="direct:updateDone"/>
+      </split>
+    </route>
+    <route id="update-change-log">
+      <from uri="direct:updateDone"/>
+      <setHeader headerName="changeId">
+        <simple>${body['ID']}</simple>
+      </setHeader>
+      <setBody>
+        <constant>
+          update hiv_change_log set status = 'DONE' where id=:?changeId
+        </constant>
+      </setBody>
+      <to uri="jdbc:hivemrOracleDataSource?useHeadersAsParameters=true"/>
+      <setBody>
+        <simple>Record ID=${headers.changeId} has been marked as 'DONE'</simple>
+      </setBody>
+      <to uri="log:updateDone"/>
+    </route>
+  </camel:camelContext>
+
+</beans>
