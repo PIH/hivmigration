@@ -8,21 +8,18 @@ including a Java API that can be embedded in the target system to facilitate the
 
 These steps will setup HIV EMR1, Oracle, Pentaho, and this code: 
 
-1. Install HIV EMR1 (ACS) and Oracle running locally using Docker, following these instructions:
-https://bitbucket.org/partnersinhealth/hivemr-docker/src/master/
+1. Install HIV EMR system (both application and Oracle db) running locally using Docker, following these instructions:
+https://bitbucket.org/partnersinhealth/hivemr/docker
 
-2. As part of step 1, install and setup HIV EMR1 (ACS) files on local disk (outside of docker):
-https://bitbucket.org/partnersinhealth/hivemr
+2. Install OpenMRS SDK with a clean database (ie. openmrs_hiv) for Haiti HIV:
+   - https://wiki.openmrs.org/display/docs/OpenMRS+SDK#OpenMRSSDK-Installation
+   - Use Lespwa-style setup with pih_config: haiti-hiv
 
 3. Get Pentaho Data Integration installed locally (mainly so that you can use Spoon - now called "PDI client" to author jobs).  There should no difficulty with any version (Versions 6, 7, or 8 appear to work).  Download from SourceForge:
 https://sourceforge.net/projects/pentaho/
 
 4. Get the hivmigration project cloned and available to use locally:
 https://github.com/PIH/hivmigration
-
-5. Install OpenMRS SDK with a clean database (ie. openmrs_hiv) for Haiti HIV:
-   - https://wiki.openmrs.org/display/docs/OpenMRS+SDK#OpenMRSSDK-Installation
-   - Use Lespwa-style setup with pih_config: haiti-hiv
 
 
 ## Migrating data
