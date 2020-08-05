@@ -9,7 +9,7 @@ including a Java API that can be embedded in the target system to facilitate the
 These steps will setup HIV EMR1, Oracle, Pentaho, and this code: 
 
 1. Install HIV EMR system (both application and Oracle db) running locally using Docker, following these instructions:
-https://bitbucket.org/partnersinhealth/hivemr/docker
+https://bitbucket.org/partnersinhealth/hivemr/src/master/docker/
 
 2. Install OpenMRS SDK with a clean database (ie. openmrs_hiv) for Haiti HIV:
    - https://wiki.openmrs.org/display/docs/OpenMRS+SDK#OpenMRSSDK-Installation
