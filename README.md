@@ -26,19 +26,22 @@ https://github.com/PIH/hivmigration
 
 Instructions for executing commands from this java project 
 
-1. Create new directory for HIV migration data and log files (ie. $HOME/environment/hiv-migration)
-2. Permanently set the environment variable in $HOME/.profile (ie. export HIVMIGRATION_HOME=/home/ball/environment/hiv-migration).  If you do this, you can likely skip setting this later in Step 5.
-3. Create file $HIV_MIGRATION_HOME/migration.properties from https://github.com/PIH/hivmigration/blob/master/etl/src/main/resources/sample-migration.properties.  As necessary, modify database, ports, password, etc for mysql and oracle.
-4. Install clean SDK with lespwa pih-config variables which creates a clean database (ie. openmrs-hiv).
-5. There are 3 ways to run the migration:
+1. Create new directory for HIV migration data and log files (eg. `~/hiv-migration`).
+2. Set the environment variable `HIVMIGRATION_HOME` (to e.g. `/home/ball/hiv-migration`).
+3. Create file `$HIVMIGRATION_HOME/migration.properties` from
+   [etl/src/main/resources/sample-migration.properties](https://github.com/PIH/hivmigration/blob/master/etl/src/main/resources/sample-migration.properties).
+   Check that the values are correct for your databases.
+4. There are 3 ways to run the migration:
    - IntelliJ:  
-     - Run Migrator.java.  
-     - This requires setting HIVMIGRATION_HOME environment variable and Java 8 in the "Run..." configuration.
+     - Run `Migrator.java`
    - Command-line:  
-     - Use ansible deployment playbook https://bitbucket.org/partnersinhealth/deployment/src/master/playbooks/roles/hiv-migration/
+     - Use [ansible deployment playbook](https://bitbucket.org/partnersinhealth/deployment/src/master/playbooks/roles/hiv-migration/)
    - Pentaho Spoon: 
-     - Set HIV_MIGRATION_HOME in ~/.kettle/kettle.properties.  The other variables will be set automatically.  
-     - Add Oracle and MySQL connectors (jar files) into Pentaho data-integrationX.Y/lib directory
+     - Set HIV_MIGRATION_HOME in ~/.kettle/kettle.properties.  The other variables will be set automatically.
+     - Add Oracle and MySQL connectors (jar files) into Pentaho `lib/` directory
+         - `org.gjt.mm.mysql.Driver` from [MySQL Connector/J 5.1.49](https://mvnrepository.com/artifact/mysql/mysql-connector-java/5.1.49)
+         - No idea about the Oracle one
+         
 
 
 
