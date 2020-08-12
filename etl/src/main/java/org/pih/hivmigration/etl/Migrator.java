@@ -29,7 +29,7 @@ public class Migrator {
 
     private static final Log log = LogFactory.getLog(Migrator.class);
 
-    public static final String HIV_MIGRATION_HOME = "HIVMIGRATION_HOME";
+    public static final String HIV_MIGRATION_HOME = "HIV_MIGRATION_HOME";
     public static final String JOB_NAME = "job.name";
     public static final String LOG_LEVEL = "job.log.level";
 

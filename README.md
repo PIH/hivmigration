@@ -27,8 +27,8 @@ https://github.com/PIH/hivmigration
 Instructions for executing commands from this java project 
 
 1. Create new directory for HIV migration data and log files (eg. `~/hiv-migration`).
-2. Set the environment variable `HIVMIGRATION_HOME` (to e.g. `/home/ball/hiv-migration`).
-3. Create file `$HIVMIGRATION_HOME/migration.properties` from
+2. Set the environment variable `HIV_MIGRATION_HOME` (to e.g. `/home/ball/hiv-migration`).
+3. Create file `$HIV_MIGRATION_HOME/migration.properties` from
    [etl/src/main/resources/sample-migration.properties](https://github.com/PIH/hivmigration/blob/master/etl/src/main/resources/sample-migration.properties).
    Check that the values are correct for your databases.
 4. There are 3 ways to run the migration:
