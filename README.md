@@ -39,8 +39,8 @@ Instructions for executing commands from this java project
    - Pentaho Spoon: 
      - Set HIV_MIGRATION_HOME in ~/.kettle/kettle.properties.  The other variables will be set automatically.
      - Add Oracle and MySQL connectors (jar files) into Pentaho `lib/` directory
-         - `org.gjt.mm.mysql.Driver` from [MySQL Connector/J 5.1.49](https://mvnrepository.com/artifact/mysql/mysql-connector-java/5.1.49)
-         - No idea about the Oracle one
+         - `org.gjt.mm.mysql.Driver` from [MySQL Connector/J 5.1.28](https://mvnrepository.com/artifact/mysql/mysql-connector-java/5.1.28)
+         - `oracle.jdbc.driver.OracleDriver` from [Oracle JDBC 6 11.2.0.3](https://mvnrepository.com/artifact/oracle/ojdbc6/11.2.0.3)
          
 
 
