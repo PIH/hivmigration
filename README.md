@@ -16,8 +16,7 @@ https://bitbucket.org/partnersinhealth/hivemr/src/master/docker/
    - Use Lespwa-style setup with pih_config: haiti-hiv
 
 3. Get Pentaho Data Integration installed locally (mainly so that you can use Spoon - now called "PDI client" to author jobs).  There should no difficulty with any version (Versions 6, 7, or 8 appear to work).  Download from SourceForge:
-https://sourceforge.net/projects/pentaho/.  You will need to manually unzip this. By convention, we do this in the 
-"/opt/pentaho" directory.  
+https://sourceforge.net/projects/pentaho/
 
 4. Get the hivmigration project cloned and available to use locally:
 https://github.com/PIH/hivmigration
@@ -39,9 +38,9 @@ Instructions for executing commands from this java project
      - Use [ansible deployment playbook](https://bitbucket.org/partnersinhealth/deployment/src/master/playbooks/roles/hiv-migration/)
    - Pentaho Spoon: 
      - Set HIV_MIGRATION_HOME in ~/.kettle/kettle.properties.  The other variables will be set automatically.
-     - Add Oracle and MySQL connectors (jar files) into Pentaho `data-integration/lib/` directory
-         - Both jars (ojdbc6.jar and mysql-connector-java-5.1.28.jar) can be found in the lib directory
-           of this project
+     - Add Oracle and MySQL connectors (jar files) into Pentaho `lib/` directory
+         - `org.gjt.mm.mysql.Driver` from [MySQL Connector/J 5.1.49](https://mvnrepository.com/artifact/mysql/mysql-connector-java/5.1.49)
+         - No idea about the Oracle one
          
 
 
