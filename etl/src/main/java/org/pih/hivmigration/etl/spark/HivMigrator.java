@@ -1,4 +1,4 @@
-package org.pih.hivmigration.etl;
+package org.pih.hivmigration.etl.spark;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -87,6 +87,31 @@ public abstract class HivMigrator implements Serializable {
         }
         catch (Exception e) {
             throw new RuntimeException("Error executing mysql update", e);
+        }
+        finally {
+            try {
+                statement.close();
+            }
+            catch (Exception e) {}
+            try {
+                connection.close();
+            }
+            catch (Exception e) {}
+        }
+    }
+
+    protected void executeOracleUpdateFromResource(String resourceName) {
+        Properties p = getOracleConnectionProperties();
+        String sql = readStringFromResource(resourceName);
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = DriverManager.getConnection(p.getProperty("url"), p);
+            statement = connection.createStatement();
+            statement.executeUpdate(sql);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Error executing oracle update", e);
         }
         finally {
             try {

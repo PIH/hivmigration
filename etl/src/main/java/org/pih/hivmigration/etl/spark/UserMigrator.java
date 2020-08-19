@@ -1,4 +1,4 @@
-package org.pih.hivmigration.etl;
+package org.pih.hivmigration.etl.spark;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,13 +28,16 @@ public class UserMigrator extends HivMigrator {
 
         log.info("User Migration");
 
+        // Create view of user data in oracle
+        executeOracleUpdateFromResource("/views/migration_users.sql");
+
         Integer maxUserId = 100; //singleValue(loadFromMysql(spark, "(select max(user_id) from users) MU"));
         Integer maxPersonId = 100; //singleValue(loadFromMysql(spark, "(select max(person_id) from person) MP"));
 
         // Load users from a view defined in the HIVEMR that contains all relevant user data
         // Add derived columns using user-defined functions to fill out the necessary properties for OpenMRS
 
-        Dataset<Row> userData = loadFromOracle(spark, "hiv_users")
+        Dataset<Row> userData = loadFromOracle(spark, "migration_users")
                 .select("SOURCE_USER_ID", "EMAIL", "FIRST_NAME", "LAST_NAME", "PASSWORD", "SALT", "MEMBER_STATE")
                 .withColumn("USER_ID", col("SOURCE_USER_ID").$plus(maxUserId))
                 .withColumn("PERSON_ID", col("SOURCE_USER_ID").$plus(maxPersonId))

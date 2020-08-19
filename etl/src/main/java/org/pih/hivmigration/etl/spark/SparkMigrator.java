@@ -1,4 +1,4 @@
-package org.pih.hivmigration.etl;
+package org.pih.hivmigration.etl.spark;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

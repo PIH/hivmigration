@@ -1,4 +1,4 @@
-package org.pih.hivmigration.etl;
+package org.pih.hivmigration.etl.spark;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.sql.api.java.UDF2;
