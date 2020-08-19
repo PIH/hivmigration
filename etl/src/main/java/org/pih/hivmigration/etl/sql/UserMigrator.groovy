@@ -1,16 +1,8 @@
 package org.pih.hivmigration.etl.sql
 
-import static org.pih.hivmigration.etl.sql.util.SqlUtil.executeMysql
-import static org.pih.hivmigration.etl.sql.util.SqlUtil.loadFromOracleToMySql
+class UserMigrator extends SqlMigrator {
 
-class UserMigrator {
-
-    static void main(String[] args) {
-        //revert()
-        migrate()
-    }
-
-    static void migrate() {
+    void migrate() {
 
         executeMysql('''
             create table hivmigration_users (
@@ -94,7 +86,7 @@ class UserMigrator {
         ''')
     }
 
-    static void revert() {
+    void revert() {
         executeMysql('''
             delete from user_property where user_id in (select u.user_id from users u, hivmigration_users hu where u.uuid = hu.user_uuid);
             delete from user_role where user_id in (select u.user_id from users u, hivmigration_users hu where u.uuid = hu.user_uuid);
