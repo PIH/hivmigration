@@ -48,7 +48,7 @@
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy</artifactId>
-            <version>3.0.4</version>
+            <version>${groovy.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-dbutils</groupId>
@@ -98,10 +98,31 @@
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.0.2</version>
+                <version>3.8.0</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <compilerId>groovy-eclipse-compiler</compilerId>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-eclipse-compiler</artifactId>
+                        <version>3.3.0-01</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-eclipse-batch</artifactId>
+                        <version>${groovy.version}-01</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.0</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
             <plugin>
