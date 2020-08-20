@@ -26,23 +26,32 @@ abstract class SqlMigrator {
 
     public static final String MIGRATION_PROPERTIES_FILE = "MIGRATION_PROPERTIES_FILE";
 
+    public Properties properties;
+
+    private int rowLimit = -1;
+
+    public void setRowLimit(int rowLimit) {
+        this.rowLimit = rowLimit;
+    }
+
     abstract void migrate();
     abstract void revert();
 
     Properties getMigrationProperties() {
-        Properties p = new Properties();
-        String migrationPropertiesFilePath = System.getenv(MIGRATION_PROPERTIES_FILE);
-        if (!StringUtils.isEmpty(migrationPropertiesFilePath)) {
-            log.info("Loading migration properties from: " + migrationPropertiesFilePath);
-            File f = new File(migrationPropertiesFilePath);
-            try (FileInputStream fis = new FileInputStream(f)) {
-                p.load(fis);
-            }
-            catch (Exception e) {
-                throw new IllegalStateException("Unable to load migration properties file located at " + migrationPropertiesFilePath);
+        if (properties == null) {
+            properties = new Properties();
+            String migrationPropertiesFilePath = System.getenv(MIGRATION_PROPERTIES_FILE);
+            if (!StringUtils.isEmpty(migrationPropertiesFilePath)) {
+                log.info("Loading migration properties from: " + migrationPropertiesFilePath);
+                File f = new File(migrationPropertiesFilePath);
+                try (FileInputStream fis = new FileInputStream(f)) {
+                    properties.load(fis);
+                } catch (Exception e) {
+                    throw new IllegalStateException("Unable to load migration properties file located at " + migrationPropertiesFilePath);
+                }
             }
         }
-        return p;
+        return properties;
     }
 
     Properties getOracleConnectionProperties() {
@@ -57,7 +66,9 @@ abstract class SqlMigrator {
     Properties getMysqlConnectionProperties() {
         Properties mp = getMigrationProperties();
         Properties properties = new Properties();
-        properties.put("url", mp.getProperty("mysql.url", "jdbc:mysql://localhost:3308/openmrs?rewriteBatchedStatements=true"));
+        properties.put("url", "jdbc:mysql://" + mp.getProperty("mysql.host", "localhost")
+                + ":" + mp.getProperty("mysql.port", "3308") + "/"
+                + mp.getProperty("mysql.database", "openmrs") + "?rewriteBatchedStatements=true");
         properties.put("user", mp.getProperty("mysql.username", "root"));
         properties.put("password", mp.getProperty("mysql.password", "root"));
         return properties;
@@ -78,6 +89,10 @@ abstract class SqlMigrator {
     }
 
     void loadFromOracleToMySql(String targetStatement, String sourceQuery) throws Exception {
+        loadFromOracleToMySql(targetStatement, sourceQuery, rowLimit);
+    }
+
+    void loadFromOracleToMySql(String targetStatement, String sourceQuery, int rowLimit) throws Exception {
 
         Connection sourceConnection = null;
         Connection targetConnection = null;
@@ -129,8 +144,13 @@ abstract class SqlMigrator {
                                                 targetConnection.commit();
                                                 batchesProcessed++;
                                                 rowsToProcess = 0;
-                                                log.info("Rows committed: " + batchesProcessed * batchSize);
+                                                if (batchSize * batchesProcessed % 50000 < batchSize) {
+                                                    log.info("Rows committed: " + batchesProcessed * batchSize);
+                                                }
                                             }
+                                            if (rowLimit > 0 && batchSize * batchesProcessed + rowsToProcess >= rowLimit) {
+                                                break;
+                                            };
                                         }
                                         if (rowsToProcess > 0) {
                                             statement.executeBatch();
@@ -164,6 +184,20 @@ abstract class SqlMigrator {
             DbUtils.closeQuietly(targetConnection);
             DbUtils.closeQuietly(sourceConnection);
         }
+    }
+
+    public void clearTable(String tableName) throws SQLException {
+        clearTable(tableName, false);
+    }
+
+    public void clearTable(String tableName, boolean disableForeignKeyChecks) throws SQLException {
+        executeMysql((disableForeignKeyChecks ? "SET FOREIGN_KEY_CHECKS=0;\n" : "SET FOREIGN_KEY_CHECKS=1;\n")
+                + "DROP TABLE IF EXISTS move_tmp_old;\n"
+                + "DROP TABLE IF EXISTS move_tmp;\n"
+                + "CREATE TABLE move_tmp LIKE " + tableName + ";\n"
+                + "RENAME TABLE " + tableName + " TO move_tmp_old, move_tmp TO " + tableName + ";\n"
+                + "DROP TABLE move_tmp_old;\n"
+                + (disableForeignKeyChecks ? "SET FOREIGN_KEY_CHECKS=1;\n" : ""));
     }
 
 }
