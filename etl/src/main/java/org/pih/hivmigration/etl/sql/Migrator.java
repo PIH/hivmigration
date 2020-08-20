@@ -1,5 +1,8 @@
 package org.pih.hivmigration.etl.sql;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,19 +13,43 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * Main class for executing the HIV migration using Spark
  */
+@Parameters(separators = "=")
 public class Migrator {
 
     private static final Log log = LogFactory.getLog(Migrator.class);
-    private static boolean shouldRevert = true;
+
+    @Parameter(names={"--step", "-s"}, description="Only run a single step. Should be the prefix of a Migrator, like 'User'.")
+    private String step;
+
+    @Parameter(names={"--revert", "-r"}, description="Revert previous changes before the corresponding step.")
+    private boolean shouldRevert = false;
+
+    @Parameter(names={"--limit", "-l"}, description="Limit the number of rows to import.")
+    private int limit = -1;
 
     /**
      * Run the application
      */
 	public static void main(String[] args) {
         log.info("Starting up HIV Migrator");
-        String revertStr = System.getenv("REVERT");
-        shouldRevert = revertStr.equals("1");
-        String step = System.getenv("STEP");
+        Migrator migrator = new Migrator();
+        JCommander.newBuilder()
+                .addObject(migrator)
+                .build()
+                .parse(args);
+        migrator.main();
+    }
+
+    public void main() {
+	    if (step != null && !step.isEmpty()) {
+	        log.info("Only running " + step + "Migrator.");
+        }
+	    if (shouldRevert) {
+	        log.info("Will revert before each step.");
+        }
+        if (limit != -1) {
+            log.info("Only transferring " + limit + " rows.");
+        }
         if (step != null && !step.isEmpty()) {
             String className = "org.pih.hivmigration.etl.sql." + step + "Migrator";
             try {
@@ -30,7 +57,7 @@ public class Migrator {
                 SqlMigrator clsInstance = (SqlMigrator) cls.getDeclaredConstructor().newInstance();
                 run(clsInstance);
             } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                log.error("Invalid value for environment variable STEP provided: '" + step
+                log.error("Invalid value for argument --step provided: '" + step
                         + "'. If provided, it must be the prefix to a migrator name, e.g. 'User'.");
                 log.error(e);
                 System.exit(1);
@@ -40,15 +67,16 @@ public class Migrator {
         }
     }
 
-    public static void run(SqlMigrator migrator) {
+    public void run(SqlMigrator migrator) {
         if (shouldRevert) {
             revert(migrator);
         }
-        migrate(migrator);
+        migrate(migrator, limit);
     }
 
-    public static void migrate(SqlMigrator migrator) {
+    public static void migrate(SqlMigrator migrator, int limit) {
 	    log.info("Executing migrator: " + migrator);
+	    migrator.setRowLimit(limit);
         StopWatch sw = new StopWatch();
         sw.start();
         migrator.migrate();

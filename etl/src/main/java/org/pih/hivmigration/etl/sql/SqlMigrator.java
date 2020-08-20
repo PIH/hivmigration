@@ -26,18 +26,14 @@ abstract class SqlMigrator {
 
     public static final String MIGRATION_PROPERTIES_FILE = "MIGRATION_PROPERTIES_FILE";
 
-    private static int rowLimit = -1;
+    private int rowLimit = -1;
+
+    public void setRowLimit(int rowLimit) {
+        this.rowLimit = rowLimit;
+    }
 
     abstract void migrate();
     abstract void revert();
-
-    public SqlMigrator() {
-        String limitStr = System.getenv("LIMIT");
-        if (!limitStr.isEmpty()) {
-            log.info("Only importing " + limitStr + " rows.");
-            rowLimit = Integer.parseInt(limitStr);
-        }
-    }
 
     Properties getMigrationProperties() {
         Properties p = new Properties();
@@ -150,7 +146,7 @@ abstract class SqlMigrator {
                                                     log.info("Rows committed: " + batchesProcessed * batchSize);
                                                 }
                                             }
-                                            if (batchSize * batchesProcessed + rowsToProcess >= rowLimit) {
+                                            if (rowLimit > 0 && batchSize * batchesProcessed + rowsToProcess >= rowLimit) {
                                                 break;
                                             };
                                         }
