@@ -48,7 +48,7 @@ public class Migrator {
 	        log.info("Will revert before each step.");
         }
         if (limit != -1) {
-            log.info("Only transferring " + limit + " rows.");
+            log.info("Only transferring " + limit + " rows at each step.");
         }
         if (step != null && !step.isEmpty()) {
             String className = "org.pih.hivmigration.etl.sql." + step + "Migrator";

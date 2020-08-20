@@ -26,6 +26,8 @@ abstract class SqlMigrator {
 
     public static final String MIGRATION_PROPERTIES_FILE = "MIGRATION_PROPERTIES_FILE";
 
+    public Properties properties;
+
     private int rowLimit = -1;
 
     public void setRowLimit(int rowLimit) {
@@ -36,19 +38,20 @@ abstract class SqlMigrator {
     abstract void revert();
 
     Properties getMigrationProperties() {
-        Properties p = new Properties();
-        String migrationPropertiesFilePath = System.getenv(MIGRATION_PROPERTIES_FILE);
-        if (!StringUtils.isEmpty(migrationPropertiesFilePath)) {
-            log.info("Loading migration properties from: " + migrationPropertiesFilePath);
-            File f = new File(migrationPropertiesFilePath);
-            try (FileInputStream fis = new FileInputStream(f)) {
-                p.load(fis);
-            }
-            catch (Exception e) {
-                throw new IllegalStateException("Unable to load migration properties file located at " + migrationPropertiesFilePath);
+        if (properties == null) {
+            properties = new Properties();
+            String migrationPropertiesFilePath = System.getenv(MIGRATION_PROPERTIES_FILE);
+            if (!StringUtils.isEmpty(migrationPropertiesFilePath)) {
+                log.info("Loading migration properties from: " + migrationPropertiesFilePath);
+                File f = new File(migrationPropertiesFilePath);
+                try (FileInputStream fis = new FileInputStream(f)) {
+                    properties.load(fis);
+                } catch (Exception e) {
+                    throw new IllegalStateException("Unable to load migration properties file located at " + migrationPropertiesFilePath);
+                }
             }
         }
-        return p;
+        return properties;
     }
 
     Properties getOracleConnectionProperties() {
