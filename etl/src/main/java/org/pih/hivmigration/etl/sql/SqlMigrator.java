@@ -26,8 +26,18 @@ abstract class SqlMigrator {
 
     public static final String MIGRATION_PROPERTIES_FILE = "MIGRATION_PROPERTIES_FILE";
 
+    private static int rowLimit = -1;
+
     abstract void migrate();
     abstract void revert();
+
+    public SqlMigrator() {
+        String limitStr = System.getenv("LIMIT");
+        if (!limitStr.isEmpty()) {
+            log.info("Only importing " + limitStr + " rows.");
+            rowLimit = Integer.parseInt(limitStr);
+        }
+    }
 
     Properties getMigrationProperties() {
         Properties p = new Properties();
@@ -57,8 +67,11 @@ abstract class SqlMigrator {
     Properties getMysqlConnectionProperties() {
         Properties mp = getMigrationProperties();
         Properties properties = new Properties();
-        properties.put("url", mp.getProperty("mysql.url", "jdbc:mysql://localhost:3308/openmrs?rewriteBatchedStatements=true"));
+        properties.put("url", "jdbc:mysql://" + mp.getProperty("mysql.host", "localhost")
+                + ":" + mp.getProperty("mysql.port", "3308") + "/"
+                + mp.getProperty("mysql.database", "openmrs") + "?rewriteBatchedStatements=true");
         properties.put("user", mp.getProperty("mysql.username", "root"));
+        System.out.println(mp.getProperty("mysql.password", "doop"));
         properties.put("password", mp.getProperty("mysql.password", "root"));
         return properties;
     }
@@ -78,6 +91,10 @@ abstract class SqlMigrator {
     }
 
     void loadFromOracleToMySql(String targetStatement, String sourceQuery) throws Exception {
+        loadFromOracleToMySql(targetStatement, sourceQuery, rowLimit);
+    }
+
+    void loadFromOracleToMySql(String targetStatement, String sourceQuery, int rowLimit) throws Exception {
 
         Connection sourceConnection = null;
         Connection targetConnection = null;
@@ -129,8 +146,13 @@ abstract class SqlMigrator {
                                                 targetConnection.commit();
                                                 batchesProcessed++;
                                                 rowsToProcess = 0;
-                                                log.info("Rows committed: " + batchesProcessed * batchSize);
+                                                if (batchSize * batchesProcessed % 50000 < batchSize) {
+                                                    log.info("Rows committed: " + batchesProcessed * batchSize);
+                                                }
                                             }
+                                            if (batchSize * batchesProcessed + rowsToProcess >= rowLimit) {
+                                                break;
+                                            };
                                         }
                                         if (rowsToProcess > 0) {
                                             statement.executeBatch();
