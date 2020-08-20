@@ -55,7 +55,10 @@ public class Migrator {
             try {
                 Class cls = Class.forName(className);
                 SqlMigrator clsInstance = (SqlMigrator) cls.getDeclaredConstructor().newInstance();
-                run(clsInstance);
+                if (shouldRevert) {
+                    revert(clsInstance);
+                }
+                migrate(clsInstance, limit);
             } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 log.error("Invalid value for argument --step provided: '" + step
                         + "'. If provided, it must be the prefix to a migrator name, e.g. 'User'.");
@@ -63,15 +66,11 @@ public class Migrator {
                 System.exit(1);
             }
         } else {
-            run(new UserMigrator());
+            if (shouldRevert) {
+                revert(new UserMigrator());
+            }
+            migrate(new UserMigrator(), limit);
         }
-    }
-
-    public void run(SqlMigrator migrator) {
-        if (shouldRevert) {
-            revert(migrator);
-        }
-        migrate(migrator, limit);
     }
 
     public static void migrate(SqlMigrator migrator, int limit) {
