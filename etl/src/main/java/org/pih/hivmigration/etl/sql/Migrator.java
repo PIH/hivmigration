@@ -45,7 +45,7 @@ public class Migrator {
 	        log.info("Only running " + step + "Migrator.");
         }
 	    if (shouldRevert) {
-	        log.info("Will revert before each step.");
+	        log.info("Will revert before running.");
         }
         if (limit != -1) {
             log.info("Only transferring " + limit + " rows at each step.");
