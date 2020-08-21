@@ -98,5 +98,8 @@ class UserMigrator extends SqlMigrator {
             
             drop table hivmigration_users;
         ''')
+
+        // reset the person table auto_increment after removing users
+        setAutoIncrement("person", "(select (max(person_id)+1) from person)")
     }
 }
