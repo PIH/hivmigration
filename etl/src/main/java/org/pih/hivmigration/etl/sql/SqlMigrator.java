@@ -1,5 +1,15 @@
 package org.pih.hivmigration.etl.sql;
 
+import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.ResultSetHandler;
+import org.apache.commons.dbutils.handlers.ScalarHandler;
+import org.apache.commons.lang.time.StopWatch;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.pih.hivmigration.etl.sql.util.SqlStatementParser;
+import org.springframework.util.StringUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.sql.Connection;
@@ -11,14 +21,6 @@ import java.sql.Statement;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
-
-import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.dbutils.QueryRunner;
-import org.apache.commons.lang.time.StopWatch;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.pih.hivmigration.etl.sql.util.SqlStatementParser;
-import org.springframework.util.StringUtils;
 
 abstract class SqlMigrator {
 
@@ -86,6 +88,28 @@ abstract class SqlMigrator {
                 qr.update(connection, sqlStatement);
             }
         }
+    }
+
+    void executeMysql(String name, String update) throws SQLException {
+        log.info("Executing: " + name);
+        StopWatch sw = new StopWatch();
+        sw.start();
+        executeMysql(update);
+        sw.stop();
+        log.info("Statement executed in: " + sw.toString());
+    }
+
+    Object selectMysql(String select, ResultSetHandler resultSetHandler) throws SQLException {
+        QueryRunner qr = new QueryRunner();
+        try (Connection connection = getConnection(getMysqlConnectionProperties())) {
+            return qr.query(connection, select, resultSetHandler);
+        }
+    }
+
+    void setAutoIncrement(String table, String select) throws SQLException {
+        Object nextId = this.selectMysql(select, new ScalarHandler());
+        String sql = "ALTER TABLE " + table + " AUTO_INCREMENT = " + nextId.toString();
+        this.executeMysql(sql);
     }
 
     void loadFromOracleToMySql(String targetStatement, String sourceQuery) throws Exception {

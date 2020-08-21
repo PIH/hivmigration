@@ -7,7 +7,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import javax.sound.midi.SysexMessage;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -67,9 +66,11 @@ public class Migrator {
             }
         } else {
             if (shouldRevert) {
+                revert(new PatientMigrator());
                 revert(new UserMigrator());
             }
             migrate(new UserMigrator(), limit);
+            migrate(new PatientMigrator(), limit);
         }
     }
 
