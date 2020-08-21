@@ -3,6 +3,7 @@ package org.pih.hivmigration.etl.sql;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
+import org.apache.commons.dbutils.handlers.ArrayHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.commons.logging.Log;
@@ -85,6 +86,7 @@ abstract class SqlMigrator {
         try (Connection connection = getConnection(getMysqlConnectionProperties())) {
             List<String> stmts = SqlStatementParser.parseSqlIntoStatements(update, ";");
             for (String sqlStatement : stmts) {
+                log.info("Executing SQL '" + sqlStatement.replace('\n', ' ').substring(0, Math.min(80, sqlStatement.length())) + "...'");
                 qr.update(connection, sqlStatement);
             }
         }
@@ -211,17 +213,10 @@ abstract class SqlMigrator {
     }
 
     public void clearTable(String tableName) throws SQLException {
-        clearTable(tableName, false);
-    }
-
-    public void clearTable(String tableName, boolean disableForeignKeyChecks) throws SQLException {
-        executeMysql((disableForeignKeyChecks ? "SET FOREIGN_KEY_CHECKS=0;\n" : "SET FOREIGN_KEY_CHECKS=1;\n")
-                + "DROP TABLE IF EXISTS move_tmp_old;\n"
-                + "DROP TABLE IF EXISTS move_tmp;\n"
-                + "CREATE TABLE move_tmp LIKE " + tableName + ";\n"
-                + "RENAME TABLE " + tableName + " TO move_tmp_old, move_tmp TO " + tableName + ";\n"
-                + "DROP TABLE move_tmp_old;\n"
-                + (disableForeignKeyChecks ? "SET FOREIGN_KEY_CHECKS=1;\n" : ""));
+        // TODO: Investigate whether this can be done super fast using `SHOW CREATE TABLE`
+        while (((Object[]) selectMysql("SELECT * FROM " + tableName + " LIMIT 1", new ArrayHandler())).length > 0) {
+            executeMysql("DELETE FROM " + tableName + " LIMIT 100000");
+        }
     }
 
 }

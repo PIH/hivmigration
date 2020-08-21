@@ -208,10 +208,12 @@ class PatientMigrator extends SqlMigrator {
         // remove patients from person, person_name and person_address template
         executeMysql("Remove Patients from Patient, Person Address, Person Name, and Person tables",
         '''
+            SET FOREIGN_KEY_CHECKS = 0;
             delete from patient where patient_id in (select person_id from hivmigration_patients);
             delete from person_address where person_id in (select person_id from hivmigration_patient_addresses);
             delete from person_name where person_id in (select person_id from hivmigration_patients);
             delete from person where person_id in (select person_id from hivmigration_patients);
+            SET FOREIGN_KEY_CHECKS = 1;
         ''')
 
         // remove staging tables

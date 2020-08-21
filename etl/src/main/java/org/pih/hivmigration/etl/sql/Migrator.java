@@ -68,9 +68,11 @@ public class Migrator {
             if (shouldRevert) {
                 revert(new PatientMigrator());
                 revert(new UserMigrator());
+                revert(new EncounterMigrator());
             }
             migrate(new UserMigrator(), limit);
             migrate(new PatientMigrator(), limit);
+            migrate(new EncounterMigrator(), limit);
         }
     }
 

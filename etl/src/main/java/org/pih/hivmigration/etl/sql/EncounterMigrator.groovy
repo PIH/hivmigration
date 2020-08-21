@@ -3,7 +3,7 @@ package org.pih.hivmigration.etl.sql
 class EncounterMigrator extends SqlMigrator {
 
     void migrate() {
-        executeMysql('''
+        executeMysql("Create encounter staging table", '''
             create table hivmigration_encounters (
               encounter_id int PRIMARY KEY AUTO_INCREMENT,
               patient_id int,
@@ -64,9 +64,8 @@ class EncounterMigrator extends SqlMigrator {
                 where e.source_location_id = hc.hiv_emr_id;
         ''')
 
-        // This should be doing an actual insert or something
-        executeMysql('''
-            insert into encounter (encounter_id, uuid, encounter_date, date_created, encounter_type_id, patient_id, creator, location_id)
+        executeMysql("Load encounter table from staging table", '''
+            insert into encounter (encounter_id, uuid, encounter_datetime, date_created, encounter_type, patient_id, creator, location_id)
             select 
                 e.encounter_id,
                 e.encounter_uuid,
@@ -74,8 +73,8 @@ class EncounterMigrator extends SqlMigrator {
                 e.date_created,
                 et.encounter_type_id,
                 p.person_id,
-                u.user_id,
-                e.location_id,
+                COALESCE(u.user_id, 1),
+                COALESCE(e.location_id, 1)
             from 
                 hivmigration_encounters e 
             inner join 
@@ -94,7 +93,7 @@ class EncounterMigrator extends SqlMigrator {
     }
 
     void revert() {
-        clearTable("obs", true);
+        clearTable("obs");
         clearTable("encounter");
         executeMysql("DROP TABLE hivmigration_encounters;");
     }
