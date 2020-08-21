@@ -100,6 +100,7 @@ class UserMigrator extends SqlMigrator {
         ''')
 
         // reset the person table auto_increment after removing users
+        // TODO likely want to reset users table as well
         setAutoIncrement("person", "(select (max(person_id)+1) from person)")
     }
 }
