@@ -96,7 +96,7 @@ abstract class SqlMigrator {
         sw.start();
         executeMysql(update);
         sw.stop();
-        log.info("Statement executed in: " + sw.toString());
+        log.debug("Took " + sw.toString());
     }
 
     Object selectMysql(String select, ResultSetHandler resultSetHandler) throws SQLException {
