@@ -163,7 +163,7 @@ abstract class SqlMigrator {
                                     int batchesProcessed = 0;
                                     int rowsToProcess = 0;
 
-                                    log.info("Importing batches of " + batchSize);
+                                    log.info("    Importing batches of " + batchSize);
                                     try (PreparedStatement stmt = targetConnection.prepareStatement(targetStatement)) {
                                         while (resultSet.next()) {
                                             for (int i = 1; i <= columnCount; i++) {
@@ -177,7 +177,7 @@ abstract class SqlMigrator {
                                                 batchesProcessed++;
                                                 rowsToProcess = 0;
                                                 if (batchSize * batchesProcessed % 50000 < batchSize) {
-                                                    log.info("Rows committed: " + batchesProcessed * batchSize);
+                                                    log.info("    Rows committed: " + batchesProcessed * batchSize);
                                                 }
                                             }
                                             if (rowLimit > 0 && batchSize * batchesProcessed + rowsToProcess >= rowLimit) {
@@ -189,7 +189,7 @@ abstract class SqlMigrator {
                                             targetConnection.commit();
                                         }
                                     }
-                                    log.info("Import completed: " + (batchesProcessed * batchSize + rowsToProcess) + " rows");
+                                    log.info("    Import completed: " + (batchesProcessed * batchSize + rowsToProcess) + " rows");
                                 }
                                 else {
                                     throw new RuntimeException("Invalid SQL extraction, no result set found");
@@ -200,7 +200,7 @@ abstract class SqlMigrator {
                             }
                         }
                         sw.stop();
-                        log.info("Statement executed in: " + sw.toString());
+                        log.info("    Statement executed in: " + sw.toString());
                     }
                     finally {
                         DbUtils.closeQuietly(statement);
