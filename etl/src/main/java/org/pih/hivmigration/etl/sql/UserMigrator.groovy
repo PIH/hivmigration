@@ -96,7 +96,7 @@ class UserMigrator extends SqlMigrator {
             delete from person_name where person_id in (select p.person_id from person p, hivmigration_users hu where p.uuid = hu.person_uuid);
             delete from person where uuid in (select person_uuid from hivmigration_users);
             
-            drop table hivmigration_users;
+            drop table if exists hivmigration_users;
         ''')
 
         // reset the person table auto_increment after removing users

@@ -217,9 +217,9 @@ class PatientMigrator extends SqlMigrator {
         // remove staging tables
         executeMysql("Remove Patient staging tables",
         '''
-            drop table hivmigration_zlemrid;
-            drop table hivmigration_patient_addresses;
-            drop table hivmigration_patients;
+            drop table if exists hivmigration_zlemrid;
+            drop table if exists hivmigration_patient_addresses;
+            drop table if exists hivmigration_patients;
         ''')
 
     }
