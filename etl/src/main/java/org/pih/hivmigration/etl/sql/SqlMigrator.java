@@ -77,6 +77,12 @@ abstract class SqlMigrator {
     }
 
     Connection getConnection(Properties p) throws SQLException {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Unable to find mysql driver");
+        }
         return DriverManager.getConnection(p.getProperty("url"), p);
     }
 
