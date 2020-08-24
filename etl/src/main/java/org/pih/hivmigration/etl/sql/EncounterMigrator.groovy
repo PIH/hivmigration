@@ -93,7 +93,7 @@ class EncounterMigrator extends SqlMigrator {
                 e.date_created,
                 e.encounter_type_id,
                 p.person_id,
-                COALESCE(u.user_id, 1),
+                COALESCE(hu.user_id, 1),
                 COALESCE(e.location_id, 1)
             from 
                 hivmigration_encounters e 
@@ -101,10 +101,8 @@ class EncounterMigrator extends SqlMigrator {
                 hivmigration_patients p on e.source_patient_id = p.source_patient_id 
             left join
               hivmigration_users hu on e.source_creator_id = hu.source_user_id
-            left join
-              users u on u.uuid = hu.user_uuid
-            where e.encounter_type_id is not null  # TODO: still need to migrate 'note' and 'regime'
-              and e.encounter_date is not null   # TODO: https://pihemr.atlassian.net/browse/UHM-3237
+            where e.encounter_type_id is not null  # TODO: still need to migrate 'note' and 'regime' https://pihemr.atlassian.net/browse/UHM-3244
+              and e.encounter_date is not null   # TODO: figure out what to do with these https://pihemr.atlassian.net/browse/UHM-3237
             ;
         ''')
     }
