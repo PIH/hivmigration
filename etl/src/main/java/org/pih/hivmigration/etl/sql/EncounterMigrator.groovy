@@ -33,6 +33,7 @@ class EncounterMigrator extends SqlMigrator {
             );
             
         ''')
+
         loadFromOracleToMySql(
                 '''
                 insert into hivmigration_encounters(source_encounter_id,source_patient_id,source_encounter_type,source_creator_id,encounter_date,date_created,comments,performed_by,source_location_id,note_title,response_to)
@@ -41,7 +42,7 @@ class EncounterMigrator extends SqlMigrator {
                 '''
                 select
                     e.encounter_id as source_encounter_id,
-                    e.patient_id as source_patient_id,	
+                    e.patient_id as source_patient_id,
                     e.type,
                     e.entered_by,
                     e.encounter_date,
@@ -59,10 +60,29 @@ class EncounterMigrator extends SqlMigrator {
         executeMysql('''
             update hivmigration_encounters SET encounter_uuid = uuid();
             update hivmigration_encounters set source_location_id = 0 where source_location_id is null;
-            update hivmigration_encounters e, hivmigration_health_center hc
-                set e.location_id = hc.openmrs_id 
-                where e.source_location_id = hc.hiv_emr_id;
         ''')
+
+        executeMysql("Fill encounter types column", '''
+            SET @encounter_type_intake = (select encounter_type_id from encounter_type where uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33');
+            SET @encounter_type_followup = (select encounter_type_id from encounter_type where uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33');
+            SET @encounter_type_specimen_collection = (select encounter_type_id from encounter_type where uuid = '10db3139-07c0-4766-b4e5-a41b01363145');
+            SET @encounter_type_medicaments_administres = (select encounter_type_id from encounter_type where uuid = '8ff50dea-18a1-4609-b4c9-3f8f2d611b84');
+            
+            UPDATE hivmigration_encounters SET encounter_type_id = CASE
+                WHEN source_encounter_type = "intake" THEN @encounter_type_intake
+                WHEN source_encounter_type = "followup" THEN @encounter_type_followup
+                WHEN source_encounter_type = "lab_result" THEN @encounter_type_specimen_collection
+                WHEN source_encounter_type = "anlap_lab_result" THEN @encounter_type_specimen_collection
+                WHEN source_encounter_type = "accompagnateur" THEN @encounter_type_medicaments_administres
+                WHEN source_encounter_type = "anlap_vital_signs" THEN @encounter_type_intake
+                WHEN source_encounter_type = "patient_contact" THEN @encounter_type_intake
+                WHEN source_encounter_type = "food_study" THEN @encounter_type_intake
+                END
+        ''')
+//      TODO: The old code from Pentaho about hivmigration_health_center. Add back in or delete once that table is migrated.
+//            update hivmigration_encounters e, hivmigration_health_center hc
+//                set e.location_id = hc.openmrs_id
+//                where e.source_location_id = hc.hiv_emr_id;
 
         executeMysql("Load encounter table from staging table", '''
             insert into encounter (encounter_id, uuid, encounter_datetime, date_created, encounter_type, patient_id, creator, location_id)
@@ -71,7 +91,7 @@ class EncounterMigrator extends SqlMigrator {
                 e.encounter_uuid,
                 e.encounter_date,
                 e.date_created,
-                et.encounter_type_id,
+                e.encounter_type_id,
                 p.person_id,
                 COALESCE(u.user_id, 1),
                 COALESCE(e.location_id, 1)
@@ -79,21 +99,17 @@ class EncounterMigrator extends SqlMigrator {
                 hivmigration_encounters e 
             inner join 
                 hivmigration_patients p on e.source_patient_id = p.source_patient_id 
-            inner join
-                hivmigration_encounter_type et on et.encounter_type = e.source_encounter_type
             left join
               hivmigration_users hu on e.source_creator_id = hu.source_user_id
             left join
               users u on u.uuid = hu.user_uuid
-            
-            # TODO: we should not just ignore these, but figure out what to do with them
-            where e.encounter_date is not null;
-
+            where e.encounter_type_id is not null  # TODO: still need to migrate 'note' and 'regime'
+              and e.encounter_date is not null   # TODO: https://pihemr.atlassian.net/browse/UHM-3237
+            ;
         ''')
     }
 
     void revert() {
-        clearTable("obs");
         clearTable("encounter");
         executeMysql("DROP TABLE hivmigration_encounters;");
     }

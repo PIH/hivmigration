@@ -82,11 +82,17 @@ abstract class SqlMigrator {
     }
 
     void executeMysql(String update) throws SQLException {
+        executeMysql(update, true);
+    }
+
+    void executeMysql(String update, boolean logStatements) throws SQLException {
         QueryRunner qr = new QueryRunner();
         try (Connection connection = getConnection(getMysqlConnectionProperties())) {
             List<String> stmts = SqlStatementParser.parseSqlIntoStatements(update, ";");
             for (String sqlStatement : stmts) {
-                log.info("Executing SQL '" + sqlStatement.replace('\n', ' ').substring(0, Math.min(80, sqlStatement.length())) + "...'");
+                if (logStatements) {
+                    log.info("Executing: SQL '" + sqlStatement.replace('\n', ' ').substring(0, Math.min(80, sqlStatement.length())) + "...'");
+                }
                 qr.update(connection, sqlStatement);
             }
         }
@@ -96,7 +102,7 @@ abstract class SqlMigrator {
         log.info("Executing: " + name);
         StopWatch sw = new StopWatch();
         sw.start();
-        executeMysql(update);
+        executeMysql(update, false);
         sw.stop();
         log.debug("Took " + sw.toString());
     }
