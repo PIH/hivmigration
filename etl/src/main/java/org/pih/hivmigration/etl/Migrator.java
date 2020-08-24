@@ -25,6 +25,7 @@ import java.util.Properties;
 /**
  * Main class for executing the HIV migration
  */
+@Deprecated
 public class Migrator {
 
     private static final Log log = LogFactory.getLog(Migrator.class);

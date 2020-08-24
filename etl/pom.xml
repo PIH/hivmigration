@@ -144,7 +144,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        org.pih.hivmigration.etl.Migrator
+                                        org.pih.hivmigration.etl.sql.Migrator
                                     </mainClass>
                                 </manifest>
                             </archive>
