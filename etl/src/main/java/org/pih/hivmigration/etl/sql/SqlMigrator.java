@@ -70,7 +70,7 @@ abstract class SqlMigrator {
         Properties properties = new Properties();
         properties.put("url", "jdbc:mysql://" + mp.getProperty("mysql.host", "localhost")
                 + ":" + mp.getProperty("mysql.port", "3308") + "/"
-                + mp.getProperty("mysql.database", "openmrs") + "?rewriteBatchedStatements=true");
+                + mp.getProperty("mysql.database", "openmrs"));
         properties.put("user", mp.getProperty("mysql.username", "root"));
         properties.put("password", mp.getProperty("mysql.password", "root"));
         return properties;
