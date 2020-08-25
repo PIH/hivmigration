@@ -132,6 +132,7 @@ abstract class SqlMigrator {
 
     void loadFromOracleToMySql(String targetStatement, String sourceQuery, int rowLimit) throws Exception {
 
+        log.info("Executing: Load from Oracle to MySQL '" + targetStatement.replace('\n', ' ').trim().replaceAll("\s*", " ").substring(0, Math.min(80, targetStatement.length())) + "...'");
         Connection sourceConnection = null;
         Connection targetConnection = null;
 
