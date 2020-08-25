@@ -49,12 +49,13 @@ class InfantMigrator extends SqlMigrator {
 
         executeMysql("Load to person table", '''
             insert into person
-              (person_id, uuid, gender, birthdate, date_created)
+              (person_id, uuid, gender, birthdate, creator, date_created)
             select
               i.person_id,
               i.person_uuid,
-              COALESCE(i.gender, 'U'),
+              COALESCE(i.gender, 'U'),  # most of the data is missing gender -- default to U
               i.birthdate,
+              1,
               date_format(curdate(), '%Y-%m-%d %T')
             from
               hivmigration_infants i 
