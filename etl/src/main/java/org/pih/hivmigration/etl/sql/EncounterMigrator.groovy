@@ -59,7 +59,6 @@ class EncounterMigrator extends SqlMigrator {
         )
         executeMysql('''
             update hivmigration_encounters SET encounter_uuid = uuid();
-            update hivmigration_encounters set source_location_id = 0 where source_location_id is null;
         ''')
 
         executeMysql("Fill encounter types column", '''
@@ -74,11 +73,10 @@ class EncounterMigrator extends SqlMigrator {
                 WHEN source_encounter_type = "lab_result" THEN @encounter_type_specimen_collection
                 WHEN source_encounter_type = "anlap_lab_result" THEN @encounter_type_specimen_collection
                 WHEN source_encounter_type = "accompagnateur" THEN @encounter_type_medicaments_administres
-                WHEN source_encounter_type = "anlap_vital_signs" THEN @encounter_type_intake
-                WHEN source_encounter_type = "patient_contact" THEN @encounter_type_intake
-                WHEN source_encounter_type = "food_study" THEN @encounter_type_intake
                 END
         ''')
+        // TODO: Handle source_encounter_type "anlap_vital_signs", "patient_contact", "food_study", "regime", "note" (https://pihemr.atlassian.net/browse/UHM-3244)
+
 //      TODO: The old code from Pentaho about hivmigration_health_center. Add back in or delete once that table is migrated.
 //            update hivmigration_encounters e, hivmigration_health_center hc
 //                set e.location_id = hc.openmrs_id
@@ -108,7 +106,7 @@ class EncounterMigrator extends SqlMigrator {
     }
 
     void revert() {
-        clearTable("encounter");
-        executeMysql("DROP TABLE hivmigration_encounters;");
+        clearTable("encounter")
+        executeMysql("DROP TABLE hivmigration_encounters;")
     }
 }
