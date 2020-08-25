@@ -97,7 +97,7 @@ abstract class SqlMigrator {
             List<String> stmts = SqlStatementParser.parseSqlIntoStatements(update, ";");
             for (String sqlStatement : stmts) {
                 if (logStatements) {
-                    log.info("Executing: SQL '" + sqlStatement.replace('\n', ' ').substring(0, Math.min(80, sqlStatement.length())) + "...'");
+                    log.info("Executing: SQL '" + abbreviate(sqlStatement) + "'");
                 }
                 qr.update(connection, sqlStatement);
             }
@@ -132,7 +132,7 @@ abstract class SqlMigrator {
 
     void loadFromOracleToMySql(String targetStatement, String sourceQuery, int rowLimit) throws Exception {
 
-        log.info("Executing: Load from Oracle to MySQL '" + targetStatement.replace('\n', ' ').trim().replaceAll("\s*", " ").substring(0, Math.min(80, targetStatement.length())) + "...'");
+        log.info("Executing: Load from Oracle to MySQL '" + abbreviate(targetStatement) + "'");
         Connection sourceConnection = null;
         Connection targetConnection = null;
 
@@ -228,6 +228,15 @@ abstract class SqlMigrator {
     public void clearTable(String tableName) throws SQLException {
         executeMysql("Deleting entries from table '" + tableName + "'",
                 "SET FOREIGN_KEY_CHECKS = 0;\n TRUNCATE TABLE " + tableName + ";\n SET FOREIGN_KEY_CHECKS = 1;");
+    }
+
+    private String abbreviate(String str) {
+        String cleanStr = str.replaceAll("\\s+", " ").trim();
+        if (cleanStr.length() > 80) {
+            return cleanStr.substring(0, 80) + "...";
+        } else {
+            return cleanStr;
+        }
     }
 
 }
