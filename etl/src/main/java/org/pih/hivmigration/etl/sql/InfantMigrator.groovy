@@ -9,7 +9,7 @@ class InfantMigrator extends SqlMigrator {
 
         executeMysql("Create Infants Staging Table", '''
             create table hivmigration_infants (
-              person_id int PRIMARY KEY AUTO_INCREMENT,
+                person_id int PRIMARY KEY AUTO_INCREMENT,
                 source_infant_id int,
                 mother_patient_id int,
                 person_uuid char(38),
@@ -28,7 +28,8 @@ class InfantMigrator extends SqlMigrator {
                     source_infant_id,
                     mother_patient_id,
                     infant_code,
-                    first_name, last_name,
+                    first_name,
+                    last_name,
                     gender,
                     birthdate
                 ) values (?, ?, ?, ?, ?, ?, ?)
@@ -44,8 +45,7 @@ class InfantMigrator extends SqlMigrator {
                 from HIV_INFANTS i
         ''')
 
-        executeMysql("Add UUIDs",
-                "update hivmigration_infants set person_uuid = uuid();")
+        executeMysql("Add UUIDs", "update hivmigration_infants set person_uuid = uuid();")
 
         executeMysql("Load to person table", '''
             insert into person
@@ -53,7 +53,7 @@ class InfantMigrator extends SqlMigrator {
             select
               i.person_id,
               i.person_uuid,
-              i.gender,
+              COALESCE(i.gender, 'U'),
               i.birthdate,
               date_format(curdate(), '%Y-%m-%d %T')
             from
@@ -88,7 +88,7 @@ class InfantMigrator extends SqlMigrator {
             order by i.source_infant_id;
         ''')
 
-        // TODO: depends on zlemrid from Patient migration
+        // TODO: depends on zlemrid from Patient migration (https://pihemr.atlassian.net/browse/UHM-3145)
         /*
         executeMysql("Load ZL IDs", '''
             insert into patient_identifier (
