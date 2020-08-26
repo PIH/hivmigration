@@ -66,11 +66,15 @@ public class Migrator {
             }
         } else {
             if (shouldRevert) {
+                revert(new EncounterMigrator());
+                revert(new InfantMigrator());
                 revert(new PatientMigrator());
                 revert(new UserMigrator());
             }
             migrate(new UserMigrator(), limit);
             migrate(new PatientMigrator(), limit);
+            migrate(new InfantMigrator(), limit);
+            migrate(new EncounterMigrator(), limit);
         }
     }
 
