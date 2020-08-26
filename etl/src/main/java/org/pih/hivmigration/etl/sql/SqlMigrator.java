@@ -242,7 +242,7 @@ abstract class SqlMigrator {
                                             };
                                         }
                                         if (rowsToProcess > 0) {
-                                            statement.executeBatch();
+                                            stmt.executeBatch();
                                             targetConnection.commit();
                                         }
                                     }
