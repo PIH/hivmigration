@@ -3,6 +3,7 @@ package org.pih.hivmigration.etl.sql;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
+import org.apache.commons.dbutils.handlers.ArrayHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.commons.logging.Log;
@@ -87,10 +88,17 @@ abstract class SqlMigrator {
     }
 
     void executeMysql(String update) throws SQLException {
+        executeMysql(update, true);
+    }
+
+    void executeMysql(String update, boolean logStatements) throws SQLException {
         QueryRunner qr = new QueryRunner();
         try (Connection connection = getConnection(getMysqlConnectionProperties())) {
             List<String> stmts = SqlStatementParser.parseSqlIntoStatements(update, ";");
             for (String sqlStatement : stmts) {
+                if (logStatements) {
+                    log.info("Executing: SQL '" + sqlStatement.replace('\n', ' ').substring(0, Math.min(80, sqlStatement.length())) + "...'");
+                }
                 qr.update(connection, sqlStatement);
             }
         }
@@ -100,7 +108,7 @@ abstract class SqlMigrator {
         log.info("Executing: " + name);
         StopWatch sw = new StopWatch();
         sw.start();
-        executeMysql(update);
+        executeMysql(update, false);
         sw.stop();
         log.debug("Took " + sw.toString());
     }
@@ -161,7 +169,7 @@ abstract class SqlMigrator {
                                     int batchesProcessed = 0;
                                     int rowsToProcess = 0;
 
-                                    log.info("Importing batches of " + batchSize);
+                                    log.info("    Importing batches of " + batchSize);
                                     try (PreparedStatement stmt = targetConnection.prepareStatement(targetStatement)) {
                                         while (resultSet.next()) {
                                             for (int i = 1; i <= columnCount; i++) {
@@ -175,7 +183,7 @@ abstract class SqlMigrator {
                                                 batchesProcessed++;
                                                 rowsToProcess = 0;
                                                 if (batchSize * batchesProcessed % 50000 < batchSize) {
-                                                    log.info("Rows committed: " + batchesProcessed * batchSize);
+                                                    log.info("    Rows committed: " + batchesProcessed * batchSize);
                                                 }
                                             }
                                             if (rowLimit > 0 && batchSize * batchesProcessed + rowsToProcess >= rowLimit) {
@@ -187,7 +195,7 @@ abstract class SqlMigrator {
                                             targetConnection.commit();
                                         }
                                     }
-                                    log.info("Import completed: " + (batchesProcessed * batchSize + rowsToProcess) + " rows");
+                                    log.info("    Import completed: " + (batchesProcessed * batchSize + rowsToProcess) + " rows");
                                 }
                                 else {
                                     throw new RuntimeException("Invalid SQL extraction, no result set found");
@@ -198,7 +206,7 @@ abstract class SqlMigrator {
                             }
                         }
                         sw.stop();
-                        log.info("Statement executed in: " + sw.toString());
+                        log.info("    Statement executed in: " + sw.toString());
                     }
                     finally {
                         DbUtils.closeQuietly(statement);
@@ -217,17 +225,8 @@ abstract class SqlMigrator {
     }
 
     public void clearTable(String tableName) throws SQLException {
-        clearTable(tableName, false);
-    }
-
-    public void clearTable(String tableName, boolean disableForeignKeyChecks) throws SQLException {
-        executeMysql((disableForeignKeyChecks ? "SET FOREIGN_KEY_CHECKS=0;\n" : "SET FOREIGN_KEY_CHECKS=1;\n")
-                + "DROP TABLE IF EXISTS move_tmp_old;\n"
-                + "DROP TABLE IF EXISTS move_tmp;\n"
-                + "CREATE TABLE move_tmp LIKE " + tableName + ";\n"
-                + "RENAME TABLE " + tableName + " TO move_tmp_old, move_tmp TO " + tableName + ";\n"
-                + "DROP TABLE move_tmp_old;\n"
-                + (disableForeignKeyChecks ? "SET FOREIGN_KEY_CHECKS=1;\n" : ""));
+        executeMysql("Deleting entries from table '" + tableName + "'",
+                "SET FOREIGN_KEY_CHECKS = 0;\n TRUNCATE TABLE " + tableName + ";\n SET FOREIGN_KEY_CHECKS = 1;");
     }
 
 }
