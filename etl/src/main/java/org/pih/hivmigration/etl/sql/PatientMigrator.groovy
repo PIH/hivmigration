@@ -166,7 +166,7 @@ class PatientMigrator extends SqlMigrator {
             order by p.source_patient_id;
         ''')
 
-        // TODO need to figure out how to handle patients with address > 255 characters (add link to ticket)
+        // TODO need to figure out how to handle patients with address > 255 characters, see https://pihemr.atlassian.net/browse/UHM-4751
         executeMysql("Insert Patients into Person Address Table",
         '''
             insert into person_address(person_id, preferred, address1, address2, city_village, state_province, country, creator, date_created, address3, uuid)
