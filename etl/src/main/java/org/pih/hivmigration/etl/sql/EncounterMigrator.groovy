@@ -65,13 +65,12 @@ class EncounterMigrator extends SqlMigrator {
             SET @encounter_type_intake = (select encounter_type_id from encounter_type where uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33');
             SET @encounter_type_followup = (select encounter_type_id from encounter_type where uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33');
             SET @encounter_type_lab_results = (select encounter_type_id from encounter_type where uuid = '4d77916a-0620-11e5-a6c0-1697f925ec7b');
-            SET @encounter_type_medicaments_administres = (select encounter_type_id from encounter_type where uuid = '8ff50dea-18a1-4609-b4c9-3f8f2d611b84');
             
             UPDATE hivmigration_encounters SET encounter_type_id = CASE
                 WHEN source_encounter_type = "intake" THEN @encounter_type_intake
                 WHEN source_encounter_type = "followup" THEN @encounter_type_followup
-                WHEN source_encounter_type = "lab_result" THEN @envounter_type_lab_results
-                WHEN source_encounter_type = "anlap_lab_result" THEN @envounter_type_lab_results
+                WHEN source_encounter_type = "lab_result" THEN @encounter_type_lab_results
+                WHEN source_encounter_type = "anlap_lab_result" THEN @encounter_type_lab_results
                 END
         ''')
         // TODO: Handle source_encounter_type "anlap_vital_signs", "patient_contact", "food_study", "regime", "note", "accompagnateur" (https://pihemr.atlassian.net/browse/UHM-3244)
