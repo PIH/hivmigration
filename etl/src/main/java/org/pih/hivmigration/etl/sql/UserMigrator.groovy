@@ -84,23 +84,29 @@ class UserMigrator extends SqlMigrator {
               SET           retired = TRUE, retired_by = 1, date_retired = now(), retire_reason = hu.member_state
               WHERE         hu.member_state in ('deleted','banned');
         ''')
+
+        // for some reason, after the insert into person_name, the auto increment ends up at 1027; nothing seems wrong with the insert
+        setAutoIncrement("person_name", "(select (max(person_name_id)+1) from person_name)")
     }
 
     void revert() {
-        executeMysql('''
-            delete from user_property where user_id in (select u.user_id from users u, hivmigration_users hu where u.uuid = hu.user_uuid);
-            delete from user_role where user_id in (select u.user_id from users u, hivmigration_users hu where u.uuid = hu.user_uuid);
-            delete from users where uuid in (select user_uuid from hivmigration_users);
-            
-            delete from name_phonetics;
-            delete from person_name where person_id in (select p.person_id from person p, hivmigration_users hu where p.uuid = hu.person_uuid);
-            delete from person where uuid in (select person_uuid from hivmigration_users);
-            
-            drop table if exists hivmigration_users;
-        ''')
+        if (tableExists("hivmigration_users")) {
+            executeMysql('''
+                delete from user_property where user_id in (select u.user_id from users u, hivmigration_users hu where u.uuid = hu.user_uuid);
+                delete from user_role where user_id in (select u.user_id from users u, hivmigration_users hu where u.uuid = hu.user_uuid);
+                delete from users where uuid in (select user_uuid from hivmigration_users);
+                
+                delete from name_phonetics;
+                delete from person_name where person_id in (select p.person_id from person p, hivmigration_users hu where p.uuid = hu.person_uuid);
+                delete from person where uuid in (select person_uuid from hivmigration_users);
+                
+                drop table hivmigration_users;
+            ''')
+        }
 
-        // reset the person table auto_increment after removing users
-        // TODO likely want to reset users table as well
+        // reset the table auto_increments after removing users
+        setAutoIncrement("person_name", "(select (max(person_name_id)+1) from person_name)")
         setAutoIncrement("person", "(select (max(person_id)+1) from person)")
+        setAutoIncrement("users", "(select (max(user_id)+1) from users)")
     }
 }
