@@ -85,8 +85,6 @@ class UserMigrator extends SqlMigrator {
               WHERE         hu.member_state in ('deleted','banned');
         ''')
 
-        // for some reason, after the insert into person_name, the auto increment ends up at 1027; nothing seems wrong with the insert
-        setAutoIncrement("person_name", "(select (max(person_name_id)+1) from person_name)")
     }
 
     void revert() {
