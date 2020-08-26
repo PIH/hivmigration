@@ -292,28 +292,6 @@ class PatientMigrator extends SqlMigrator {
             order by p.source_patient_id;
         ''')
 
-        executeMysql("Insert National Identifier into Patient Identifier Table",
-                '''
-            insert into patient_identifier(patient_id, uuid, identifier_type, location_id, identifier, preferred, creator, date_created)
-            select
-                p.person_id as patient_id,
-                uuid() as uuid,
-                (SELECT patient_identifier_type_id from patient_identifier_type where name = 'Carte d\\'identification nationale') as identifier_type,
-                (SELECT location_id from location where name = 'Unknown Location') as location_id,
-                p.national_id as identifier,
-                0 as preferred,
-                u.user_id as creator,
-            date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created
-            from
-                hivmigration_patients p
-            left join
-                hivmigration_users hu on p.patient_created_by = hu.source_user_id
-            left join
-                users u on u.uuid = hu.user_uuid
-            where p.national_id is not null
-            order by p.source_patient_id;
-        ''')
-
         executeMysql("Insert Fiscal Numbers into Patient Identifier Table",
                 '''
             insert into patient_identifier(patient_id, uuid, identifier_type, location_id, identifier, preferred, creator, date_created)

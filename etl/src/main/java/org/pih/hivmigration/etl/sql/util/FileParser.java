@@ -9,9 +9,7 @@ import java.util.List;
 
 public class FileParser {
 
-    /**
-     * Loads file into a list, one entry per line
-     */
+    // TODO confirm that this works with CSVs with more than one column (if we ever need it)
     public static List<List<String>> loadCSV(String fileName)  {
 
         List<List<String>> rows = new ArrayList<>();
