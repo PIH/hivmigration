@@ -1,7 +1,5 @@
 package org.pih.hivmigration.etl.sql
 
-import org.w3c.dom.Text
-
 class InfantMigrator extends SqlMigrator {
 
     @Override
@@ -106,12 +104,12 @@ class InfantMigrator extends SqlMigrator {
               date_format(now(), '%Y-%m-%d %T') as date_created
             from
               hivmigration_infants p
-            join 
+            join
               hivmigration_zlemrid z on p.person_id = z.person_id
             order by p.source_infant_id;
         ''')
          */
-        
+
         executeMysql("Create Mother-Child relationship", '''
             insert into relationship
                 (person_a, relationship, person_b, start_date, creator, date_created, uuid)
@@ -131,12 +129,16 @@ class InfantMigrator extends SqlMigrator {
 
     @Override
     def void revert() {
-        executeMysql("Remove infants from Relationship, Patient, Person Name, Person tables", '''
+
+        if (tableExists("hivmigration_infants")) {
+            executeMysql("Remove infants from Relationship, Patient, Person Name, Person tables", '''
             delete from relationship where person_b in (select person_id from hivmigration_infants);
             delete from patient where patient_id in (select person_id from hivmigration_infants);
             delete from person_name where person_id in (select person_id from hivmigration_infants);
             delete from person where person_id in (select person_id from hivmigration_infants);
         ''');
+        }
+
         executeMysql("drop table if exists hivmigration_infants;");
     }
 }
