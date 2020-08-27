@@ -204,7 +204,7 @@ class PatientMigrator extends SqlMigrator {
         // load in our pre-created batch of new ZL Identifiers
         // TODO: replace with "production" identifiers, see: https://pihemr.atlassian.net/jira/software/c/projects/UHM/issues/UHM-4807
         // TODO: when we replace with "production" identifiers, make sure we have enough for patients and infants
-        loadFromCSVtoMySql("insert into hivmigration_zlemrid (zl_emr_id) values (?)", "sql/patient/zl-identifiers.csv")
+        loadFromCSVtoMySql("insert into hivmigration_zlemrid (zl_emr_id) values (?)", "/sql/patient/zl-identifiers.csv")
 
         executeMysql("Insert ZL EMR IDs into Patient Identifier Table",
         '''

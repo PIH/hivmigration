@@ -1,8 +1,8 @@
 package org.pih.hivmigration.etl.sql.util;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,9 +14,9 @@ public class FileParser {
 
         List<List<String>> rows = new ArrayList<>();
 
-        File file = new File(FileParser.class.getClassLoader().getResource(fileName).getFile());
-
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+        try {
+            InputStream is = FileParser.class.getResourceAsStream(fileName);
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
             String line;
             while ((line = br.readLine()) != null) {
                 List<String> row = Arrays.asList(line.split(","));
@@ -24,7 +24,7 @@ public class FileParser {
             }
         }
         catch (Exception e) {
-            throw new RuntimeException("Unable to read file: " + fileName);
+            throw new RuntimeException("Unable to read file: " + fileName, e);
         }
 
         return rows;
