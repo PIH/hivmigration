@@ -87,8 +87,6 @@ class InfantMigrator extends SqlMigrator {
             order by i.source_infant_id;
         ''')
 
-        // TODO: depends on zlemrid from Patient migration (https://pihemr.atlassian.net/browse/UHM-3145)
-        /*
         executeMysql("Load ZL IDs", '''
             insert into patient_identifier (
               patient_id, uuid, identifier_type, location_id, identifier, preferred, creator, date_created
@@ -108,7 +106,6 @@ class InfantMigrator extends SqlMigrator {
               hivmigration_zlemrid z on p.person_id = z.person_id
             order by p.source_infant_id;
         ''')
-         */
 
         executeMysql("Create Mother-Child relationship", '''
             insert into relationship
@@ -133,6 +130,7 @@ class InfantMigrator extends SqlMigrator {
         if (tableExists("hivmigration_infants")) {
             executeMysql("Remove infants from Relationship, Patient, Person Name, Person tables", '''
             delete from relationship where person_b in (select person_id from hivmigration_infants);
+            delete from patient_identifier where patient_id in (select person_id from hivmigration_infants);
             delete from patient where patient_id in (select person_id from hivmigration_infants);
             delete from person_name where person_id in (select person_id from hivmigration_infants);
             delete from person where person_id in (select person_id from hivmigration_infants);
