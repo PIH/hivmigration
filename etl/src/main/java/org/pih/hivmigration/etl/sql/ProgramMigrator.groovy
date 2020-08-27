@@ -103,9 +103,17 @@ class ProgramMigrator extends SqlMigrator {
                 (source_patient_id, location_id, enrollment_date, art_start_date, outcome, outcome_date)
             select
                 source_patient_id, 
-                health_center, 
-                LEAST(IFNULL(min_visit_date, art_start_date), art_start_date), 
-                LEAST(art_start_date, 
+                health_center,
+                  # Enrollment Date in program is earlier of minimum encounter and art start date
+                LEAST (IFNULL(min_visit_date, art_start_date), art_start_date),
+                  # There are a small number of cases in which ART starts after the outcome (4-5)
+                  # These seem to be data quality issues, and only affect inactive patients
+                  # Set ART Start Date to the Outcome Date (as calculated below) in these cases 
+                LEAST (art_start_date, GREATEST (
+                    IFNULL(treatment_status_date, regimen_outcome_date),
+                    regimen_outcome_date
+                    LEAST (IFNULL(min_visit_date, art_start_date), art_start_date)
+                    )
                 CASE treatment_status
                     WHEN died THEN DIED
                     WHEN lost THEN ABANDONED
@@ -115,16 +123,11 @@ class ProgramMigrator extends SqlMigrator {
                     WHEN treatment_stopped THEN TREATMENT_STOPPED
                     WHEN treatment_stopped_side_effects THEN TREATMENT_STOPPED
                     WHEN treatment_stopped_other THEN TREATMENT_STOPPED
-                    END,  
-                GREATEST(  # this is the logic that was in the Pentaho script...
-                    COALESCE(
-                        GREATEST(
-                            IFNULL(treatment_status_date, regimen_outcome_date),
-                            regimen_outcome_date
-                        ),
-                        DATE_ADD(max_visit_date, INTERVAL 6 MONTH)
-                    ),
-                    IFNULL(min_visit_date, 0)
+                    END,
+                GREATEST (
+                    IFNULL(treatment_status_date, regimen_outcome_date),
+                    regimen_outcome_date
+                    LEAST (IFNULL(min_visit_date, art_start_date), art_start_date)
                     )
             from hivmigration_programs_initial
             where starting_health_center is not null
