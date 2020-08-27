@@ -37,7 +37,6 @@ class PatientMigrator extends SqlMigrator {
             create table hivmigration_patient_addresses (
                 address_id int PRIMARY KEY,
                 source_patient_id int,
-                person_id int,
                 address_type NVARCHAR(8),
                 entry_date date,
                 address NVARCHAR(512),
@@ -67,32 +66,32 @@ class PatientMigrator extends SqlMigrator {
                     values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             ''',
             '''
-                select 
-                    d.PATIENT_ID as SOURCE_PATIENT_ID, 
-                    d.PIH_ID, 
-                    d.NIF_ID, 
-                    d.NATIONAL_ID, 
-                    d.FIRST_NAME, 
-                    d.FIRST_NAME2, 
-                    d.LAST_NAME, 
-                    upper(d.GENDER) as GENDER, 
-                    d.BIRTH_DATE AS BIRTHDATE, 
-                    decode(d.BIRTH_DATE_EXACT_P, 'f', 1, 't', 0, null) as BIRTHDATE_ESTIMATED, 
-                    d.PHONE_NUMBER, 
-                    d.BIRTH_PLACE, 
-                    d.AGENT as ACCOMPAGNATEUR_NAME, 
-                    d.PATIENT_CREATED_BY, 
-                    d.PATIENT_CREATED_DATE, 
-                    d.TREATMENT_STATUS as outcome, 
+                select
+                    d.PATIENT_ID as SOURCE_PATIENT_ID,
+                    d.PIH_ID,
+                    d.NIF_ID,
+                    d.NATIONAL_ID,
+                    d.FIRST_NAME,
+                    d.FIRST_NAME2,
+                    d.LAST_NAME,
+                    upper(d.GENDER) as GENDER,
+                    d.BIRTH_DATE AS BIRTHDATE,
+                    decode(d.BIRTH_DATE_EXACT_P, 'f', 1, 't', 0, null) as BIRTHDATE_ESTIMATED,
+                    d.PHONE_NUMBER,
+                    d.BIRTH_PLACE,
+                    d.AGENT as ACCOMPAGNATEUR_NAME,
+                    d.PATIENT_CREATED_BY,
+                    d.PATIENT_CREATED_DATE,
+                    d.TREATMENT_STATUS as outcome,
                     d.TREATMENT_STATUS_DATE as outcome_date
-                from HIV_DEMOGRAPHICS_REAL d 
+                from HIV_DEMOGRAPHICS_REAL d
                 order by  d.PATIENT_ID
             ''');
 
         // load patient addresses into staging table
         // TODO do we need to use nvarchar?
         loadFromOracleToMySql('''
-                    insert into hivmigration_patient_addresses(address_id, source_patient_id, address_type, entry_date, address, 
+                    insert into hivmigration_patient_addresses(address_id, source_patient_id, address_type, entry_date, address,
                         department, commune, section, locality)
                     values (?,?,?,?,?,?,?,?,?)
             ''',
@@ -118,20 +117,24 @@ class PatientMigrator extends SqlMigrator {
             update hivmigration_patients set person_uuid = uuid();
         ''')
 
-        // TODO I had to add an IFNULL for the birthdate_estimated, unclear why this wasn't needed before
-        // TODO I had to add IFNULL for creator and set to 1 if null, unclear why this wasn't needed before, and is this correct?
+        // (this seems to be our current convention in OpenMRS and seemed reasonable to me)
+        executeMysql("Set Birthdate Estimate to 0 if Birthdate null",
+        '''
+            update hivmigration_patients set birthdate_estimated = 0 where birthdate is null
+        ''')
+
         executeMysql("Insert Patients into Person Table",
-        '''  
+        '''
             insert into person (person_id, uuid, gender, birthdate, birthdate_estimated, creator, date_created, dead, death_date, cause_of_death)
                 select
                     p.person_id,
                     p.person_uuid as uuid,
                     p.gender,
                     p.birthdate,
-                    IFNULL(p.birthdate_estimated,0),
-                    IFNULL(u.user_id,1) as creator,
-                    date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created, 
-                    case when (p.outcome='died') then (1) else 0 end as dead, 
+                    p.birthdate_estimated,
+                    u.user_id as creator,
+                    date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created,
+                    case when (p.outcome='died') then (1) else 0 end as dead,
                     case when (p.outcome='died') then (p.outcome_date) else null end as death_date,
                     case when (p.outcome='died') then ( SELECT concept_id FROM concept WHERE uuid='3cd6fac4-26fe-102b-80cb-0017a47871b2') else null end as cause_of_death
                 from
@@ -143,8 +146,6 @@ class PatientMigrator extends SqlMigrator {
                 order by p.source_patient_id;
         ''')
 
-        // insert into person_name table
-        // TODO I had to add IFNULL for creator and set to 1 if null, unclear why this wasn't needed before, and is this correct?
         executeMysql("Insert Patients into Person Name Table",
         '''
             insert into person_name(person_id, uuid, given_name, family_name, preferred, creator, date_created)
@@ -154,7 +155,7 @@ class PatientMigrator extends SqlMigrator {
                 concat(p.first_name, if(p.first_name2 is null, '', concat(' ', p.first_name2))) as given_name,
                 p.last_name as family_name,
                 1 as preferred,
-                IFNULL(u.user_id,1) as creator,
+                u.user_id as creator,
                 date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created
             from
                 hivmigration_patients p
@@ -165,32 +166,31 @@ class PatientMigrator extends SqlMigrator {
             order by p.source_patient_id;
         ''')
 
-        // TODO do we need to actually try to set creator correctly
-        // TODO need to figure out how to handle patients with address > 255 characters (add link to ticket)
+        // TODO need to figure out how to handle patients with address > 255 characters, see https://pihemr.atlassian.net/browse/UHM-4751
         executeMysql("Insert Patients into Person Address Table",
         '''
-            insert into person_address(person_id, preferred, address1, address2, city_village, state_province, country, creator, date_created, address3, uuid) 
-            select  person_id, 
-                    case when (address_type = 'current') then 1 else 0 end as 'preferred',
-                    locality as address1, 
-                    left(address,255) as address2, 
-                    commune as city_village, 
-                    department as state_province, 'Haiti' as country, 
-                    1 as creator, 
-                    entry_date as date_created, 
-                    section as address3, 
+            insert into person_address(person_id, preferred, address1, address2, city_village, state_province, country, creator, date_created, address3, uuid)
+            select  p.person_id,
+                    case when (pa.address_type = 'current') then 1 else 0 end as 'preferred',
+                    pa.locality as address1,
+                    left(pa.address,255) as address2,
+                    pa.commune as city_village,
+                    pa.department as state_province, 'Haiti' as country,
+                    1 as creator,
+                    pa.entry_date as date_created,
+                    pa.section as address3,
                     uuid() as uuid
-            from hivmigration_patient_addresses 
-            order by person_id 
+            from hivmigration_patient_addresses pa, hivmigration_patients p
+            where pa.source_patient_id = p.source_patient_id
+            order by person_id
         ''')
 
-        // TODO I had to add IFNULL for creator and set to 1 if null, unclear why this wasn't needed before, and is this correct?
         executeMysql("Insert Patients into Patient Table",
         '''
             insert into patient(patient_id, creator, date_created)
             select
                 p.person_id as patient_id,
-                IFNULL(u.user_id,1) as creator,
+                u.user_id as creator,
                 date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created
             from
                 hivmigration_patients p
@@ -200,19 +200,162 @@ class PatientMigrator extends SqlMigrator {
                 users u on u.uuid = hu.user_uuid
             order by p.source_patient_id;
         ''')
+
+        // load in our pre-created batch of new ZL Identifiers
+        loadFromCSVtoMySql("insert into hivmigration_zlemrid (zl_emr_id) values (?)", "sql/patient/zl-identifiers.csv")
+
+        executeMysql("Insert ZL EMR IDs into Patient Identifier Table",
+        '''
+            insert into patient_identifier(patient_id, uuid, identifier_type, location_id, identifier, preferred, creator, date_created)
+            select
+                p.person_id as patient_id,
+                uuid() as uuid,
+                (SELECT patient_identifier_type_id from patient_identifier_type where name = 'ZL EMR ID') as identifier_type,
+                (SELECT location_id from location where name = 'Unknown Location') as location_id,
+                z.zl_emr_id as identifier,
+                1 as preferred,
+                u.user_id as creator,
+                date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created
+            from
+                hivmigration_patients p
+            join 
+                hivmigration_zlemrid z on p.person_id = z.person_id
+            left join
+                hivmigration_users hu on p.patient_created_by = hu.source_user_id
+            left join
+                users u on u.uuid = hu.user_uuid
+                order by p.source_patient_id;
+        ''')
+
+        executeMysql("Insert HIVEMR-V1 into Patient Identifier Table",
+                '''
+            insert into patient_identifier(patient_id, uuid, identifier_type, location_id, identifier, preferred, creator, date_created)
+            select
+                p.person_id as patient_id,
+                uuid() as uuid,
+                (SELECT patient_identifier_type_id from patient_identifier_type where name = 'HIVEMR-V1') as identifier_type,
+                (SELECT location_id from location where name = 'Unknown Location') as location_id,
+                p.source_patient_id as identifier,
+                0 as preferred,
+                u.user_id as creator,
+            date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created
+            from
+                hivmigration_patients p
+            left join
+                hivmigration_users hu on p.patient_created_by = hu.source_user_id
+            left join
+                users u on u.uuid = hu.user_uuid
+            order by p.source_patient_id;
+        ''')
+
+        executeMysql("Insert Dossier Number into Patient Identifier Table",
+                '''
+            insert into patient_identifier(patient_id, uuid, identifier_type, location_id, identifier, preferred, creator, date_created)
+            select
+                p.person_id as patient_id,
+                uuid() as uuid,
+                (SELECT patient_identifier_type_id from patient_identifier_type where name = 'HIV Nimewo Dosye') as identifier_type,
+                (SELECT location_id from location where name = 'Unknown Location') as location_id,
+                p.pih_id as identifier,
+                0 as preferred,
+                u.user_id as creator,
+                date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created
+            from
+                hivmigration_patients p
+            left join
+                hivmigration_users hu on p.patient_created_by = hu.source_user_id
+            left join
+                users u on u.uuid = hu.user_uuid
+            where p.pih_id is not null
+            order by p.source_patient_id;
+        ''')
+
+        executeMysql("Insert National Identifier into Patient Identifier Table",
+                '''
+            insert into patient_identifier(patient_id, uuid, identifier_type, location_id, identifier, preferred, creator, date_created)
+            select
+                p.person_id as patient_id,
+                uuid() as uuid,
+                (SELECT patient_identifier_type_id from patient_identifier_type where name = 'Carte d\\'identification nationale') as identifier_type,
+                (SELECT location_id from location where name = 'Unknown Location') as location_id,
+                p.national_id as identifier,
+                0 as preferred,
+                u.user_id as creator,
+            date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created
+            from
+                hivmigration_patients p
+            left join
+                hivmigration_users hu on p.patient_created_by = hu.source_user_id
+            left join
+                users u on u.uuid = hu.user_uuid
+            where p.national_id is not null
+            order by p.source_patient_id;
+        ''')
+
+        executeMysql("Insert Fiscal Numbers into Patient Identifier Table",
+                '''
+            insert into patient_identifier(patient_id, uuid, identifier_type, location_id, identifier, preferred, creator, date_created)
+            select
+                p.person_id as patient_id,
+                uuid() as uuid,
+                (SELECT patient_identifier_type_id from patient_identifier_type where name = 'Numéro d\\'identité fiscale (NIF)') as identifier_type,
+                (SELECT location_id from location where name = 'Unknown Location') as location_id,
+                p.nif_id as identifier,
+                0 as preferred,
+                u.user_id as creator,
+                date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created
+            from
+                hivmigration_patients p
+            left join
+                hivmigration_users hu on p.patient_created_by = hu.source_user_id
+            left join
+                users u on u.uuid = hu.user_uuid
+                where p.nif_id is not null
+                order by p.source_patient_id;
+        ''')
+
+        executeMysql('Insert Phone Numbers into Person Attribute Table',
+            '''
+            insert into person_attribute(person_id, value, person_attribute_type_id, creator, date_created, uuid)
+                select
+                    p.person_id as person_id,
+                    p.phone_number as value,
+                    (SELECT person_attribute_type_id from person_attribute_type where name = 'Telephone Number') as person_attribute_type_id,
+                    u.user_id as creator,
+                    date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created,
+                    uuid() as uuid
+                from
+                    hivmigration_patients p
+                left join
+                    hivmigration_users hu on p.patient_created_by = hu.source_user_id
+                left join
+                    users u on u.uuid = hu.user_uuid
+                where p.phone_number is not null
+                order by p.source_patient_id;
+        ''')
     }
+
 
     @Override
     def void revert() {
 
-        // remove patients from person, person_name and person_address template
-        executeMysql("Remove Patients from Patient, Person Address, Person Name, and Person tables",
-        '''
+        if (tableExists("hivmigration_patients")) {
+            executeMysql("Remove Patients from Patient, Patient Identifier, Person Name, Person Addresses, Person Attribute and Person tables",
+                    '''
+            delete from person_attribute where person_id in (select person_id from hivmigration_patients);
+            delete from patient_identifier where patient_id in (select person_id from hivmigration_patients);
             delete from patient where patient_id in (select person_id from hivmigration_patients);
-            delete from person_address where person_id in (select person_id from hivmigration_patient_addresses);
+            delete from person_address where person_id in (select person_id from hivmigration_patients);
             delete from person_name where person_id in (select person_id from hivmigration_patients);
             delete from person where person_id in (select person_id from hivmigration_patients);
         ''')
+            setAutoIncrement("person_attribute", "select (max(person_attribute_id) + 1) from person_attribute")
+            setAutoIncrement("person_address", "select (max(person_address_id)+1) from person_address")
+            setAutoIncrement("patient_identifier", "select (max(patient_identifier_id)+1) from patient_identifier")
+            setAutoIncrement("person_name", "select (max(person_name_id)+1) from person_name")
+            setAutoIncrement("person", "select (max(person_id)+1) from person")
+            setAutoIncrement("patient", "select (max(patient_id)+1) from patient")
+        }
 
         // remove staging tables
         executeMysql("Remove Patient staging tables",

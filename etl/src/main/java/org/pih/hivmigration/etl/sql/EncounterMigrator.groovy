@@ -105,6 +105,6 @@ class EncounterMigrator extends SqlMigrator {
 
     void revert() {
         clearTable("encounter")
-        executeMysql("DROP TABLE hivmigration_encounters;")
+        executeMysql("DROP TABLE if exists hivmigration_encounters;")
     }
 }

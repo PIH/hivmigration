@@ -8,6 +8,7 @@ import org.apache.commons.dbutils.handlers.ScalarHandler;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.pih.hivmigration.etl.sql.util.FileParser;
 import org.pih.hivmigration.etl.sql.util.SqlStatementParser;
 import org.springframework.util.StringUtils;
 
@@ -122,8 +123,67 @@ abstract class SqlMigrator {
 
     void setAutoIncrement(String table, String select) throws SQLException {
         Object nextId = this.selectMysql(select, new ScalarHandler());
-        String sql = "ALTER TABLE " + table + " AUTO_INCREMENT = " + nextId.toString();
+        String sql = "ALTER TABLE " + table + " AUTO_INCREMENT = " + (nextId != null ? nextId.toString() : "1");
         this.executeMysql(sql);
+    }
+
+    void loadFromCSVtoMySql(String targetStatement, String sourceCSV) throws Exception{
+
+        log.info("Loading: " + sourceCSV);
+        Connection targetConnection = null;
+
+        List<List<String>> rows = FileParser.loadCSV(sourceCSV);
+
+        try {
+            targetConnection = getConnection(getMysqlConnectionProperties());
+            boolean originalTargetAutocommit = targetConnection.getAutoCommit();
+
+            try {
+                targetConnection.setAutoCommit(false);
+
+                if (rows != null) {
+
+                    int batchSize = 200;
+                    int batchesProcessed = 0;
+                    int rowsToProcess = 0;
+
+                    Iterator<List<String>> rowsIterator = rows.iterator();
+                    log.info("Importing batches of " + batchSize);
+                    try (PreparedStatement stmt = targetConnection.prepareStatement(targetStatement)) {
+                        while (rowsIterator.hasNext()) {
+                            // assumes each row is the same size and matches target statement
+                            List<String> row = rowsIterator.next();
+                            for (int i = 0; i < row.size(); i++) {
+                                stmt.setObject(i + 1, row.get(i));
+                            }
+                            stmt.addBatch();
+                            rowsToProcess++;
+                            if (rowsToProcess % batchSize == 0) {
+                                stmt.executeBatch();
+                                targetConnection.commit();
+                                batchesProcessed++;
+                                rowsToProcess = 0;
+                                if (batchSize * batchesProcessed % 50000 < batchSize) {
+                                    log.info("Rows committed: " + batchesProcessed * batchSize);
+                                }
+                            }
+                        }
+                        if (rowsToProcess > 0) {
+                            stmt.executeBatch();
+                            targetConnection.commit();
+                        }
+                    }
+                    log.info("Import completed: " + (batchesProcessed * batchSize + rowsToProcess) + " rows");
+                }
+
+            }
+            finally {
+                targetConnection.setAutoCommit(originalTargetAutocommit);
+            }
+        }
+        finally {
+            DbUtils.closeQuietly(targetConnection);
+        }
     }
 
     void loadFromOracleToMySql(String targetStatement, String sourceQuery) throws Exception {
@@ -224,6 +284,18 @@ abstract class SqlMigrator {
             DbUtils.closeQuietly(sourceConnection);
         }
     }
+
+    public boolean tableExists(String tableName) throws Exception {
+
+        String select = "select count(*) from information_schema.tables " +
+                "where table_schema='" + (getMigrationProperties().get("mysql.database") != null ? getMigrationProperties().get("mysql.database") : "openmrs") + "' " +
+                "and table_name = '" + tableName + "';";
+
+        Long count = (Long) selectMysql(select,  new ScalarHandler());
+
+        return count == 1;
+    }
+
 
     public void clearTable(String tableName) throws SQLException {
         executeMysql("Deleting entries from table '" + tableName + "'",
