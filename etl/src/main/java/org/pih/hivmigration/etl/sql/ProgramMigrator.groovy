@@ -53,7 +53,7 @@ class ProgramMigrator extends SqlMigrator {
             insert into hivmigration_outcome(outcome, outcome_concept_id) values("TRANSFERRED_INTERNALLY", @outcome_transferred_out);
         ''')
 
-        setAutoIncrement("patient_program", "(select ifnull(max(patient_program_id)+1, 1) from patient_program)")
+        setAutoIncrement("patient_program", "(select max(patient_program_id)+1 from patient_program)")
         
         loadFromOracleToMySql('''
             insert into hivmigration_programs_raw
