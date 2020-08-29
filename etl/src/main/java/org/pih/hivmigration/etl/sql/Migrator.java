@@ -23,6 +23,9 @@ public class Migrator {
     @Parameter(names={"--revert", "-r"}, description="Revert previous changes before the corresponding step.")
     private boolean shouldRevert = false;
 
+    @Parameter(names={"--revert-only", "-e"}, description="Only revert previous changes, don't run the migration. Works with --step.")
+    private boolean shouldRevertOnly = false;
+
     @Parameter(names={"--limit", "-l"}, description="Limit the number of rows to import.")
     private int limit = -1;
 
@@ -46,6 +49,9 @@ public class Migrator {
 	    if (shouldRevert) {
 	        log.info("Will revert before running.");
         }
+	    if (shouldRevertOnly) {
+	        log.info("Reverting only; not migrating.");
+        }
         if (limit != -1) {
             log.info("Only transferring " + limit + " rows at each step.");
         }
@@ -54,10 +60,12 @@ public class Migrator {
             try {
                 Class cls = Class.forName(className);
                 SqlMigrator clsInstance = (SqlMigrator) cls.getDeclaredConstructor().newInstance();
-                if (shouldRevert) {
+                if (shouldRevert || shouldRevertOnly) {
                     revert(clsInstance);
                 }
-                migrate(clsInstance, limit);
+                if (!shouldRevertOnly) {
+                    migrate(clsInstance, limit);
+                }
             } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 log.error("Invalid value for argument --step provided: '" + step
                         + "'. If provided, it must be the prefix to a migrator name, e.g. 'User'.");
@@ -65,18 +73,24 @@ public class Migrator {
                 System.exit(1);
             }
         } else {
-            if (shouldRevert) {
+            if (shouldRevert || shouldRevertOnly) {
                 revert(new EncounterMigrator());
+                revert(new ProgramMigrator());
+                revert(new StagingDataMigrator());
                 revert(new ProviderMigrator());
                 revert(new InfantMigrator());
                 revert(new PatientMigrator());
                 revert(new UserMigrator());
             }
-            migrate(new UserMigrator(), limit);
-            migrate(new PatientMigrator(), limit);
-            migrate(new InfantMigrator(), limit);
-            migrate(new ProviderMigrator(), limit);
-            migrate(new EncounterMigrator(), limit);
+            if (!shouldRevertOnly) {
+                migrate(new UserMigrator(), limit);
+                migrate(new PatientMigrator(), limit);
+                migrate(new InfantMigrator(), limit);
+                migrate(new ProviderMigrator(), limit);
+                migrate(new StagingDataMigrator(), limit);
+                migrate(new ProgramMigrator(), limit);
+                migrate(new EncounterMigrator(), limit);
+            }
         }
     }
 
