@@ -34,25 +34,6 @@ class ProgramMigrator extends SqlMigrator {
             );
         ''')
 
-        executeMysql("Create outcome lookup table", '''
-            create table hivmigration_outcome (
-              id int PRIMARY KEY AUTO_INCREMENT,
-            	outcome varchar(255),
-            	outcome_concept_id int
-            );
-            
-            SET @outcome_died = (select concept_id from concept where uuid = '3cdd446a-26fe-102b-80cb-0017a47871b2');
-            SET @outcome_lost_to_followup = (select concept_id from concept where uuid = '3ceb0ed8-26fe-102b-80cb-0017a47871b2');
-            SET @outcome_transferred_out = (select concept_id from concept where uuid = '3cdd5c02-26fe-102b-80cb-0017a47871b2');
-            SET @outcome_treatment_stopped = (select concept_id from concept where uuid = '3cdc0d7a-26fe-102b-80cb-0017a47871b2');
-            
-            insert into hivmigration_outcome(outcome, outcome_concept_id) values("DIED", @outcome_died);
-            insert into hivmigration_outcome(outcome, outcome_concept_id) values("LOST", @outcome_lost_to_followup);
-            insert into hivmigration_outcome(outcome, outcome_concept_id) values("TREATMENT_STOPPED", @outcome_treatment_stopped);
-            insert into hivmigration_outcome(outcome, outcome_concept_id) values("TRANSFERRED_OUT", @outcome_transferred_out);
-            insert into hivmigration_outcome(outcome, outcome_concept_id) values("TRANSFERRED_INTERNALLY", @outcome_transferred_out);
-        ''')
-
         setAutoIncrement("patient_program", "(select max(patient_program_id)+1 from patient_program)")
         
         loadFromOracleToMySql('''
@@ -102,19 +83,24 @@ class ProgramMigrator extends SqlMigrator {
         ''')
 
         executeMysql("Add enrollment_date and outcome", '''
+            SET @outcome_died = (select concept_id from concept where uuid = '3cdd446a-26fe-102b-80cb-0017a47871b2');
+            SET @outcome_lost_to_followup = (select concept_id from concept where uuid = '3ceb0ed8-26fe-102b-80cb-0017a47871b2');
+            SET @outcome_transferred_out = (select concept_id from concept where uuid = '3cdd5c02-26fe-102b-80cb-0017a47871b2');
+            SET @outcome_treatment_stopped = (select concept_id from concept where uuid = '3cdc0d7a-26fe-102b-80cb-0017a47871b2');
+
             UPDATE hivmigration_programs_raw
             SET
                 # Enrollment Date in program is earlier of minimum encounter and art start date
                 enrollment_date = LEAST (IFNULL(min_visit_date, art_start_date), IFNULL(art_start_date, min_visit_date)),                
                 outcome = CASE treatment_status
-                    WHEN 'died' THEN 'DIED'
-                    WHEN 'lost' THEN 'LOST' 
-                    WHEN 'abandoned' THEN 'LOST'
-                    WHEN 'transferred_out' THEN 'TRANSFERRED_OUT'
-                    WHEN 'treatment_refused' THEN 'TREATMENT_STOPPED'  # TODO: this might be its own outcome
-                    WHEN 'treatment_stopped' THEN 'TREATMENT_STOPPED'
-                    WHEN 'treatment_stopped_side_effects' THEN 'TREATMENT_STOPPED'
-                    WHEN 'treatment_stopped_other' THEN 'TREATMENT_STOPPED'
+                    WHEN 'died' THEN @outcome_died
+                    WHEN 'lost' THEN @outcome_lost_to_followup
+                    WHEN 'abandoned' THEN @outcome_lost_to_followup
+                    WHEN 'transferred_out' THEN @outcome_transferred_out
+                    WHEN 'treatment_refused' THEN @outcome_treatment_stopped  # TODO: this might be its own outcome
+                    WHEN 'treatment_stopped' THEN @outcome_treatment_stopped
+                    WHEN 'treatment_stopped_side_effects' THEN @outcome_treatment_stopped
+                    WHEN 'treatment_stopped_other' THEN @outcome_treatment_stopped
                     END
             ;
         ''')
@@ -122,25 +108,18 @@ class ProgramMigrator extends SqlMigrator {
 
         executeMysql("Add outcome date if outcome present", '''
             UPDATE hivmigration_programs_raw
-            SET
-                # Outcome date is the most recent of treatment_status_date, regimen_outcome_date, and enrollment date
-                outcome_date = IFNULL(
-                    GREATEST (
-                        COALESCE(treatment_status_date, regimen_outcome_date, '1800-01-01'),
-                        IFNULL(regimen_outcome_date, '1800-01-01'),
-                        enrollment_date
-                    ),
-                    DATE_ADD(max_visit_date, INTERVAL 6 MONTH)
-                )
-            WHERE OUTCOME IS NOT NULL
-            ;
+                SET outcome_date = treatment_status_date;
+            UPDATE hivmigration_programs_raw
+                SET outcome_date = regimen_outcome_date WHERE outcome_date IS NULL OR regimen_outcome_date > outcome_date;
+            UPDATE hivmigration_programs_raw
+                SET outcome_date = enrollment_date WHERE outcome_date IS NULL OR enrollment_date > outcome_date;
+            UPDATE hivmigration_programs_raw
+                SET outcome_date = DATE(DATE_ADD(max_visit_date, INTERVAL 6 MONTH)) WHERE outcome IS NULL;            
+            UPDATE hivmigration_programs_raw
+                SET outcome_date = CURDATE() WHERE outcome_date > CURDATE();
         ''')
 
-        executeMysql("Fix ART start date in the 4-5 cases where it starts after the outcome", '''
-            UPDATE hivmigration_programs_raw
-            SET art_start_date = LEAST (art_start_date, outcome_date)
-            WHERE art_start_date IS NOT NULL AND outcome_date IS NOT NULL
-        ''')
+        // TODO: investigate cases where art_start_date > outcome_date
 
         executeMysql("Remove bad health center entries", '''
             UPDATE hivmigration_programs_raw
@@ -172,6 +151,8 @@ class ProgramMigrator extends SqlMigrator {
         ''')
 
         executeMysql("Load initial enrollments into hivmigration_programs table", '''
+            SET @outcome_transferred_out = (select concept_id from concept where uuid = '3cdd5c02-26fe-102b-80cb-0017a47871b2');
+
             insert into hivmigration_programs
                 (source_patient_id, location_id, enrollment_date, art_start_date, outcome_date, outcome)
             SELECT
@@ -180,7 +161,7 @@ class ProgramMigrator extends SqlMigrator {
                 enrollment_date,
                 IF (art_start_date < health_center_transfer_date, art_start_date, NULL),
                 health_center_transfer_date,
-                'TRANSFERRED_INTERNALLY'
+                @outcome_transferred_out
             FROM hivmigration_programs_raw
             WHERE starting_health_center IS NOT NULL
             ;
@@ -211,7 +192,7 @@ class ProgramMigrator extends SqlMigrator {
                 h.enrollment_date, 
                 h.outcome_date, 
                 hc.openmrs_id,
-                o.outcome_concept_id, 
+                h.outcome 
                 1,
                 date_format(curdate(), '%Y-%m-%d %T'),
                 uuid()
@@ -221,8 +202,6 @@ class ProgramMigrator extends SqlMigrator {
                 hivmigration_patients p on h.source_patient_id = p.source_patient_id 
             left outer join
                 hivmigration_health_center hc on h.location_id = hc.hiv_emr_id
-            left outer join 
-                hivmigration_outcome o on h.outcome = o.outcome
             ; 
         ''')
         
