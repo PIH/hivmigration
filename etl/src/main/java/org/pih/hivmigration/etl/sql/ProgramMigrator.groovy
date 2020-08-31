@@ -183,12 +183,14 @@ class ProgramMigrator extends SqlMigrator {
         ''')
 
         executeMysql("Load to patient_program table", '''
+            SET @hiv_program = (SELECT program_id FROM program WHERE uuid = "b1cb1fc1-5190-4f7a-af08-48870975dafc");
+            
             insert into patient_program
                 (patient_program_id, patient_id, program_id, date_enrolled, date_completed, location_id, outcome_concept_id, creator, date_created, uuid)
             select
                 h.patient_program_id, 
                 p.person_id,
-                2,
+                @hiv_program,
                 h.enrollment_date, 
                 h.outcome_date, 
                 hc.openmrs_id,
@@ -205,20 +207,7 @@ class ProgramMigrator extends SqlMigrator {
             ; 
         ''')
         
-        executeMysql("Add patient state", '''
-            insert into patient_state
-                (patient_program_id, state, start_date, end_date, creator, date_created, uuid)
-            select
-                patient_program_id,
-                if (art_start_date is null or art_start_date > enrollment_date, 2, 1),
-                if (art_start_date is null, enrollment_date, art_start_date), 
-                if (art_start_date is null, outcome_date, art_start_date),
-                1,
-                date_format(curdate(), '%Y-%m-%d %T'),
-                uuid()
-            from hivmigration_programs
-            ;
-            ''')
+        // TODO: figure out how patient state should work
     }
 
     void revert() {
