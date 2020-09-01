@@ -300,6 +300,7 @@ abstract class SqlMigrator {
     public void clearTable(String tableName) throws SQLException {
         executeMysql("Deleting entries from table '" + tableName + "'",
                 "SET FOREIGN_KEY_CHECKS = 0;\n TRUNCATE TABLE " + tableName + ";\n SET FOREIGN_KEY_CHECKS = 1;");
+        executeMysql("ALTER TABLE " + tableName + " AUTO_INCREMENT = 1;");
     }
 
     private String abbreviate(String str) {
