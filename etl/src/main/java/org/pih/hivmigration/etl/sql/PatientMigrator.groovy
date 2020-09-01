@@ -166,6 +166,22 @@ class PatientMigrator extends SqlMigrator {
             order by p.source_patient_id;
         ''')
 
+        // TODO: see https://pihemr.atlassian.net/browse/UHM-4817
+        executeMysql("Set NULL names to UNKNOWN", '''
+            update
+                person_name set given_name='UNKNOWN'
+            where
+                given_name is null and
+                person_id in (select person_id from hivmigration_patients);
+            
+            update
+                person_name set family_name='UNKNOWN'
+            where
+                family_name is null and
+                person_id in (select person_id from hivmigration_patients);
+        ''')
+
+
         // TODO need to figure out how to handle patients with address > 255 characters, see https://pihemr.atlassian.net/browse/UHM-4751
         executeMysql("Insert Patients into Person Address Table",
         '''
