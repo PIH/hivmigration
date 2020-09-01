@@ -75,9 +75,9 @@ public class Migrator {
         } else {
             if (shouldRevert || shouldRevertOnly) {
                 revert(new EncounterMigrator());
+                revert(new ProviderMigrator());
                 revert(new ProgramMigrator());
                 revert(new StagingDataMigrator());
-                revert(new ProviderMigrator());
                 revert(new InfantMigrator());
                 revert(new PatientMigrator());
                 revert(new UserMigrator());
@@ -86,9 +86,9 @@ public class Migrator {
                 migrate(new UserMigrator(), limit);
                 migrate(new PatientMigrator(), limit);
                 migrate(new InfantMigrator(), limit);
-                migrate(new ProviderMigrator(), limit);
                 migrate(new StagingDataMigrator(), limit);
                 migrate(new ProgramMigrator(), limit);
+                migrate(new ProviderMigrator(), limit);
                 migrate(new EncounterMigrator(), limit);
             }
         }

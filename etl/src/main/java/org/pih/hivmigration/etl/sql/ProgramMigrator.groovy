@@ -5,6 +5,7 @@ class ProgramMigrator extends SqlMigrator {
     void migrate() {
         executeMysql("Create staging table to receive program data", '''
             create table hivmigration_programs_raw (
+                # these columns receive the data directly from HIV EMR during the "load" step
                 source_patient_id int PRIMARY KEY,
                 starting_health_center int,
                 health_center int,
@@ -16,12 +17,17 @@ class ProgramMigrator extends SqlMigrator {
                 regimen_outcome_date date,
                 min_visit_date date,
                 max_visit_date date,
+                # these columns are calculated afterward
                 enrollment_date date,
                 outcome_date date,
                 outcome varchar(255)
             );
         ''')
 
+        // One row of input data can be split into two rows of output data. The input data
+        // is row-per-patient while the output data is row-per-enrollment.
+        // There are transformations we need to make both before and after splitting.
+        // Therefore we create another table which holds the split data for further processing.
         executeMysql("Create intermediate staging table", '''
             create table hivmigration_programs (
                 patient_program_id int PRIMARY KEY AUTO_INCREMENT,
@@ -35,7 +41,8 @@ class ProgramMigrator extends SqlMigrator {
         ''')
 
         setAutoIncrement("patient_program", "(select max(patient_program_id)+1 from patient_program)")
-        
+
+        // Load the data in. Note especially the list of encounter types.
         loadFromOracleToMySql('''
             insert into hivmigration_programs_raw
                 (source_patient_id,
@@ -105,12 +112,21 @@ class ProgramMigrator extends SqlMigrator {
             ;
         ''')
 
-
+        // In pseudocode, does something like:
+        //   outcome_date = latest(treatment_status_date, regimen_oucome_date, enrollment_date)
+        //   if outcome_date is null:
+        //       outcome_date = max_visit_date + 6 months
+        //   if outcome_date is in the future:
+        //       outcome_date = today
         executeMysql("Add outcome date if outcome present", '''
+            # Top choice is the current treatment_status_date
             UPDATE hivmigration_programs_raw
                 SET outcome_date = treatment_status_date;
+            # Unless there's a regimen_outcome_date which is later than the treatment_status_date
             UPDATE hivmigration_programs_raw
                 SET outcome_date = regimen_outcome_date WHERE outcome_date IS NULL OR regimen_outcome_date > outcome_date;
+            # And if the enrollment date (which is the earlier of minimum encounter and art start date) is later
+            # than either of those, use that
             UPDATE hivmigration_programs_raw
                 SET outcome_date = enrollment_date WHERE outcome_date IS NULL OR enrollment_date > outcome_date;
             UPDATE hivmigration_programs_raw
@@ -135,12 +151,16 @@ class ProgramMigrator extends SqlMigrator {
                 starting_health_center = IF (
                         starting_health_center = health_center OR
                         health_center_transfer_date IS NULL OR
-                        health_center_transfer_date > outcome_date OR
-                        health_center_transfer_date < enrollment_date,
+                        health_center_transfer_date > outcome_date OR  # TODO: investigate whether
+                        health_center_transfer_date < enrollment_date, #   these conditions make sense
                     NULL,
                     starting_health_center)
             ;
         ''')
+
+        // The following three blocks are where the enrollments get split.
+        // For patients with no starting_health_center, we only create a single enrollment.
+        // If a starting_health_center is present, we create two enrollments, "initial" and "current."
 
         executeMysql("Load single enrollments to hivmigration_programs table", '''
             INSERT INTO hivmigration_programs
