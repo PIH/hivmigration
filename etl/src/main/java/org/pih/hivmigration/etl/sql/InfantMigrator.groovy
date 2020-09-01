@@ -76,6 +76,21 @@ class InfantMigrator extends SqlMigrator {
               hivmigration_infants i
         ''')
 
+        // TODO: see https://pihemr.atlassian.net/browse/UHM-4817
+        executeMysql("Set NULL names to UNKNOWN", '''
+            update
+                person_name set given_name='UNKNOWN'
+            where
+                given_name is null and
+                person_id in (select person_id from hivmigration_infants);
+            
+            update
+                person_name set family_name='UNKNOWN'
+            where
+                family_name is null and
+                person_id in (select person_id from hivmigration_infants);
+        ''')
+
         executeMysql("Load infants into patient table", '''
             insert into patient (patient_id, creator, date_created)
             select
@@ -120,21 +135,6 @@ class InfantMigrator extends SqlMigrator {
                 uuid()
             from hivmigration_infants i 
             join hivmigration_patients p on i.mother_patient_id = p.source_patient_id;
-        ''')
-
-        // TODO: see https://pihemr.atlassian.net/browse/UHM-4817
-        executeMysql("Set NULL names to UNKNOWN", '''
-            update
-                person_name set given_name='UNKNOWN'
-            where
-                given_name is null and
-                person_id in (select person_id from hivmigration_infants);
-            
-            update
-                person_name set family_name='UNKNOWN'
-            where
-                family_name is null and
-                person_id in (select person_id from hivmigration_infants);
         ''')
 
     }
