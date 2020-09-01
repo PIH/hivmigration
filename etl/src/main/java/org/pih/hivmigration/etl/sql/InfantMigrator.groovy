@@ -122,6 +122,21 @@ class InfantMigrator extends SqlMigrator {
             join hivmigration_patients p on i.mother_patient_id = p.source_patient_id;
         ''')
 
+        // TODO: see https://pihemr.atlassian.net/browse/UHM-4817
+        executeMysql("Set NULL names to UNKNOWN", '''
+            update
+                person_name set given_name='UNKNOWN'
+            where
+                given_name is null and
+                person_id in (select person_id from hivmigration_infants);
+            
+            update
+                person_name set family_name='UNKNOWN'
+            where
+                family_name is null and
+                person_id in (select person_id from hivmigration_infants);
+        ''')
+
     }
 
     @Override
