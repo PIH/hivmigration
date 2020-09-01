@@ -79,9 +79,7 @@ class ProgramMigrator extends SqlMigrator {
                     and			encounter_date is not null
                     group by 	patient_id
                 ) e
-            where
-                d.TREATMENT_STATUS != 'test' 
-            and 
+            where 
                 d.patient_id = e.patient_id
             and
                 d.patient_id = r.patient_id(+)
@@ -194,7 +192,7 @@ class ProgramMigrator extends SqlMigrator {
                 source_patient_id,
                 health_center,
                 health_center_transfer_date,
-                IF (art_start_date < health_center_transfer_date, health_center_transfer_date, art_start_date),
+                art_start_date,  # this will be before the transfer_date in cases where ART started at the first health center
                 outcome_date,
                 outcome
             FROM hivmigration_programs_raw
