@@ -212,7 +212,7 @@ class ProgramMigrator extends SqlMigrator {
                 h.enrollment_date, 
                 h.outcome_date, 
                 hc.openmrs_id,
-                h.outcome 
+                h.outcome,
                 1,
                 date_format(curdate(), '%Y-%m-%d %T'),
                 uuid()
