@@ -152,6 +152,12 @@ class InfantMigrator extends SqlMigrator {
         ''');
         }
 
+        setAutoIncrement("relationship", "select (max(relationship_id)+1) from relationship")
+        setAutoIncrement("patient_identifier", "select (max(patient_identifier_id)+1) from patient_identifier")
+        setAutoIncrement("person_name", "select (max(person_name_id)+1) from person_name")
+        setAutoIncrement("person", "select (max(person_id)+1) from person")
+        setAutoIncrement("patient", "select (max(patient_id)+1) from patient")
+
         executeMysql("drop table if exists hivmigration_infants;");
     }
 }
