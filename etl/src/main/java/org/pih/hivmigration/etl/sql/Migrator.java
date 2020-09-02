@@ -29,6 +29,9 @@ public class Migrator {
     @Parameter(names={"--limit", "-l"}, description="Limit the number of rows to import.")
     private int limit = -1;
 
+    @Parameter(names={"--de-identify", "-d"}, description="De-identify patient names.")
+    private boolean deIdentify = false;
+
     /**
      * Run the application
      */
@@ -83,13 +86,17 @@ public class Migrator {
                 revert(new UserMigrator());
             }
             if (!shouldRevertOnly) {
-                migrate(new UserMigrator(), limit);
+                migrate(new UserMigrator(), -1);
                 migrate(new PatientMigrator(), limit);
                 migrate(new InfantMigrator(), limit);
-                migrate(new StagingDataMigrator(), limit);
+                migrate(new StagingDataMigrator(), -1);
                 migrate(new ProgramMigrator(), limit);
                 migrate(new ProviderMigrator(), limit);
                 migrate(new EncounterMigrator(), limit);
+
+                if (deIdentify == true) {
+                    migrate(new DeIdentifyMigrator(), -1);
+                }
             }
         }
     }
