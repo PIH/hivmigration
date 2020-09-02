@@ -15,8 +15,8 @@ class VisitMigrator extends SqlMigrator {
             FROM
                 (
                     SELECT patient_id,
-                           Subtime(Min(encounter_datetime), '00:05:00') AS date_started,  /* visit must start before first enc */
-                           Addtime(Max(encounter_datetime), '00:05:00') AS date_stopped,  /* visit must end after last enc */
+                           Min(encounter_datetime) AS date_started,  -- encounter_datetime is always midnight
+                           Addtime(Max(encounter_datetime), '23:59:00') AS date_stopped,
                            Max(location_id) as location_id,  /* Avoid using 'Unknown Location' if there is another location available */
                            creator
                     FROM   encounter
