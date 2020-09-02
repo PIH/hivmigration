@@ -16,13 +16,14 @@ class VisitMigrator extends SqlMigrator {
                 (
                     SELECT patient_id,
                            Min(encounter_datetime) AS date_started,  -- encounter_datetime is always midnight
-                           Addtime(Max(encounter_datetime), '23:59:00') AS date_stopped,
+                           Addtime(Max(encounter_datetime), '23:59:59') AS date_stopped,
                            Max(location_id) as location_id,  /* Avoid using 'Unknown Location' if there is another location available */
                            creator
                     FROM   encounter
                     WHERE  FIND_IN_SET(encounter_type, @encounter_type_exclusions) = 0
                     GROUP  BY patient_id,
                               Date(encounter_datetime)
+                              -- TODO: Group by location as well 
                 ) AS e;
             
             -- Add visit IDs to their encounters
