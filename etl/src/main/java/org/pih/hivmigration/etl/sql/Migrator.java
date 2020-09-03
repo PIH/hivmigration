@@ -74,6 +74,7 @@ public class Migrator {
             }
         } else {
             if (shouldRevert || shouldRevertOnly) {
+                revert(new VisitMigrator());
                 revert(new EncounterMigrator());
                 revert(new ProviderMigrator());
                 revert(new ProgramMigrator());
@@ -90,6 +91,7 @@ public class Migrator {
                 migrate(new ProgramMigrator(), limit);
                 migrate(new ProviderMigrator(), limit);
                 migrate(new EncounterMigrator(), limit);
+                migrate(new VisitMigrator(), limit);
             }
         }
     }
