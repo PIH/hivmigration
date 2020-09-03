@@ -4,338 +4,92 @@ class DeIdentifyMigrator extends SqlMigrator {
 
     @Override
     void migrate() {
+
         executeMysql("De-identifying names",
             '''
-            -- Remove all middle names and second family names
-            UPDATE person_name SET family_name2 = NULL where not family_name2 is NULL;
-            UPDATE person_name SET middle_name = NULL where not middle_name is NULL;
+             update person_name pn, hivmigration_patients p
+            set family_name =
+                (CASE
+                    WHEN p.source_patient_id % 20 = 0 THEN 'Miranda'
+                    WHEN p.source_patient_id % 20 = 1 THEN 'Allen'
+                    WHEN p.source_patient_id % 20 = 2 THEN 'Virguna'
+                    WHEN p.source_patient_id % 20 = 3 THEN 'Kamikazi'
+                    WHEN p.source_patient_id % 20 = 4 THEN 'Inka'
+                    WHEN p.source_patient_id % 20 = 5 THEN 'Kichura'
+                    WHEN p.source_patient_id % 20 = 6 THEN 'Mukatete'
+                    WHEN p.source_patient_id % 20 = 7 THEN 'Seaton'
+                    WHEN p.source_patient_id % 20 = 8 THEN 'Ball'
+                    WHEN p.source_patient_id % 20 = 9 THEN 'Soucy'
+                    WHEN p.source_patient_id % 20 = 10 THEN 'Ioan'
+                    WHEN p.source_patient_id % 20 = 11 THEN 'Munson'
+                    WHEN p.source_patient_id % 20 = 12 THEN 'Kim'
+                    WHEN p.source_patient_id % 20 = 13 THEN 'White'
+                    WHEN p.source_patient_id % 20 = 14 THEN 'Cardoza'
+                    WHEN p.source_patient_id % 20 = 15 THEN 'Istenes'
+                    WHEN p.source_patient_id % 20 = 16 THEN 'Dylan'
+                    WHEN p.source_patient_id % 20 = 17 THEN 'Young'
+                    WHEN p.source_patient_id % 20 = 18 THEN 'Brady'
+                    WHEN p.source_patient_id % 20 = 19 THEN 'Lannister'
+                END)
+            where family_name != 'UNKNOWN' and pn.person_id = p.person_id
+            and pn.person_id not in (select person_id from users);
+            
+            update person_name pn, hivmigration_patients p
+            set given_name =
+                (CASE
+                    WHEN p.source_patient_id % 20 = 0 THEN 'Lucia'
+                    WHEN p.source_patient_id % 20 = 1 THEN 'Maria'
+                    WHEN p.source_patient_id % 20 = 2 THEN 'Martina'
+                    WHEN p.source_patient_id % 20 = 3 THEN 'Daniela'
+                    WHEN p.source_patient_id % 20 = 4 THEN 'Alba'
+                    WHEN p.source_patient_id % 20 = 5 THEN 'Ella'
+                    WHEN p.source_patient_id % 20 = 6 THEN 'Noemi'
+                    WHEN p.source_patient_id % 20 = 7 THEN 'Louise'
+                    WHEN p.source_patient_id % 20 = 8 THEN 'Mia'
+                    WHEN p.source_patient_id % 20 = 9 THEN 'Roseline'
+                    WHEN p.source_patient_id % 20 = 10 THEN 'Madeline'
+                    WHEN p.source_patient_id % 20 = 11 THEN 'Mirlande'
+                    WHEN p.source_patient_id % 20 = 12 THEN 'Fabienne'
+                    WHEN p.source_patient_id % 20 = 13 THEN 'Islande'
+                    WHEN p.source_patient_id % 20 = 14 THEN 'Emma'
+                    WHEN p.source_patient_id % 20 = 15 THEN 'Olivia'
+                    WHEN p.source_patient_id % 20 = 16 THEN 'Ava'
+                    WHEN p.source_patient_id % 20 = 17 THEN 'Sophia'
+                    WHEN p.source_patient_id % 20 = 18 THEN 'Charlotte'
+                    WHEN p.source_patient_id % 20 = 19 THEN 'Amelia'
+                END)
+            where given_name != 'UNKNOWN' and pn.person_id = p.person_id and p.gender = 'F'
+            and pn.person_id not in (select person_id from users);
+            
+            update person_name pn, hivmigration_patients p
+            set given_name =
+                (CASE
+                    WHEN p.source_patient_id % 20 = 0 THEN 'Liam'
+                    WHEN p.source_patient_id % 20 = 1 THEN 'Noah'
+                    WHEN p.source_patient_id % 20 = 2 THEN 'William'
+                    WHEN p.source_patient_id % 20 = 3 THEN 'James'
+                    WHEN p.source_patient_id % 20 = 4 THEN 'Oliver'
+                    WHEN p.source_patient_id % 20 = 5 THEN 'Gabriel'
+                    WHEN p.source_patient_id % 20 = 6 THEN 'Raphael'
+                    WHEN p.source_patient_id % 20 = 7 THEN 'Alexandre'
+                    WHEN p.source_patient_id % 20 = 8 THEN 'Mohamed'
+                    WHEN p.source_patient_id % 20 = 9 THEN 'Louis'
+                    WHEN p.source_patient_id % 20 = 10 THEN 'Augustin'
+                    WHEN p.source_patient_id % 20 = 11 THEN 'Mark'
+                    WHEN p.source_patient_id % 20 = 12 THEN 'Alejandro'
+                    WHEN p.source_patient_id % 20 = 13 THEN 'Hugo'
+                    WHEN p.source_patient_id % 20 = 14 THEN 'Pablo'
+                    WHEN p.source_patient_id % 20 = 15 THEN 'Martin'
+                    WHEN p.source_patient_id % 20 = 16 THEN 'Innocent'
+                    WHEN p.source_patient_id % 20 = 17 THEN 'Alvaro'
+                    WHEN p.source_patient_id % 20 = 18 THEN 'Lucas'
+                    WHEN p.source_patient_id % 20 = 19 THEN 'Jamie'
+                END)
+            where given_name != 'UNKNOWN' and pn.person_id = p.person_id and p.gender != 'F'
+            and pn.person_id not in (select person_id from users);
+            '''
+        )
 
-            -- Set all family names to a random bunch of 40 last names
-            update person_name set family_name = 'Miranda' where family_name !='UNKNOWN';
-            update person_name set family_name = 'Allen' where person_id % 2 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Waters' where person_id % 3 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Ball' where person_id % 4 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Fraser' where person_id % 5 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Choi' where person_id % 6 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Blaya' where person_id % 7 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Keeton' where person_id % 8 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Amoroso' where person_id % 9 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Hsuing' where person_id % 10 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Seaton' where person_id % 11 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Montgomery' where person_id % 12 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Forest' where person_id % 13 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Kastenbaum' where person_id % 14 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Gans' where person_id % 15 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Jazayeri' where person_id % 16 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Dahl' where person_id % 17 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Farmer' where person_id % 18 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Constan' where person_id % 19 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Thomas' where person_id % 20 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Marx' where person_id % 21 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Zintl' where person_id % 22 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Soucy' where person_id % 23 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'West' where person_id % 24 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Cardoza' where person_id % 25 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'White' where person_id % 26 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Mccormick' where person_id % 27 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Kim' where person_id % 28 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Kidder' where person_id % 29 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Yatuta' where person_id % 30 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Mbuyu' where person_id % 31 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Mukatete' where person_id % 32 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Kimihura' where person_id % 33 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Kichura' where person_id % 34 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Kibungo' where person_id % 35 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Rwamagana' where person_id % 36 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Ihene' where person_id % 37 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Inka' where person_id % 38 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Kamikazi' where person_id % 39 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Inzira' where person_id % 40 = 0 and family_name !='UNKNOWN';
-            update person_name set family_name = 'Virunga' where person_id % 41 = 0 and family_name !='UNKNOWN';
-
-            --
-            -- Set all first names of Males to a random bunch of 20 choices
-            --
-            update person_name set given_name = 'Paul' where person_id % 21 = 0
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')
-            
-             and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Tom' where person_id % 21 = 1
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')
-            
-             and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Ted' where person_id % 21 = 2
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Max' where person_id % 21 = 3
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Hamish' where person_id % 21 = 4
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Darius' where person_id % 21 = 5
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Simon' where person_id % 21 = 6
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Edward' where person_id % 21 = 7
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Charles' where person_id % 21 = 8
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Luke' where person_id % 21 = 9
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Barack' where person_id % 21 = 10
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'John' where person_id % 21 = 11
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Michael' where person_id % 21 = 12
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Christopher' where person_id % 21 = 13
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Zaynt' where person_id % 21 = 14
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Sebastian' where person_id % 21 = 15
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Howard' where person_id % 21 = 16
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Adam' where person_id % 21 = 17
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Joshua' where person_id % 21 = 18
-                and exists        (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Steven' where person_id % 21 = 19
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            update person_name set given_name = 'Sam' where person_id % 21 = 20
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'M')  and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            
-            --
-            -- Set all first names of Females to a random bunch of 20 choices
-            --
-            update person_name set given_name = 'Mary' where person_id % 21 = 0
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Ophelia' where person_id % 21 = 1
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Kathryn' where person_id % 21 = 2
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Ellen' where person_id % 21 = 3
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Naomi' where person_id % 21 = 4
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Claire' where person_id % 21 = 5
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Lucy' where person_id % 21 = 6
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Freya' where person_id % 21 = 7
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Carole' where person_id % 21 = 8
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Sophia' where person_id % 21 = 9
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Alice' where person_id % 21 = 10
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Melissa' where person_id % 21 = 11
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Vanessa' where person_id % 21 = 12
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Sally' where person_id % 21 = 13
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Anne' where person_id % 21 = 14
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Katie' where person_id % 21 = 15
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Jennifer' where person_id % 21 = 16
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Jill' where person_id % 21 = 17
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Susan' where person_id % 21 = 18
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Megan' where person_id % 21 = 19
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-            update person_name set given_name = 'Amanda' where person_id % 21 = 20
-                and exists
-                    (SELECT *
-                    FROM person
-                    WHERE person.person_id = person_name.person_id
-                    AND person.gender = 'F' or person.gender = 'U') and not person_id in (select user_id from users) and given_name != 'UNKNOWN';
-        ''');
     }
 
     @Override
