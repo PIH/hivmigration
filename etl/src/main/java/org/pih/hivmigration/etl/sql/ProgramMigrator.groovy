@@ -111,7 +111,7 @@ class ProgramMigrator extends SqlMigrator {
         ''')
 
         // In pseudocode, does something like:
-        //   outcome_date = latest(treatment_status_date, regimen_oucome_date, enrollment_date)
+        //   outcome_date = latest(treatment_status_date, regimen_outcome_date)
         //   if outcome_date is null:
         //       outcome_date = max_visit_date + 6 months
         //   if outcome_date is in the future:
@@ -120,19 +120,25 @@ class ProgramMigrator extends SqlMigrator {
             # Top choice is the current treatment_status_date
             UPDATE hivmigration_programs_raw
                 SET outcome_date = treatment_status_date;
+                
             # Unless there's a regimen_outcome_date which is later than the treatment_status_date
             UPDATE hivmigration_programs_raw
                 SET outcome_date = regimen_outcome_date WHERE outcome_date IS NULL OR regimen_outcome_date > outcome_date;
-            # And if the enrollment date (which is the earlier of minimum encounter and art start date) is later
-            # than either of those, use that
-            UPDATE hivmigration_programs_raw
-                SET outcome_date = enrollment_date WHERE outcome_date IS NULL OR enrollment_date > outcome_date;
+            
+            # If no outcome date is readily available, use last visit date + 6 months as a proxy
             UPDATE hivmigration_programs_raw
                 SET outcome_date = DATE(DATE_ADD(max_visit_date, INTERVAL 6 MONTH)) WHERE outcome IS NULL;            
+            
+            # If this results in a future outcome date, then just use the current date
             UPDATE hivmigration_programs_raw
                 SET outcome_date = CURDATE() WHERE outcome_date > CURDATE();
+                
+            # Now, make sure we aren't setting an outcome date if the patient does not have an outcome
+            UPDATE hivmigration_programs_raw
+                SET outcome_date = null WHERE outcome is null;
         ''')
 
+        // TODO: If the above logic does not result in an outcome date for all outcomes, research individual cases and adjust
         // TODO: investigate cases where art_start_date > outcome_date
 
         executeMysql("Remove bad health center entries", '''
@@ -226,6 +232,8 @@ class ProgramMigrator extends SqlMigrator {
         ''')
         
         // TODO: figure out how patient state should work
+        // Currently we are loading ART Start Date into the staging table, but never using it
+        // If we intend to use states to capture the ART Start Date, then this should be used in this way like Malawi
     }
 
     void revert() {
