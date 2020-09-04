@@ -75,10 +75,12 @@ class EncounterMigrator extends SqlMigrator {
         ''')
         // TODO: Handle source_encounter_type "anlap_vital_signs", "patient_contact", "food_study", "regime", "note", "accompagnateur" (https://pihemr.atlassian.net/browse/UHM-3244)
 
-//      TODO: The old code from Pentaho about hivmigration_health_center. Add back in or delete once that table is migrated.
-//            update hivmigration_encounters e, hivmigration_health_center hc
-//                set e.location_id = hc.openmrs_id
-//                where e.source_location_id = hc.hiv_emr_id;
+        executeMysql('Set encounter locations',
+            '''
+            update hivmigration_encounters e, hivmigration_health_center hc
+                set e.location_id = hc.openmrs_id         
+                where e.source_location_id = hc.hiv_emr_id;
+            ''')
 
         executeMysql("Load encounter table from staging table", '''
             insert into encounter (encounter_id, uuid, encounter_datetime, date_created, encounter_type, patient_id, creator, location_id)
