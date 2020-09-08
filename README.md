@@ -15,34 +15,33 @@ https://bitbucket.org/partnersinhealth/hivemr/src/master/docker/
    - https://wiki.openmrs.org/display/docs/OpenMRS+SDK#OpenMRSSDK-Installation
    - Use Lespwa-style setup with pih_config: haiti-hiv
 
-3. Get Pentaho Data Integration installed locally (mainly so that you can use Spoon - now called "PDI client" to author jobs).  There should no difficulty with any version (Versions 6, 7, or 8 appear to work).  Download from SourceForge:
-https://sourceforge.net/projects/pentaho/
-
-4. Get the hivmigration project cloned and available to use locally:
+3. Get the hivmigration project cloned and available to use locally:
 https://github.com/PIH/hivmigration
-
 
 ## Migrating data
 
 Instructions for executing commands from this java project 
 
-1. Create new directory for HIV migration data and log files (eg. `~/hiv-migration`).
-2. Set the environment variable `HIV_MIGRATION_HOME` (to e.g. `/home/ball/hiv-migration`).
-3. Create file `$HIV_MIGRATION_HOME/migration.properties` from
+1. Create file `migration.properties` from
    [etl/src/main/resources/sample-migration.properties](https://github.com/PIH/hivmigration/blob/master/etl/src/main/resources/sample-migration.properties).
    Check that the values are correct for your databases.
-4. There are 3 ways to run the migration:
-   - IntelliJ:  
-     - Run `Migrator.java`
-   - Command-line:  
-     - Use [ansible deployment playbook](https://bitbucket.org/partnersinhealth/deployment/src/master/playbooks/roles/hiv-migration/)
-   - Pentaho Spoon: 
-     - Set HIV_MIGRATION_HOME in ~/.kettle/kettle.properties.  The other variables will be set automatically.
-     - Add Oracle and MySQL connectors (jar files) into Pentaho `lib/` directory
-         - `org.gjt.mm.mysql.Driver` from [MySQL Connector/J 5.1.28](https://mvnrepository.com/artifact/mysql/mysql-connector-java/5.1.28)
-         - `oracle.jdbc.driver.OracleDriver` from [Oracle JDBC 6 11.2.0.3](https://mvnrepository.com/artifact/oracle/ojdbc6/11.2.0.3)
-         
+2. Set MIGRATION_PROPERTIES_FILE environment variable to point to that file, ie:
+    MIGRATION_PROPERTIES_FILE=/home/mgoodrich/pih/hivmigration/migration.properties
+3. Ways to run the migration:
+    - IntelliJ:  
+        - Run `org.pih.hivmigration.etl.sql.Migrator.java` 
+        
+ ![Image of IntelliJ config](intellij-config.png)
+    
+    - Command-line (?? not sure if this still works):  
+      - Use [ansible deployment playbook](https://bitbucket.org/partnersinhealth/deployment/src/master/playbooks/roles/hiv-migration/)
 
+ 
+## Pentaho
 
+Previously, we were writing the migration using Pentaho. We have switched to Java/SQL approach, but you'll need Pentaho to properly
+view the existing Pentaho code:
 
+1. Get Pentaho Data Integration installed locally (mainly so that you can use Spoon - now called "PDI client" to author jobs).  There should no difficulty with any version (Versions 6, 7, or 8 appear to work).  Download from SourceForge:
+https://sourceforge.net/projects/pentaho/
 
