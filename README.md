@@ -25,23 +25,20 @@ Instructions for executing commands from this java project
 1. Create file `migration.properties` from
    [etl/src/main/resources/sample-migration.properties](https://github.com/PIH/hivmigration/blob/master/etl/src/main/resources/sample-migration.properties).
    Check that the values are correct for your databases.
-2. Set MIGRATION_PROPERTIES_FILE environment variable to point to that file, ie:
-    MIGRATION_PROPERTIES_FILE=/home/mgoodrich/pih/hivmigration/migration.properties
-3. Ways to run the migration:
-    - IntelliJ:  
-        - Run `org.pih.hivmigration.etl.sql.Migrator.java` 
-        
- ![Image of IntelliJ config](intellij-config.png)
-    
-    - Command-line (?? not sure if this still works):  
-      - Use [ansible deployment playbook](https://bitbucket.org/partnersinhealth/deployment/src/master/playbooks/roles/hiv-migration/)
-
+2. Set `MIGRATION_PROPERTIES_FILE` environment variable to point to that file, ie:
+    `MIGRATION_PROPERTIES_FILE=/home/mgoodrich/pih/hivmigration/migration.properties`
+3. Two ways to run the migration:
+    - IntelliJ: Run `org.pih.hivmigration.etl.sql.Migrator.java` with a config like this one
+      ![Image of IntelliJ config](intellij-config.png) 
+    - Command-line (may or may not still work): Use
+      [ansible deployment playbook](https://bitbucket.org/partnersinhealth/deployment/src/master/playbooks/roles/hiv-migration/)
  
 ## Pentaho
 
-Previously, we were writing the migration using Pentaho. We have switched to Java/SQL approach, but you'll need Pentaho to properly
+Previously, we were writing the migration using Pentaho. We have switched 
+to Java/SQL approach, but you'll need Pentaho to properly
 view the existing Pentaho code:
 
-1. Get Pentaho Data Integration installed locally (mainly so that you can use Spoon - now called "PDI client" to author jobs).  There should no difficulty with any version (Versions 6, 7, or 8 appear to work).  Download from SourceForge:
+Get Pentaho Data Integration installed locally (mainly so that you can use Spoon - now called "PDI client" to author jobs).  There should no difficulty with any version (Versions 6, 7, or 8 appear to work).  Download from SourceForge:
 https://sourceforge.net/projects/pentaho/
 
