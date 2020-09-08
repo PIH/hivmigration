@@ -30,6 +30,7 @@ Instructions for executing commands from this java project
 3. Two ways to run the migration:
     - IntelliJ: Run `org.pih.hivmigration.etl.sql.Migrator.java` with a config like this one
       ![Image of IntelliJ config](intellij-config.png) 
+      Run with the program argument `--help` to see the available options.
     - Command-line (may or may not still work): Use
       [ansible deployment playbook](https://bitbucket.org/partnersinhealth/deployment/src/master/playbooks/roles/hiv-migration/)
  
