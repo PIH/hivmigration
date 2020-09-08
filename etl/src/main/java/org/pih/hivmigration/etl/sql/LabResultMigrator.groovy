@@ -62,7 +62,28 @@ class LabResultMigrator extends SqlMigrator {
 
         executeMysql("Add UUIDs", "UPDATE hivmigration_lab_results SET uuid = uuid();")
 
-        executeMysql("Load lab results as observations", '''
+        executeMysql("Create stored procedure to add obs", '''
+            DELIMITER $$ ;
+            CREATE PROCEDURE create_obs (IN concept_uuid CHAR(38), IN test_type VARCHAR(100), IN input_column VARCHAR(100), IN output_column VARCHAR(100))
+            BEGIN
+                SET @s = CONCAT(
+                    'INSERT INTO obs(`', output_column, '`, person_id, concept_id, ',
+                    '   encounter_id, obs_datetime, location_id, creator, date_created, voided, uuid) ',
+                    'SELECT r.`', input_column, '`, p.person_id, (SELECT concept_id FROM concept WHERE uuid=', QUOTE(concept_uuid), '), ',
+                    '   e.encounter_id, r.obs_datetime, e.location_id, 1, now(), 0, uuid() ',
+                    'FROM hivmigration_lab_results r ',
+                    '     JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id ',
+                    '     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id \'
+                    'WHERE r.`', input_column, '` IS NOT NULL AND r.test_type = ', QUOTE(test_type));
+                PREPARE stmt FROM @s;
+                EXECUTE stmt;
+                DEALLOCATE PREPARE stmt;
+            END $$
+            DELIMITER ;
+        ''')
+
+        // executeMysql("Load lab results as observations",
+        '''
             -- Viral load
             --
             
@@ -165,7 +186,8 @@ class LabResultMigrator extends SqlMigrator {
                 JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id
                 JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
             WHERE r.test_type ='tr';
-        ''')
+        '''
+        //)
     }
 
     @Override
