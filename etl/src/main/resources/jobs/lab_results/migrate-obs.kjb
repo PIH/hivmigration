@@ -362,6 +362,7 @@
       <name>START</name>
       <description/>
       <type>SPECIAL</type>
+      <attributes/>
       <start>Y</start>
       <dummy>N</dummy>
       <repeat>N</repeat>
@@ -377,15 +378,18 @@
       <nr>0</nr>
       <xloc>128</xloc>
       <yloc>32</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Load Configuration</name>
       <description/>
       <type>JOB</type>
+      <attributes/>
       <specification_method>filename</specification_method>
       <job_object_id/>
       <filename>${Internal.Job.Filename.Directory}/../load-configuration.kjb</filename>
       <jobname/>
+      <directory/>
       <arg_from_previous>N</arg_from_previous>
       <params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row>
@@ -409,13 +413,15 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>288</xloc>
+      <xloc>336</xloc>
       <yloc>32</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Create Staging Tables</name>
       <description/>
       <type>SQL</type>
+      <attributes/>
       <sql/>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>T</sqlfromfile>
@@ -425,13 +431,15 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>480</xloc>
+      <xloc>576</xloc>
       <yloc>32</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Reset obs_id</name>
       <description/>
       <type>TRANS</type>
+      <attributes/>
       <specification_method>filename</specification_method>
       <trans_object_id/>
       <filename>${Internal.Job.Filename.Directory}/reset-obs-id.ktr</filename>
@@ -461,13 +469,15 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>288</xloc>
-      <yloc>160</yloc>
+      <xloc>320</xloc>
+      <yloc>192</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Extract Viral Load Results</name>
       <description/>
       <type>TRANS</type>
+      <attributes/>
       <specification_method>filename</specification_method>
       <trans_object_id/>
       <filename>${Internal.Job.Filename.Directory}/extract-vl-results.ktr</filename>
@@ -498,12 +508,14 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>112</xloc>
-      <yloc>160</yloc>
+      <yloc>192</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Add Obs UUID</name>
       <description/>
       <type>SQL</type>
+      <attributes/>
       <sql>update hivmigration_lab_results SET uuid = UUID();</sql>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>F</sqlfromfile>
@@ -514,12 +526,14 @@
       <draw>Y</draw>
       <nr>0</nr>
       <xloc>112</xloc>
-      <yloc>288</yloc>
+      <yloc>384</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Create insert_vl SP</name>
       <description/>
       <type>SQL</type>
+      <attributes/>
       <sql/>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>T</sqlfromfile>
@@ -529,13 +543,15 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>448</xloc>
-      <yloc>288</yloc>
+      <xloc>624</xloc>
+      <yloc>384</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Run insert_vl SP</name>
       <description/>
       <type>TRANS</type>
+      <attributes/>
       <specification_method>filename</specification_method>
       <trans_object_id/>
       <filename>${Internal.Job.Filename.Directory}/run-vl-insert.ktr</filename>
@@ -565,13 +581,15 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>640</xloc>
-      <yloc>288</yloc>
+      <xloc>848</xloc>
+      <yloc>384</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Drop insert_vl SP</name>
       <description/>
       <type>SQL</type>
+      <attributes/>
       <sql>drop procedure if exists insert_vl_results</sql>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>F</sqlfromfile>
@@ -581,13 +599,15 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>288</xloc>
-      <yloc>288</yloc>
+      <xloc>336</xloc>
+      <yloc>384</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Create CD4 construct</name>
       <description/>
       <type>SQL</type>
+      <attributes/>
       <sql/>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>T</sqlfromfile>
@@ -597,13 +617,15 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>640</xloc>
+      <xloc>816</xloc>
       <yloc>32</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Create Hematocrit construct</name>
       <description/>
       <type>SQL</type>
+      <attributes/>
       <sql/>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>T</sqlfromfile>
@@ -613,13 +635,15 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>832</xloc>
+      <xloc>1088</xloc>
       <yloc>32</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Create HIV VL construct</name>
       <description/>
       <type>SQL</type>
+      <attributes/>
       <sql/>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>T</sqlfromfile>
@@ -629,13 +653,15 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>832</xloc>
-      <yloc>160</yloc>
+      <xloc>1088</xloc>
+      <yloc>192</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Create PPD construct</name>
       <description/>
       <type>SQL</type>
+      <attributes/>
       <sql/>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>T</sqlfromfile>
@@ -645,13 +671,15 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>640</xloc>
-      <yloc>160</yloc>
+      <xloc>816</xloc>
+      <yloc>192</yloc>
+      <attributes_kjc/>
     </entry>
     <entry>
       <name>Create test-rapide construct</name>
       <description/>
       <type>SQL</type>
+      <attributes/>
       <sql/>
       <useVariableSubstitution>F</useVariableSubstitution>
       <sqlfromfile>T</sqlfromfile>
@@ -661,8 +689,9 @@
       <parallel>N</parallel>
       <draw>Y</draw>
       <nr>0</nr>
-      <xloc>448</xloc>
-      <yloc>160</yloc>
+      <xloc>576</xloc>
+      <yloc>192</yloc>
+      <attributes_kjc/>
     </entry>
   </entries>
   <hops>
@@ -786,4 +815,5 @@
   </hops>
   <notepads>
   </notepads>
+  <attributes/>
 </job>
