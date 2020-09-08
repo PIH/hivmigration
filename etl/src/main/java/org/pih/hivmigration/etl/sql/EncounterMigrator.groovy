@@ -14,6 +14,7 @@ class EncounterMigrator extends SqlMigrator {
               source_encounter_type varchar(100),
               location_id int,
               source_location_id int,
+              form_id int,
               creator int,
               encounter_uuid char(38),
               encounter_date date,
@@ -75,6 +76,19 @@ class EncounterMigrator extends SqlMigrator {
         ''')
         // TODO: Handle source_encounter_type "anlap_vital_signs", "patient_contact", "food_study", "regime", "note", "accompagnateur" (https://pihemr.atlassian.net/browse/UHM-3244)
 
+        executeMysql("Fill form id column", '''
+            SET @form_intake = (select form_id from form where uuid = '3a0a04ae-4184-11e7-a919-92ebcb67fe33');
+            SET @form_followup = (select form_id from form where uuid = '3959f67c-b83a-11e7-abc4-cec278b6b50a');
+            SET @form_lab_results = (select form_id from form where uuid = '4d778ef4-0620-11e5-a6c0-1697f925ec7b');
+            
+            UPDATE hivmigration_encounters SET form_id = CASE
+                WHEN source_encounter_type = "intake" THEN @form_intake
+                WHEN source_encounter_type = "followup" THEN @form_followup
+                WHEN source_encounter_type = "lab_result" THEN @form_lab_results
+                WHEN source_encounter_type = "anlap_lab_result" THEN @form_lab_results
+                END
+        ''')
+
         executeMysql('Set encounter locations',
             '''
             update hivmigration_encounters e, hivmigration_health_center hc
@@ -83,13 +97,14 @@ class EncounterMigrator extends SqlMigrator {
             ''')
 
         executeMysql("Load encounter table from staging table", '''
-            insert into encounter (encounter_id, uuid, encounter_datetime, date_created, encounter_type, patient_id, creator, location_id)
+            insert into encounter (encounter_id, uuid, encounter_datetime, date_created, encounter_type, form_id, patient_id, creator, location_id)
             select 
                 e.encounter_id,
                 e.encounter_uuid,
                 e.encounter_date,
                 e.date_created,
                 e.encounter_type_id,
+                e.form_id,
                 p.person_id,
                 COALESCE(hu.user_id, 1),
                 COALESCE(e.location_id, 1)
