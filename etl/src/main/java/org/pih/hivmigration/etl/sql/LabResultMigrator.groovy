@@ -160,6 +160,8 @@ class LabResultMigrator extends SqlMigrator {
                      JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
             WHERE r.vl_detectable_lower_limit IS NOT NULL AND r.test_type ='viral_load';
             
+            -- TODO: Figure out what "Detectable lower limit" is
+            
             
             -- CD4 Count
             --
