@@ -23,7 +23,7 @@ class VisitMigrator extends SqlMigrator {
                     WHERE  FIND_IN_SET(encounter_type, @encounter_type_exclusions) = 0
                     GROUP  BY patient_id,
                               Date(encounter_datetime)
-                              -- TODO: Group by location as well 
+                              -- TODO: Group by location as well? see: https://pihemr.atlassian.net/browse/UHM-4834
                 ) AS e;
             
             -- Add visit IDs to their encounters
