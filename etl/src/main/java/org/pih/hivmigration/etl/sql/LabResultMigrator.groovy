@@ -18,6 +18,8 @@ class LabResultMigrator extends SqlMigrator {
               value_boolean BOOLEAN,
               vl_beyond_detectable_limit BOOLEAN,
               vl_detectable_lower_limit DOUBLE,
+              tmp_vl_beyond_detectable_limit_concept int,
+              tmp_rapid_test_value int,
               uuid char(38),
               KEY `source_encounter_id_idx` (`source_encounter_id`)
             );
@@ -63,17 +65,20 @@ class LabResultMigrator extends SqlMigrator {
         executeMysql("Add UUIDs", "UPDATE hivmigration_lab_results SET uuid = uuid();")
 
         executeMysql("Create stored procedure to add obs", '''
+            DROP PROCEDURE IF EXISTS create_obs;
             DELIMITER $$ ;
-            CREATE PROCEDURE create_obs (IN concept_uuid CHAR(38), IN test_type VARCHAR(100), IN input_column VARCHAR(100), IN output_column VARCHAR(100))
+            CREATE PROCEDURE create_obs (IN concept_uuid CHAR(38), IN test_type VARCHAR(100), IN input_column VARCHAR(100), IN output_column VARCHAR(100), IN group_column VARCHAR(100))
             BEGIN
                 SET @s = CONCAT(
-                    'INSERT INTO obs(`', output_column, '`, person_id, concept_id, ',
+                    'INSERT INTO obs(`', output_column, '`, ', IF(group_column IS NULL, '', 'obs_group_id, '),
+                    '   person_id, concept_id, ',
                     '   encounter_id, obs_datetime, location_id, creator, date_created, voided, uuid) ',
-                    'SELECT r.`', input_column, '`, p.person_id, (SELECT concept_id FROM concept WHERE uuid=', QUOTE(concept_uuid), '), ',
+                    'SELECT r.`', input_column, '`, ', IF(group_column IS NULL, '', CONCAT('r.`', group_column, '`, ')),
+                    '   p.person_id, (SELECT concept_id FROM concept WHERE uuid=', QUOTE(concept_uuid), '), ',
                     '   e.encounter_id, r.obs_datetime, e.location_id, 1, now(), 0, uuid() ',
                     'FROM hivmigration_lab_results r ',
                     '     JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id ',
-                    '     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id \'
+                    '     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id ',
                     'WHERE r.`', input_column, '` IS NOT NULL AND r.test_type = ', QUOTE(test_type));
                 PREPARE stmt FROM @s;
                 EXECUTE stmt;
@@ -82,11 +87,12 @@ class LabResultMigrator extends SqlMigrator {
             DELIMITER ;
         ''')
 
-        // executeMysql("Load lab results as observations",
+        executeMysql("Load lab results as observations",
         '''
             -- Viral load
             --
             
+            -- Create construct
             SET @hiv_vl_construct = (SELECT concept_id FROM concept WHERE uuid='11765b8c-a338-48a4-9480-df898c903723');
             INSERT INTO obs(obs_id, person_id, concept_id, encounter_id, obs_datetime, location_id, creator, date_created, voided, uuid)
             SELECT r.obs_id, p.person_id, @hiv_vl_construct, e.encounter_id, r.obs_datetime, e.location_id, 1, now(), 0, r.uuid
@@ -95,99 +101,43 @@ class LabResultMigrator extends SqlMigrator {
                      JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
             WHERE r.test_type = 'viral_load';
             
-            SET @specimen_number = (SELECT concept_id FROM concept WHERE uuid='162086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-            INSERT INTO obs(person_id, concept_id, encounter_id, obs_datetime, location_id, obs_group_id, value_text, creator, date_created, voided, uuid)
-            SELECT p.person_id, @specimen_number, e.encounter_id, r.obs_datetime, e.location_id, r.obs_id, r.sample_id, 1, now(), 0, uuid()
-            FROM hivmigration_lab_results r
-                     JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id
-                     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
-            WHERE r.test_type = 'viral_load';
+            -- Specimen number
+            CALL create_obs('162086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'viral_load', 'sample_id', 'value_text', 'obs_id');
             
-            SET @hvl_value = (SELECT concept_id FROM concept WHERE uuid='3cd4a882-26fe-102b-80cb-0017a47871b2');
-            INSERT INTO obs(person_id, concept_id, encounter_id, obs_datetime, location_id, obs_group_id, value_numeric, creator, date_created, voided, uuid)
-            SELECT p.person_id, @hvl_value, e.encounter_id, r.obs_datetime, e.location_id, r.obs_id, r.value_numeric, 1, now(), 0, uuid()
-            FROM hivmigration_lab_results r
-                     JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id
-                     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
-            WHERE r.value_numeric IS NOT NULL AND r.test_type ='viral_load';
+            -- HVL Value
+            CALL create_obs('3cd4a882-26fe-102b-80cb-0017a47871b2', 'viral_load', 'value_numeric', 'value_numeric', 'obs_id'); 
             
-            SET @hvl_qualitative = (SELECT concept_id FROM concept WHERE uuid='1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-            SET @not_detected = (SELECT concept_id FROM concept WHERE uuid='1302AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-            INSERT INTO obs(person_id, concept_id, encounter_id, obs_datetime, location_id, obs_group_id, value_coded, creator, date_created, voided, uuid)
-            SELECT p.person_id, @hvl_qualitative, e.encounter_id, r.obs_datetime, e.location_id, r.obs_id, @not_detected, 1, now(), 0, uuid()
-            FROM hivmigration_lab_results r
-                     JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id
-                     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
-            WHERE r.vl_beyond_detectable_limit = 1 AND r.test_type ='viral_load';
+            -- Detectable
+            UPDATE hivmigration_lab_results
+            SET tmp_vl_beyond_detectable_limit_concept = (SELECT concept_id FROM concept WHERE uuid='1302AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+            WHERE vl_beyond_detectable_limit = 1;
+            CALL create_obs('1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'viral_load', 'tmp_vl_beyond_detectable_limit_concept', 'value_coded', 'obs_id');
             
-            SET @detectable_lower_limit = (SELECT concept_id FROM concept WHERE uuid='53cb83ed-5d55-4b63-922f-d6b8fc67a5f8');
-            INSERT INTO obs(person_id, concept_id, encounter_id, obs_datetime, location_id, obs_group_id, value_numeric, creator, date_created, voided, uuid)
-            SELECT p.person_id, @detectable_lower_limit, e.encounter_id, r.obs_datetime, e.location_id, r.obs_id, r.vl_detectable_lower_limit, 1, now(), 0, uuid()
-            FROM hivmigration_lab_results r
-                     JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id
-                     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
-            WHERE r.vl_detectable_lower_limit IS NOT NULL AND r.test_type ='viral_load';
+            -- Detectable lower limit
+            CALL create_obs('53cb83ed-5d55-4b63-922f-d6b8fc67a5f8', 'viral_load', 'vl_detectable_lower_limit', 'value_numeric', 'obs_id');
             
             
             -- CD4 Count
             --
-            
-            SET @cd4_value = (SELECT concept_id FROM concept WHERE uuid='3ceda710-26fe-102b-80cb-0017a47871b2');
-            INSERT INTO obs(person_id, concept_id, encounter_id, obs_datetime, location_id, value_numeric, creator, date_created, voided, uuid)
-            SELECT p.person_id, @cd4_value, e.encounter_id, r.obs_datetime, e.location_id, r.value_numeric, 1, now(), 0, uuid()
-            FROM hivmigration_lab_results r
-                     JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id
-                     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
-            WHERE r.value_numeric IS NOT NULL AND r.test_type ='cd4';
-            
+            CALL create_obs('3ceda710-26fe-102b-80cb-0017a47871b2', 'cd4', 'value_numeric', 'value_numeric', NULL);
             
             -- Hematocrit
             --
-            
-            SET @hematocrit_value = (SELECT concept_id FROM concept WHERE uuid='3cd69a98-26fe-102b-80cb-0017a47871b2');
-            INSERT INTO obs(person_id, concept_id, encounter_id, obs_datetime, location_id, value_numeric, creator, date_created, voided, uuid)
-            SELECT p.person_id, @hematocrit_value, e.encounter_id, r.obs_datetime, e.location_id, r.value_numeric,1, now(), 0, uuid()
-            FROM hivmigration_lab_results r
-                     JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id
-                     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
-            WHERE r.value_numeric IS NOT NULL AND r.test_type ='hematocrit';
-            
+            CALL create_obs('3cd69a98-26fe-102b-80cb-0017a47871b2', 'hematocrit', 'value_numeric', 'value_numeric', NULL);
             
             -- PPD
             --
-            
-            SET @ppd_value = (SELECT concept_id FROM concept WHERE uuid='3cecf388-26fe-102b-80cb-0017a47871b2');
-            INSERT INTO obs(person_id, concept_id, encounter_id, obs_datetime, location_id, value_numeric, creator, date_created, voided, uuid)
-            SELECT p.person_id, @ppd_value, e.encounter_id, r.obs_datetime, e.location_id, r.value_numeric,1, now(), 0, uuid()
-            FROM hivmigration_lab_results r
-                     JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id
-                     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
-            WHERE r.value_numeric IS NOT NULL AND r.test_type ='ppd';
-            
+            CALL create_obs('3cecf388-26fe-102b-80cb-0017a47871b2', 'ppd', 'value_numeric', 'value_numeric', NULL);            
             
             -- Rapid Test
             --
-            
-            SET @test_rapid_value = (SELECT concept_id FROM concept WHERE uuid='3cd6c946-26fe-102b-80cb-0017a47871b2');
             SET @positive = (SELECT concept_id FROM concept WHERE uuid='3cd3a7a2-26fe-102b-80cb-0017a47871b2');
             SET @negative = (SELECT concept_id FROM concept WHERE uuid='3cd28732-26fe-102b-80cb-0017a47871b2');
-            INSERT INTO obs(person_id, concept_id, encounter_id, obs_datetime, location_id, value_coded, creator, date_created, voided, uuid)
-            SELECT p.person_id,
-                   @test_rapid_value,
-                   e.encounter_id,
-                   r.obs_datetime,
-                   e.location_id,
-                   IF(r.value_boolean=1, @positive, @negative),
-                   1,
-                   now(),
-                   0,
-                   uuid()
-            FROM hivmigration_lab_results r
-                JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id
-                JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
-            WHERE r.test_type ='tr';
-        '''
-        //)
+            UPDATE hivmigration_lab_results
+            SET tmp_rapid_test_value = IF(value_boolean=1, @positive, @negative)
+            WHERE test_type ='tr';
+            CALL create_obs('3cd6c946-26fe-102b-80cb-0017a47871b2', 'tr', 'tmp_rapid_test_value', 'value_coded', NULL);
+        ''')
     }
 
     @Override
