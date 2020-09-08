@@ -32,16 +32,23 @@ public class Migrator {
     @Parameter(names={"--de-identify", "-d"}, description="De-identify patient names.")
     private boolean deIdentify = false;
 
+    @Parameter(names={"--help", "-h"}, help = true)
+    private boolean help = false;
+
     /**
      * Run the application
      */
 	public static void main(String[] args) {
         log.info("Starting up HIV Migrator");
         Migrator migrator = new Migrator();
-        JCommander.newBuilder()
+        JCommander jc = JCommander.newBuilder()
                 .addObject(migrator)
-                .build()
-                .parse(args);
+                .build();
+        jc.parse(args);
+        if (migrator.help) {
+            jc.usage();
+            System.exit(0);
+        }
         migrator.main();
     }
 
