@@ -148,40 +148,34 @@ class LabResultMigrator extends SqlMigrator {
             INSERT INTO tmp_obs (value_numeric, source_patient_id, source_encounter_id, concept_uuid)
             SELECT value_numeric, source_patient_id, source_encounter_id, '3ceda710-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_lab_results
-            WHERE test_type = 'cd4'
-            
-            -- etc. for the others
-            
-            CALL migrate_tmp_obs();
-
-
-
-
-
-
-            
-            -- the below has not been updated yet
-            
-            -- HVL Value
-            
- 
+            WHERE test_type = 'cd4';
             
             -- Hematocrit
             --
-            CALL create_obs('3cd69a98-26fe-102b-80cb-0017a47871b2', 'hematocrit', 'value_numeric', 'value_numeric', NULL);
-            
+            INSERT INTO tmp_obs (value_numeric, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT value_numeric, source_patient_id, source_encounter_id, '3cd69a98-26fe-102b-80cb-0017a47871b2'
+            FROM hivmigration_lab_results
+            WHERE test_type = 'hematocrit';
+                        
             -- PPD
             --
-            CALL create_obs('3cecf388-26fe-102b-80cb-0017a47871b2', 'ppd', 'value_numeric', 'value_numeric', NULL);            
-            
+            INSERT INTO tmp_obs (value_numeric, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT value_numeric, source_patient_id, source_encounter_id, '3cecf388-26fe-102b-80cb-0017a47871b2'
+            FROM hivmigration_lab_results
+            WHERE test_type = 'ppd';
+
             -- Rapid Test
             --
-            SET @positive = (SELECT concept_id FROM concept WHERE uuid='3cd3a7a2-26fe-102b-80cb-0017a47871b2');
-            SET @negative = (SELECT concept_id FROM concept WHERE uuid='3cd28732-26fe-102b-80cb-0017a47871b2');
-            UPDATE hivmigration_lab_results
-            SET tmp_rapid_test_value = IF(value_boolean=1, @positive, @negative)
-            WHERE test_type ='tr';
-            CALL create_obs('3cd6c946-26fe-102b-80cb-0017a47871b2', 'tr', 'tmp_rapid_test_value', 'value_coded', NULL);
+            INSERT INTO tmp_obs (value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT
+                IF(value_boolean=1, '3cd3a7a2-26fe-102b-80cb-0017a47871b2', '3cd28732-26fe-102b-80cb-0017a47871b2'),
+                source_patient_id,
+                source_encounter_id,
+                '3cd6c946-26fe-102b-80cb-0017a47871b2'
+            FROM hivmigration_lab_results
+            WHERE test_type = 'tr';
+            
+            CALL migrate_tmp_obs();
         ''')
     }
 
