@@ -64,45 +64,78 @@ class LabResultMigrator extends SqlMigrator {
 
         executeMysql("Add UUIDs", "UPDATE hivmigration_lab_results SET uuid = uuid();")
 
-        executeMysql("Create stored procedure to add obs", '''
-            DROP PROCEDURE IF EXISTS create_obs;
+        executeMysql("Create stored procedures to add obs", '''
+            DROP PROCEDURE IF EXISTS create_tmp_obs_table;
+            DROP PROCEDURE IF EXISTS migrate_tmp_obs;
             DELIMITER $$ ;
-            CREATE PROCEDURE create_obs (IN concept_uuid CHAR(38), IN test_type VARCHAR(100), IN input_column VARCHAR(100), IN output_column VARCHAR(100), IN group_column VARCHAR(100))
+            CREATE PROCEDURE create_tmp_obs_table()
             BEGIN
-                SET @s = CONCAT(
-                    'INSERT INTO obs(`', output_column, '`, ', IF(group_column IS NULL, '', 'obs_group_id, '),
-                    '   person_id, concept_id, ',
-                    '   encounter_id, obs_datetime, location_id, creator, date_created, voided, uuid) ',
-                    'SELECT r.`', input_column, '`, ', IF(group_column IS NULL, '', CONCAT('r.`', group_column, '`, ')),
-                    '   p.person_id, (SELECT concept_id FROM concept WHERE uuid=', QUOTE(concept_uuid), '), ',
-                    '   e.encounter_id, r.obs_datetime, e.location_id, 1, now(), 0, uuid() ',
-                    'FROM hivmigration_lab_results r ',
-                    '     JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id ',
-                    '     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id ',
-                    'WHERE r.`', input_column, '` IS NOT NULL AND r.test_type = ', QUOTE(test_type));
-                PREPARE stmt FROM @s;
-                EXECUTE stmt;
-                DEALLOCATE PREPARE stmt;
+                DROP TABLE IF EXISTS tmp_obs;
+                CREATE TABLE tmp_obs (
+                    obs_id INT PRIMARY KEY AUTO_INCREMENT,
+                    obs_group_id INT,
+                    source_patient_id INT,
+                    source_encounter_id INT,
+                    concept_uuid CHAR(38),
+                    value_coded_uuid CHAR(38),
+                    value_datetime DATETIME,
+                    value_numeric DOUBLE,
+                    value_text TEXT
+                );
+            END $$
+            CREATE PROCEDURE migrate_tmp_obs()
+            BEGIN
+                INSERT INTO obs (
+                    obs_id, person_id, encounter_id, obs_group_id, obs_datetime, location_id, concept_id,
+                    value_coded, value_numeric, value_datetime, value_text, creator, date_created, voided, uuid
+                )
+                SELECT
+                    o.obs_id, p.person_id, e.encounter_id, o.obs_group_id, e.encounter_date, e.location_id, q.concept_id,
+                    a.concept_id, o.value_numeric, o.value_datetime, o.value_text, 1, e.date_created, 0, uuid()
+                FROM tmp_obs o
+                    JOIN 	    hivmigration_patients p ON o.source_patient_id = p.source_patient_id
+                    JOIN 	    hivmigration_encounters e ON o.source_encounter_id = e.source_encounter_id
+                    LEFT JOIN 	concept q ON q.uuid = o.concept_uuid
+                    LEFT JOIN 	concept a ON a.uuid = o.value_coded_uuid;
             END $$
             DELIMITER ;
         ''')
 
         executeMysql("Load lab results as observations",
         '''
+            CALL create_tmp_obs_table();
+
             -- Viral load
             --
             
             -- Create construct
-            SET @hiv_vl_construct = (SELECT concept_id FROM concept WHERE uuid='11765b8c-a338-48a4-9480-df898c903723');
-            INSERT INTO obs(obs_id, person_id, concept_id, encounter_id, obs_datetime, location_id, creator, date_created, voided, uuid)
-            SELECT r.obs_id, p.person_id, @hiv_vl_construct, e.encounter_id, r.obs_datetime, e.location_id, 1, now(), 0, r.uuid
-            FROM hivmigration_lab_results r
-                     JOIN hivmigration_patients p ON r.source_patient_id = p.source_patient_id
-                     JOIN hivmigration_encounters e ON r.source_encounter_id = e.source_encounter_id
-            WHERE r.test_type = 'viral_load';
+            INSERT INTO tmp_obs (obs_id, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT obs_id, source_patient_id, source_encounter_id, '11765b8c-a338-48a4-9480-df898c903723'
+            FROM hivmigration_lab_results
+            WHERE test_type = 'viral_load';            
             
             -- Specimen number
-            CALL create_obs('162086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'viral_load', 'sample_id', 'value_text', 'obs_id');
+            INSERT INTO tmp_obs
+                (obs_group_id, value_text, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT obs_id, sample_id, source_patient_id, source_encounter_id, '162086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+            FROM hivmigration_lab_results
+            WHERE test_type = 'viral_load';
+            
+            -- etc. for viral load
+            
+            INSERT INTO tmp_obs (value_numeric, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT value_numeric, source_patient_id, source_encounter_id, '3ceda710-26fe-102b-80cb-0017a47871b2'
+            FROM hivmigration_lab_results
+            WHERE test_type = 'cd4'
+            
+            
+            CALL migrate_tmp_obs();
+
+
+
+
+            
+            -- the below has not been updated yet
             
             -- HVL Value
             CALL create_obs('3cd4a882-26fe-102b-80cb-0017a47871b2', 'viral_load', 'value_numeric', 'value_numeric', 'obs_id'); 
