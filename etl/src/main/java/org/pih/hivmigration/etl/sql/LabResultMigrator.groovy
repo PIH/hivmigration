@@ -18,9 +18,6 @@ class LabResultMigrator extends SqlMigrator {
               value_boolean BOOLEAN,
               vl_beyond_detectable_limit BOOLEAN,
               vl_detectable_lower_limit DOUBLE,
-              tmp_vl_beyond_detectable_limit_concept int,
-              tmp_rapid_test_value int,
-              uuid char(38),
               KEY `source_encounter_id_idx` (`source_encounter_id`)
             );
         ''')
@@ -61,8 +58,6 @@ class LabResultMigrator extends SqlMigrator {
             and      r.lab_test_id = t.lab_test_id  
             order by d.patient_id desc, e.encounter_id desc
         ''')
-
-        executeMysql("Add UUIDs", "UPDATE hivmigration_lab_results SET uuid = uuid();")
 
         executeMysql("Create stored procedures to add obs", '''
             DROP PROCEDURE IF EXISTS create_tmp_obs_table;
