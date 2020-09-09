@@ -74,6 +74,7 @@ public class Migrator {
                     revert(clsInstance);
                 }
                 if (!shouldRevertOnly) {
+                    migrate(new ProcedureSetup(), -1);
                     migrate(clsInstance, limit);
                 }
             } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -84,6 +85,7 @@ public class Migrator {
             }
         } else {
             if (shouldRevert || shouldRevertOnly) {
+                revert(new LabResultMigrator());
                 revert(new VisitMigrator());
                 revert(new EncounterMigrator());
                 revert(new ProviderMigrator());
@@ -94,6 +96,7 @@ public class Migrator {
                 revert(new UserMigrator());
             }
             if (!shouldRevertOnly) {
+                migrate(new ProcedureSetup(), -1);
                 migrate(new UserMigrator(), -1);
                 migrate(new PatientMigrator(), limit);
                 migrate(new InfantMigrator(), limit);
@@ -102,11 +105,10 @@ public class Migrator {
                 migrate(new ProviderMigrator(), limit);
                 migrate(new EncounterMigrator(), limit);
                 migrate(new VisitMigrator(), limit);
-
-                if (deIdentify == true) {
+                migrate(new LabResultMigrator(), limit);
+                if (deIdentify) {
                     migrate(new DeIdentifyMigrator(), -1);
                 }
-
             }
         }
     }
