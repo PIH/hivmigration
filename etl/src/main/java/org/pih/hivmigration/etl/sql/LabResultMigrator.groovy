@@ -48,10 +48,10 @@ class LabResultMigrator extends SqlMigrator {
                      to_char(e.encounter_date, 'yyyy-mm-dd') as obs_datetime,
                      value as value_numeric, 
                      value_string as value_text,   
-                     case when (value_p='t') then ( 1) 	
+                     case when (value_p='t') then ( 1)     
                         else 0
                         end as value_boolean,                
-                     case when (r.RESULT_UNDETECTABLE='t') then ( 1) 	
+                     case when (r.RESULT_UNDETECTABLE='t') then ( 1)     
                         else 0
                         end as vl_beyond_detectable_limit,                  
                      r.RESULT_UNDETECTABLE_RANGE as vl_detectable_lower_limit
@@ -93,10 +93,10 @@ class LabResultMigrator extends SqlMigrator {
                     o.obs_id, p.person_id, e.encounter_id, o.obs_group_id, e.encounter_date, e.location_id, q.concept_id,
                     a.concept_id, o.value_numeric, o.value_datetime, o.value_text, 1, e.date_created, 0, uuid()
                 FROM tmp_obs o
-                    JOIN 	    hivmigration_patients p ON o.source_patient_id = p.source_patient_id
-                    JOIN 	    hivmigration_encounters e ON o.source_encounter_id = e.source_encounter_id
-                    LEFT JOIN 	concept q ON q.uuid = o.concept_uuid
-                    LEFT JOIN 	concept a ON a.uuid = o.value_coded_uuid;
+                    JOIN       hivmigration_patients p ON o.source_patient_id = p.source_patient_id
+                    JOIN       hivmigration_encounters e ON o.source_encounter_id = e.source_encounter_id
+                    LEFT JOIN  concept q ON q.uuid = o.concept_uuid
+                    LEFT JOIN  concept a ON a.uuid = o.value_coded_uuid;
             END $$
             DELIMITER ;
         ''')
