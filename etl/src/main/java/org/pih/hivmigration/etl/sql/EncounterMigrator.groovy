@@ -66,26 +66,30 @@ class EncounterMigrator extends SqlMigrator {
             SET @encounter_type_intake = (select encounter_type_id from encounter_type where uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33');
             SET @encounter_type_followup = (select encounter_type_id from encounter_type where uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33');
             SET @encounter_type_lab_results = (select encounter_type_id from encounter_type where uuid = '4d77916a-0620-11e5-a6c0-1697f925ec7b');
+            SET @encounter_type_drug_dispensing = (select encounter_type_id from encounter_type where uuid = 'cc1720c9-3e4c-4fa8-a7ec-40eeaad1958c');
             
             UPDATE hivmigration_encounters SET encounter_type_id = CASE
                 WHEN source_encounter_type = "intake" THEN @encounter_type_intake
                 WHEN source_encounter_type = "followup" THEN @encounter_type_followup
                 WHEN source_encounter_type = "lab_result" THEN @encounter_type_lab_results
                 WHEN source_encounter_type = "anlap_lab_result" THEN @encounter_type_lab_results
+                WHEN source_encounter_type = "accompagnateur" THEN @encounter_type_drug_dispensing
                 END
         ''')
-        // TODO: Handle source_encounter_type "anlap_vital_signs", "patient_contact", "food_study", "regime", "note", "accompagnateur" (https://pihemr.atlassian.net/browse/UHM-3244)
+        // TODO: Handle source_encounter_type "anlap_vital_signs", "patient_contact", "food_study", "regime", "note" (https://pihemr.atlassian.net/browse/UHM-3244)
 
         executeMysql("Fill form id column", '''
             SET @form_intake = (select form_id from form where uuid = '3a0a04ae-4184-11e7-a919-92ebcb67fe33');
             SET @form_followup = (select form_id from form where uuid = '3959f67c-b83a-11e7-abc4-cec278b6b50a');
             SET @form_lab_results = (select form_id from form where uuid = '4d778ef4-0620-11e5-a6c0-1697f925ec7b');
+            SET @form_hiv_dispensing = (select form_id from form where uuid = 'c3af594f-fd77-44b2-b3a0-44d4f3c7cc3a');
             
             UPDATE hivmigration_encounters SET form_id = CASE
                 WHEN source_encounter_type = "intake" THEN @form_intake
                 WHEN source_encounter_type = "followup" THEN @form_followup
                 WHEN source_encounter_type = "lab_result" THEN @form_lab_results
                 WHEN source_encounter_type = "anlap_lab_result" THEN @form_lab_results
+                WHEN source_encounter_type = "accompagnateur" THEN @form_hiv_dispensing
                 END
         ''')
 
