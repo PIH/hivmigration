@@ -123,11 +123,14 @@ class LabResultMigrator extends SqlMigrator {
             
             -- etc. for viral load
             
+            -- CD4
+            --
             INSERT INTO tmp_obs (value_numeric, source_patient_id, source_encounter_id, concept_uuid)
             SELECT value_numeric, source_patient_id, source_encounter_id, '3ceda710-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_lab_results
             WHERE test_type = 'cd4'
             
+            -- etc. for the others
             
             CALL migrate_tmp_obs();
 
