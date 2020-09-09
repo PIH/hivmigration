@@ -112,17 +112,37 @@ class LabResultMigrator extends SqlMigrator {
             INSERT INTO tmp_obs (obs_id, source_patient_id, source_encounter_id, concept_uuid)
             SELECT obs_id, source_patient_id, source_encounter_id, '11765b8c-a338-48a4-9480-df898c903723'
             FROM hivmigration_lab_results
-            WHERE test_type = 'viral_load';            
+            WHERE test_type = 'viral_load';
             
             -- Specimen number
             INSERT INTO tmp_obs
                 (obs_group_id, value_text, source_patient_id, source_encounter_id, concept_uuid)
             SELECT obs_id, sample_id, source_patient_id, source_encounter_id, '162086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
             FROM hivmigration_lab_results
-            WHERE test_type = 'viral_load';
+            WHERE test_type = 'viral_load' AND sample_id IS NOT NULL;
+
+            -- HVL Value
+            INSERT INTO tmp_obs
+                (obs_group_id, value_text, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT obs_id, value_numeric, source_patient_id, source_encounter_id, '3cd4a882-26fe-102b-80cb-0017a47871b2'
+            FROM hivmigration_lab_results
+            WHERE test_type = 'viral_load' AND value_numeric IS NOT NULL;
             
-            -- etc. for viral load
+            -- Detectable
+            INSERT INTO tmp_obs
+                (obs_group_id, value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT obs_id, '1302AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', source_patient_id, source_encounter_id, '1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+            FROM hivmigration_lab_results
+            WHERE test_type = 'viral_load' AND vl_beyond_detectable_limit = 1; 
             
+            -- Detectable lower limit
+            INSERT INTO tmp_obs
+                (obs_group_id, value_numeric, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT obs_id, vl_detectable_lower_limit, source_patient_id, source_encounter_id, '53cb83ed-5d55-4b63-922f-d6b8fc67a5f8'
+            FROM hivmigration_lab_results
+            WHERE test_type = 'viral_load' AND vl_detectable_lower_limit IS NOT NULL;
+            
+                       
             -- CD4
             --
             INSERT INTO tmp_obs (value_numeric, source_patient_id, source_encounter_id, concept_uuid)
@@ -137,25 +157,14 @@ class LabResultMigrator extends SqlMigrator {
 
 
 
+
+
             
             -- the below has not been updated yet
             
             -- HVL Value
-            CALL create_obs('3cd4a882-26fe-102b-80cb-0017a47871b2', 'viral_load', 'value_numeric', 'value_numeric', 'obs_id'); 
             
-            -- Detectable
-            UPDATE hivmigration_lab_results
-            SET tmp_vl_beyond_detectable_limit_concept = (SELECT concept_id FROM concept WHERE uuid='1302AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-            WHERE vl_beyond_detectable_limit = 1;
-            CALL create_obs('1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'viral_load', 'tmp_vl_beyond_detectable_limit_concept', 'value_coded', 'obs_id');
-            
-            -- Detectable lower limit
-            CALL create_obs('53cb83ed-5d55-4b63-922f-d6b8fc67a5f8', 'viral_load', 'vl_detectable_lower_limit', 'value_numeric', 'obs_id');
-            
-            
-            -- CD4 Count
-            --
-            CALL create_obs('3ceda710-26fe-102b-80cb-0017a47871b2', 'cd4', 'value_numeric', 'value_numeric', NULL);
+ 
             
             -- Hematocrit
             --
