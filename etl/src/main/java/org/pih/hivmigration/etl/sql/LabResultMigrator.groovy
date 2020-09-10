@@ -139,7 +139,7 @@ class LabResultMigrator extends SqlMigrator {
 
     @Override
     def void revert() {
-        executeMysql("drop table hivmigration_lab_results")
+        executeMysql("drop table if exists hivmigration_lab_results")
         clearTable("obs")
     }
 }
