@@ -25,6 +25,7 @@ class ProcedureSetup extends SqlMigrator {
             END $$
             CREATE PROCEDURE migrate_tmp_obs()
             BEGIN
+                SET FOREIGN_KEY_CHECKS=0;
                 INSERT INTO obs (
                     obs_id, person_id, encounter_id, obs_group_id, obs_datetime, location_id, concept_id,
                     value_coded, value_numeric, value_datetime, value_text, creator, date_created, voided, uuid
@@ -37,6 +38,7 @@ class ProcedureSetup extends SqlMigrator {
                     JOIN       hivmigration_encounters e ON o.source_encounter_id = e.source_encounter_id
                     LEFT JOIN  concept q ON q.uuid = o.concept_uuid
                     LEFT JOIN  concept a ON a.uuid = o.value_coded_uuid;
+                SET FOREIGN_KEY_CHECKS=0;    
             END $$
             DELIMITER ;
         ''')

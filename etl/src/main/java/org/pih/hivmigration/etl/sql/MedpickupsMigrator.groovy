@@ -6,25 +6,23 @@ class MedpickupsMigrator extends SqlMigrator{
     @Override
     def void migrate() {
         executeMysql("Create staging table", '''
-            create table hivmigration_dispensing (
-              obs_id int PRIMARY KEY AUTO_INCREMENT,
-              source_encounter_id int,
+            create table hivmigration_dispensing (              
+              source_encounter_id int PRIMARY KEY,
               source_patient_id int,              
               dispensed_to VARCHAR(20), -- accompagnateur, patient
               accompagnateur_name VARCHAR(100),
               dac BOOLEAN, -- dispensed in community
               months_dispensed int,
               next_dispense_date date,
-              art_treatment_line VARCHAR(16), -- first_line, second_line, third_line,
-              KEY `source_encounter_id_idx` (`source_encounter_id`)
+              art_treatment_line VARCHAR(16) -- first_line, second_line, third_line
             );
         ''')
-        setAutoIncrement("hivmigration_dispensing", "(select max(obs_id)+1 from obs)")
 
         executeMysql("Create staging table", '''
             create table hivmigration_dispensing_meds (
               obs_id int PRIMARY KEY AUTO_INCREMENT,
               source_encounter_id int,
+              source_patient_id int, 
               source_medication_category VARCHAR(16), -- arv_1, arv_2, inh_1, tms_1             
               source_product_name VARCHAR(100), -- HIV_PRODUCTS.COMBINATION_DETAILS              
               quantity int
@@ -57,36 +55,41 @@ class MedpickupsMigrator extends SqlMigrator{
                     d.art_treatment_line as art_treatment_line
             from hiv_dispensing d, hiv_encounters e 
             where d.encounter_id = e.encounter_id 
+            order by d.encounter_id 
         ''')
+
+        setAutoIncrement("hivmigration_dispensing_meds", "(select max(obs_id)+1 from obs)")
 
         loadFromOracleToMySql('''
             insert into hivmigration_dispensing_meds
                 (source_encounter_id,
+                 source_patient_id,
                  source_medication_category,
                  source_product_name,
                  quantity)
-            values (?, ?, ?, ?)
+            values (?, ?, ?, ?, ?)
         ''', '''
-            select  m.encounter_id as source_encounter_id,       
+            select  m.encounter_id as source_encounter_id,     
+                    e.patient_id as source_patient_id,  
                     m.med_reference as source_medication_category,       
                     p.combination_details as source_product_name,
                     m.quantity as quantity
-            from hiv_dispensing_meds m, hiv_products p 
-            where m.product_id = p.product_id 
+            from hiv_dispensing_meds m, hiv_encounters e, hiv_products p 
+            where m.encounter_id=e.encounter_id and m.product_id = p.product_id 
          ''')
 
         executeMysql("Create tmp_obs_table", ''' 
             CALL create_tmp_obs_table();
             ''')
 
-        setAutoIncrement("tmp_obs", "(select max(obs_id)+1 from hivmigration_dispensing)")
+        setAutoIncrement("tmp_obs", "(select max(obs_id)+1 from hivmigration_dispensing_meds)")
 
-        executeMysql("Load lab results as observations", ''' 
+        executeMysql("Load meds dispensing as observations", ''' 
                 
             SET @person_at_visit_concept_uuid = 'd0d91980-6788-4325-80d3-3bd7b54e705a';
             SET @patient_at_visit_concept_uuid = '1249F550-FF24-4F3E-A743-B37232E9E1C3';
             SET @chw_at_visit_concept_uuid = 'bf997029-a496-41a2-a7e7-7981e82d2dd0';
-                        
+                                               
             -- Person at visit: accompagnateur(CHW) or patient
              INSERT INTO tmp_obs (value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
              SELECT IF(dispensed_to='patient', @patient_at_visit_concept_uuid, @chw_at_visit_concept_uuid), 
@@ -145,7 +148,36 @@ class MedpickupsMigrator extends SqlMigrator{
              SELECT next_dispense_date, source_patient_id, source_encounter_id, @next_dispense_date
              FROM hivmigration_dispensing
              WHERE next_dispense_date is not null;
+                        
+            -- Create Dispensing Construct
+            SET @dispensing_construct_uuid = 'cef4a703-8521-4c2d-9932-d1429a57e684';
             
+            INSERT INTO tmp_obs(obs_id, source_patient_id, source_encounter_id, concept_uuid) 
+            SELECT obs_id, source_patient_id, source_encounter_id, @dispensing_construct_uuid
+            FROM hivmigration_dispensing_meds
+            WHERE source_product_name is not null;
+            
+            -- Medication category
+            SET @medication_category_uuid = '3cdbc4b4-26fe-102b-80cb-0017a47871b2';
+            SET @arv1_category_uuid = 'd8252da3-eac3-417e-9f84-b747f07c1c09';
+            SET @arv2_category_uuid = '3ce85288-26fe-102b-80cb-0017a47871b2';
+            SET @prophylaxis_category_uuid = '8b801f21-16a9-42cf-9869-9f491395765b';
+            
+            
+            INSERT INTO tmp_obs
+                (obs_group_id, value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT obs_id, 
+                    case source_medication_category 
+                        WHEN 'arv_1' then @arv1_category_uuid
+                        WHEN 'arv_2' then @arv1_category_uuid
+                        ELSE @prophylaxis_category_uuid
+                    end source_medication_category   
+                    , source_patient_id
+                    , source_encounter_id
+                    , @medication_category_uuid
+            FROM hivmigration_dispensing_meds
+            WHERE source_medication_category IS NOT NULL;
+                                    
             CALL migrate_tmp_obs();
         ''')
     }
