@@ -38,7 +38,7 @@ class ProcedureSetup extends SqlMigrator {
                     JOIN       hivmigration_encounters e ON o.source_encounter_id = e.source_encounter_id
                     LEFT JOIN  concept q ON q.uuid = o.concept_uuid
                     LEFT JOIN  concept a ON a.uuid = o.value_coded_uuid;
-                SET FOREIGN_KEY_CHECKS=0;    
+                SET FOREIGN_KEY_CHECKS=1;    
             END $$
             DELIMITER ;
         ''')

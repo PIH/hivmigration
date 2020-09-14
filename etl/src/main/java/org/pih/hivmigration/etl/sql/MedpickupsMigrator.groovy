@@ -186,5 +186,6 @@ class MedpickupsMigrator extends SqlMigrator{
     def void revert() {
         executeMysql("drop table if exists hivmigration_dispensing_meds")
         executeMysql("drop table if exists hivmigration_dispensing")
+        clearTable("obs")
     }
 }
