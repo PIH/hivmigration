@@ -30,7 +30,7 @@ class ProcedureSetup extends SqlMigrator {
                     value_coded, value_numeric, value_datetime, value_text, creator, date_created, voided, uuid
                 )
                 SELECT
-                    o.obs_id, p.person_id, e.encounter_id, o.obs_group_id, e.encounter_date, e.location_id, q.concept_id,
+                    o.obs_id, p.person_id, e.encounter_id, o.obs_group_id, e.encounter_date, ifnull(e.location_id, 1), q.concept_id,
                     a.concept_id, o.value_numeric, o.value_datetime, o.value_text, 1, e.date_created, 0, uuid()
                 FROM tmp_obs o
                     JOIN       hivmigration_patients p ON o.source_patient_id = p.source_patient_id
