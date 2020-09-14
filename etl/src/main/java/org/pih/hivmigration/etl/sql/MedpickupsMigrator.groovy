@@ -154,8 +154,7 @@ class MedpickupsMigrator extends SqlMigrator{
             
             INSERT INTO tmp_obs(obs_id, source_patient_id, source_encounter_id, concept_uuid) 
             SELECT obs_id, source_patient_id, source_encounter_id, @dispensing_construct_uuid
-            FROM hivmigration_dispensing_meds
-            WHERE source_product_name is not null;
+            FROM hivmigration_dispensing_meds;
             
             -- Medication category
             SET @medication_category_uuid = '3cdbc4b4-26fe-102b-80cb-0017a47871b2';
