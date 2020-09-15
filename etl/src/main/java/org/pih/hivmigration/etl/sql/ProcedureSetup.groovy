@@ -16,7 +16,7 @@ class ProcedureSetup extends SqlMigrator {
                     obs_group_id INT,
                     source_patient_id INT,
                     source_encounter_id INT,
-                    concept_uuid CHAR(38),                    
+                    concept_uuid CHAR(38),
                     value_coded_uuid CHAR(38),
                     drug_uuid CHAR(38),
                     value_datetime DATETIME,
@@ -25,7 +25,7 @@ class ProcedureSetup extends SqlMigrator {
                 );
             END $$
             CREATE PROCEDURE migrate_tmp_obs()
-            BEGIN                
+            BEGIN
                 INSERT INTO obs (
                     obs_id, person_id, encounter_id, obs_group_id, obs_datetime, location_id, concept_id,
                     value_coded, value_drug, value_numeric, value_datetime, value_text, creator, date_created, voided, uuid
