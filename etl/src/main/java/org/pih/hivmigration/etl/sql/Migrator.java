@@ -74,7 +74,7 @@ public class Migrator {
                     revert(clsInstance);
                 }
                 if (!shouldRevertOnly) {
-                    migrate(new ProcedureSetup(), -1);
+                    migrate(new Setup(), -1);
                     migrate(clsInstance, limit);
                 }
             } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -97,7 +97,7 @@ public class Migrator {
                 revert(new UserMigrator());
             }
             if (!shouldRevertOnly) {
-                migrate(new ProcedureSetup(), -1);
+                migrate(new Setup(), -1);
                 migrate(new UserMigrator(), -1);
                 migrate(new PatientMigrator(), limit);
                 migrate(new InfantMigrator(), limit);
