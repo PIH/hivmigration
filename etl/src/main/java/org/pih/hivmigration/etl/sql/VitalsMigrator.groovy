@@ -150,9 +150,9 @@ class VitalsMigrator extends SqlMigrator {
                 source_patient_id,
                 source_encounter_id,
                 CASE
-                    WHEN result > 60 THEN  -- TODO
+                    WHEN result > 60 THEN round((result - 32.0) * 0.555555, 1)
                     ELSE result
-                END
+                END,
                 '3ce939d2-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_vitals
             WHERE sign = 'temperature';
@@ -163,18 +163,20 @@ class VitalsMigrator extends SqlMigrator {
 
     @Override
     def void revert() {
-        executeMysql("Clear vitals obs", '''
-            SET @c1 = (SELECT concept_id FROM concept WHERE uuid = '3ce93cf2-26fe-102b-80cb-0017a47871b2');
-            SET @c2 = (SELECT concept_id FROM concept WHERE uuid = '3ce93b62-26fe-102b-80cb-0017a47871b2');
-            SET @c3 = (SELECT concept_id FROM concept WHERE uuid = '3ce93694-26fe-102b-80cb-0017a47871b2');
-            SET @c4 = (SELECT concept_id FROM concept WHERE uuid = '3ce934fa-26fe-102b-80cb-0017a47871b2');
-            SET @c5 = (SELECT concept_id FROM concept WHERE uuid = '3ce93824-26fe-102b-80cb-0017a47871b2');
-            SET @c6 = (SELECT concept_id FROM concept WHERE uuid = '3ceb11f8-26fe-102b-80cb-0017a47871b2');
-            SET @c7 = (SELECT concept_id FROM concept WHERE uuid = '3ce939d2-26fe-102b-80cb-0017a47871b2');
-
-            DELETE FROM obs WHERE concept_id IN (@c1, @c2, @c3, @c4, @c5, @c6, @c7);
-        ''')
-        setAutoIncrement("obs", "(select (max(obs_id)+1) from obs)")
+        // This commented-out code takes a very long time. Use only if needed.
+//        executeMysql("Clear vitals obs", '''
+//            SET @c1 = (SELECT concept_id FROM concept WHERE uuid = '3ce93cf2-26fe-102b-80cb-0017a47871b2');
+//            SET @c2 = (SELECT concept_id FROM concept WHERE uuid = '3ce93b62-26fe-102b-80cb-0017a47871b2');
+//            SET @c3 = (SELECT concept_id FROM concept WHERE uuid = '3ce93694-26fe-102b-80cb-0017a47871b2');
+//            SET @c4 = (SELECT concept_id FROM concept WHERE uuid = '3ce934fa-26fe-102b-80cb-0017a47871b2');
+//            SET @c5 = (SELECT concept_id FROM concept WHERE uuid = '3ce93824-26fe-102b-80cb-0017a47871b2');
+//            SET @c6 = (SELECT concept_id FROM concept WHERE uuid = '3ceb11f8-26fe-102b-80cb-0017a47871b2');
+//            SET @c7 = (SELECT concept_id FROM concept WHERE uuid = '3ce939d2-26fe-102b-80cb-0017a47871b2');
+//
+//            DELETE FROM obs WHERE concept_id IN (@c1, @c2, @c3, @c4, @c5, @c6, @c7);
+//        ''')
+//        setAutoIncrement("obs", "(select (max(obs_id)+1) from obs)")
+        clearTable("obs")
         executeMysql("DROP TABLE IF EXISTS hivmigration_vitals;")
         executeMysql("DROP TABLE IF EXISTS hivmigration_vitals_encounters;")
     }
