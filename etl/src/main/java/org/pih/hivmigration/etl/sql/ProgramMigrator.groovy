@@ -127,7 +127,7 @@ class ProgramMigrator extends SqlMigrator {
             
             # If no outcome date is readily available, use last visit date + 6 months as a proxy
             UPDATE hivmigration_programs_raw
-                SET outcome_date = DATE(DATE_ADD(max_visit_date, INTERVAL 6 MONTH)) WHERE outcome IS NULL;            
+                SET outcome_date = DATE(DATE_ADD(max_visit_date, INTERVAL 6 MONTH)) WHERE outcome_date IS NULL;            
             
             # If this results in a future outcome date, then just use the current date
             UPDATE hivmigration_programs_raw
