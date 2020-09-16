@@ -103,11 +103,8 @@ class VitalsMigrator extends SqlMigrator {
             SELECT
                 source_patient_id,
                 source_encounter_id,  -- this is only provided so that the procedure won't choke on the join. We overwrite the encounter_id below.
-                CASE
-                    -- result unit is unreliable, but fortunately the values are unambiguous
-                    WHEN result < 3.0 THEN round(result * 100, 1)
-                    WHEN result > 3.0 THEN result
-                END,
+                -- result unit is unreliable, but fortunately the values are unambiguous
+                IF(result < 3.0, round(result * 100, 1), result),
                 '3ce93cf2-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_vitals
             WHERE sign = 'height';
@@ -126,12 +123,20 @@ class VitalsMigrator extends SqlMigrator {
             WHERE sign = 'weight';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, value_numeric, concept_uuid)
-            SELECT source_patient_id, source_encounter_id, result, '3ce93694-26fe-102b-80cb-0017a47871b2'
+            SELECT
+                source_patient_id,
+                source_encounter_id,
+                IF(result < 20, result * 10, result),
+                '3ce93694-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_vitals
             WHERE sign = 'blood_pressure_dias';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, value_numeric, concept_uuid)
-            SELECT source_patient_id, source_encounter_id, result, '3ce934fa-26fe-102b-80cb-0017a47871b2'
+            SELECT
+                source_patient_id,
+                source_encounter_id,
+                IF(result < 30, result * 10, result),
+                '3ce934fa-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_vitals
             WHERE sign = 'blood_pressure_sys';
             
@@ -149,10 +154,7 @@ class VitalsMigrator extends SqlMigrator {
             SELECT 
                 source_patient_id,
                 source_encounter_id,
-                CASE
-                    WHEN result > 60 THEN round((result - 32.0) * 0.555555, 1)
-                    ELSE result
-                END,
+                IF(result > 60, round((result - 32.0) * 0.555555, 1), result),
                 '3ce939d2-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_vitals
             WHERE sign = 'temperature';
@@ -163,7 +165,7 @@ class VitalsMigrator extends SqlMigrator {
 
     @Override
     def void revert() {
-        // This commented-out code takes a very long time. Use only if needed.
+        // This commented-out code takes a very long time. Use only if needed to preserve other obs.
 //        executeMysql("Clear vitals obs", '''
 //            SET @c1 = (SELECT concept_id FROM concept WHERE uuid = '3ce93cf2-26fe-102b-80cb-0017a47871b2');
 //            SET @c2 = (SELECT concept_id FROM concept WHERE uuid = '3ce93b62-26fe-102b-80cb-0017a47871b2');
