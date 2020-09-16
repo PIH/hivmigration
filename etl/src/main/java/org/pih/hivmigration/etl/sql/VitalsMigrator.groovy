@@ -118,14 +118,11 @@ class VitalsMigrator extends SqlMigrator {
                 CASE
                     WHEN result_unit = 'kgs' THEN result
                     WHEN result_unit = 'lbs' THEN round(result * 0.453592, 1)
-                    -- Drop 3461 entries with result_unit = NULL
-                    -- result distribution for these has Avg 115, stddev 33.5. Not obvious what to use.
-                    -- (there are only 813 entries with result_unit not NULL)
+                    ELSE result  -- use kgs for the 3461 entries with result_unit = NULL
                 END,
                 '3ce93b62-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_vitals
-            WHERE sign = 'weight'
-            AND result_unit IN ('kgs', 'lbs');
+            WHERE sign = 'weight';
         ''')
 
         executeMysql("CALL migrate_tmp_obs_vitals();")
