@@ -44,7 +44,7 @@ class UserMigrator extends SqlMigrator {
                       and u.USER_ID = n.PERSON_ID
                       and u.USER_ID = ar.OBJECT_ID_TWO
                       and ar.REL_ID = mr.REL_ID
-                      and ar.REL_TYPE = 'membership_rel\'
+                      and ar.REL_TYPE = 'membership_rel'
                       and mr.MEMBER_STATE IS NOT NULL
                     order by u.user_id
                 '''

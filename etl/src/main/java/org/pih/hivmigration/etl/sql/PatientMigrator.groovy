@@ -167,6 +167,21 @@ class PatientMigrator extends SqlMigrator {
         ''')
 
         // TODO: see https://pihemr.atlassian.net/browse/UHM-4817
+        executeMysql("Note NULL names", '''
+            INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)
+            SELECT
+                person_id,
+                CASE
+                    WHEN given_name IS NULL AND family_name IS NULL THEN 'given name and family name'
+                    WHEN given_name IS NULL THEN 'given name'
+                    WHEN family_name IS NULL THEN 'family name'
+                END,
+                NULL,
+                'Patient missing name'
+            FROM person_name
+            WHERE (given_name IS NULL OR family_name IS NULL)
+                AND person_id in (select person_id from hivmigration_patients);
+        ''')
         executeMysql("Set NULL names to UNKNOWN", '''
             update
                 person_name set given_name='UNKNOWN'
@@ -180,7 +195,6 @@ class PatientMigrator extends SqlMigrator {
                 family_name is null and
                 person_id in (select person_id from hivmigration_patients);
         ''')
-
 
         // TODO need to figure out how to handle patients with address > 255 characters, see https://pihemr.atlassian.net/browse/UHM-4751
         executeMysql("Insert Patients into Person Address Table",
@@ -199,6 +213,12 @@ class PatientMigrator extends SqlMigrator {
             from hivmigration_patient_addresses pa, hivmigration_patients p
             where pa.source_patient_id = p.source_patient_id
             order by person_id
+        ''')
+        executeMysql("Note long addresses", '''
+            INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)
+            SELECT p.person_id, 'address', pa.address, 'Address exceeds 255 character limit'
+            FROM  hivmigration_patient_addresses pa, hivmigration_patients p
+            WHERE pa.source_patient_id = p.source_patient_id AND LENGTH(pa.address) > 255;
         ''')
 
         executeMysql("Insert Patients into Patient Table",

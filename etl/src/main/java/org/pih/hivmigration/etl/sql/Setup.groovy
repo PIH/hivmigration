@@ -1,6 +1,6 @@
 package org.pih.hivmigration.etl.sql
 
-class ProcedureSetup extends SqlMigrator {
+class Setup extends SqlMigrator {
 
     @Override
     def void migrate() {
@@ -42,9 +42,20 @@ class ProcedureSetup extends SqlMigrator {
             END $$
             DELIMITER ;
         ''')
+
+        executeMysql("Create table for logging data irregularities", '''
+            CREATE TABLE hivmigration_data_warnings (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                patient_id INT,
+                field_name VARCHAR(100),
+                field_value VARCHAR(1000),
+                note VARCHAR(1000)
+            );
+        ''')
     }
 
     @Override
     def void revert() {
+        executeMysql("DROP TABLE IF EXISTS hivmigration_data_warnings;")
     }
 }
