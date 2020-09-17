@@ -208,9 +208,9 @@ class PatientMigrator extends SqlMigrator {
         ''')
         executeMysql("Note long addresses", '''
             INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)
-            SELECT p.person_id, 'address', pa.address, 'Can't fit address longer than 255 characters'
+            SELECT p.person_id, 'address', pa.address, 'Address exceeds 255 character limit'
             FROM  hivmigration_patient_addresses pa, hivmigration_patients p
-            WHERE pa.source_patient_id = p.source_patient_id;
+            WHERE pa.source_patient_id = p.source_patient_id AND LENGTH(pa.address) > 255;
         ''')
 
         executeMysql("Insert Patients into Patient Table",

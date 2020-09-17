@@ -95,6 +95,7 @@ public class Migrator {
                 revert(new InfantMigrator());
                 revert(new PatientMigrator());
                 revert(new UserMigrator());
+                revert(new Setup());
             }
             if (!shouldRevertOnly) {
                 migrate(new Setup(), -1);
