@@ -87,6 +87,7 @@ public class Migrator {
             if (shouldRevert || shouldRevertOnly) {
                 revert(new MedpickupsMigrator());
                 revert(new VitalsMigrator());
+                revert(new ExamExtraMigrator());
                 revert(new LabResultMigrator());
                 revert(new VisitMigrator());
                 revert(new EncounterMigrator());
@@ -110,6 +111,7 @@ public class Migrator {
                 migrate(new LabResultMigrator(), limit);
                 migrate(new VitalsMigrator(), limit);
                 migrate(new MedpickupsMigrator(), limit);
+                migrate(new ExamExtraMigrator(), limit);
                 if (deIdentify) {
                     migrate(new DeIdentifyMigrator(), -1);
                 }
