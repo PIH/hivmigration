@@ -6,7 +6,7 @@ class ExamExtraMigrator extends SqlMigrator{
     def void migrate() {
 
         executeMysql("Create staging table for migrating next scheduled visit date", '''
-            create table hivmigration_next_visit_date (                            
+            create table hivmigration_exam_extra (                            
               source_encounter_id int,
               source_patient_id int,
               next_exam_date date            
@@ -14,7 +14,7 @@ class ExamExtraMigrator extends SqlMigrator{
         ''')
 
         loadFromOracleToMySql('''
-            insert into hivmigration_next_visit_date (
+            insert into hivmigration_exam_extra (
               source_encounter_id,
               source_patient_id,
               next_exam_date 
@@ -40,7 +40,7 @@ class ExamExtraMigrator extends SqlMigrator{
                         
             INSERT INTO tmp_obs (value_datetime, source_patient_id, source_encounter_id, concept_uuid)
             SELECT next_exam_date, source_patient_id, source_encounter_id, @next_visit_date_concept_uuid
-            FROM hivmigration_next_visit_date
+            FROM hivmigration_exam_extra
             WHERE next_exam_date is not null;
             
             CALL migrate_tmp_obs();
@@ -59,6 +59,6 @@ class ExamExtraMigrator extends SqlMigrator{
                         where  e.encounter_type=t.encounter_type_id and t.uuid='cc1720c9-3e4c-4fa8-a7ec-40eeaad1958c\'
                     );          
         ''')
-        executeMysql("drop table if exists hivmigration_next_visit_date")
+        executeMysql("drop table if exists hivmigration_exam_extra")
     }
 }
