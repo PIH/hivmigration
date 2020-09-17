@@ -1,6 +1,6 @@
 package org.pih.hivmigration.etl.sql
 
-class ReturnVisitDateMigrator extends SqlMigrator{
+class ExamExtraMigrator extends SqlMigrator{
 
     @Override
     def void migrate() {
@@ -37,12 +37,11 @@ class ReturnVisitDateMigrator extends SqlMigrator{
         executeMysql("Load next visit date as observations", ''' 
                       
             SET @next_visit_date_concept_uuid = '3ce94df0-26fe-102b-80cb-0017a47871b2';            
-            
-            -- Do not overwrite existing Next Dispense Date obs that were inserted while migrating meds
+                        
             INSERT INTO tmp_obs (value_datetime, source_patient_id, source_encounter_id, concept_uuid)
             SELECT next_exam_date, source_patient_id, source_encounter_id, @next_visit_date_concept_uuid
             FROM hivmigration_next_visit_date
-            WHERE next_exam_date is not null and source_encounter_id not in (select e.source_encounter_id from hivmigration_encounters e, obs o, concept c where e.encounter_id = o.encounter_id and o.concept_id=c.concept_id and c.uuid=@next_visit_date_concept_uuid);
+            WHERE next_exam_date is not null;
             
             CALL migrate_tmp_obs();
             
