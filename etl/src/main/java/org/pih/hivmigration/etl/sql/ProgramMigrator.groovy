@@ -138,8 +138,15 @@ class ProgramMigrator extends SqlMigrator {
                 SET outcome_date = null WHERE outcome is null;
         ''')
 
-        // TODO: If the above logic does not result in an outcome date for all outcomes, research individual cases and adjust
-        // TODO: investigate cases where art_start_date > outcome_date
+        executeMysql("Note where art_start_date > outcome_date", '''
+            INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)
+            SELECT
+                p.person_id, 'art_start_date', hpr.art_start_date, CONCAT('Patient has ART start date(s) after patient outcome date of ', hpr.outcome_date, '.')
+            FROM hivmigration_programs_raw hpr
+            JOIN hivmigration_patients p ON p.source_patient_id = hpr.source_patient_id
+            WHERE hpr.art_start_date > hpr.outcome_date
+            GROUP BY p.person_id;
+        ''')
 
         executeMysql("Remove bad health center entries", '''
             UPDATE hivmigration_programs_raw
@@ -230,10 +237,7 @@ class ProgramMigrator extends SqlMigrator {
                 hivmigration_health_center hc on h.location_id = hc.hiv_emr_id
             ; 
         ''')
-        
-        // TODO: figure out how patient state should work
-        // Currently we are loading ART Start Date into the staging table, but never using it
-        // If we intend to use states to capture the ART Start Date, then this should be used in this way like Malawi
+
     }
 
     void revert() {
