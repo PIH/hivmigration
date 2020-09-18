@@ -87,7 +87,7 @@ class InfantMigrator extends SqlMigrator {
                     WHEN family_name IS NULL THEN 'family name'
                 END,
                 NULL,
-                'Infant missing name'
+                'Infant missing name. Defaulted to "UNKNOWN"'
             FROM person_name
             WHERE (given_name IS NULL OR family_name IS NULL)
                 AND person_id in (select person_id from hivmigration_infants);
