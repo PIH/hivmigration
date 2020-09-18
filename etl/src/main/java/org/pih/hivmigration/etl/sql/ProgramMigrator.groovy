@@ -138,7 +138,15 @@ class ProgramMigrator extends SqlMigrator {
                 SET outcome_date = null WHERE outcome is null;
         ''')
 
-        // TODO: log cases where art_start_date > outcome_date
+        executeMysql("Note where art_start_date > outcome_date", '''
+            INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)
+            SELECT
+                p.person_id, 'art_start_date', hpr.art_start_date, CONCAT('Patient has ART start date(s) after patient outcome date of ', hpr.outcome_date, '. However, ART start dates were not migrated from the HIV EMR at all anyway.')
+            FROM hivmigration_programs_raw hpr
+            JOIN hivmigration_patients p ON p.source_patient_id = hpr.source_patient_id
+            WHERE hpr.art_start_date > hpr.outcome_date
+            GROUP BY p.person_id;
+        ''')
 
         executeMysql("Remove bad health center entries", '''
             UPDATE hivmigration_programs_raw

@@ -44,7 +44,7 @@ class Setup extends SqlMigrator {
         ''')
 
         executeMysql("Create table for logging data irregularities", '''
-            CREATE TABLE hivmigration_data_warnings (
+            CREATE TABLE IF NOT EXISTS hivmigration_data_warnings (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 patient_id INT,
                 field_name VARCHAR(100),
