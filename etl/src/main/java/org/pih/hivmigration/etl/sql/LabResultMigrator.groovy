@@ -86,14 +86,14 @@ class LabResultMigrator extends SqlMigrator {
             FROM hivmigration_lab_results
             WHERE test_type = 'viral_load' AND value_numeric IS NOT NULL;
             
-            -- Beyond detectable limit
+            -- Below detectable limit
             INSERT INTO tmp_obs
                 (obs_group_id, value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
             SELECT obs_id, '1306AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', source_patient_id, source_encounter_id, '1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
             FROM hivmigration_lab_results
             WHERE test_type = 'viral_load' AND vl_beyond_detectable_limit = 1; 
             
-            -- Detectable limit
+            -- Detected
             INSERT INTO tmp_obs
                 (obs_group_id, value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
             SELECT obs_id, '1301AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', source_patient_id, source_encounter_id, '1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
