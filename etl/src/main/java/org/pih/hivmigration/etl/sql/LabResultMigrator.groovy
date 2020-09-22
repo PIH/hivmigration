@@ -81,17 +81,24 @@ class LabResultMigrator extends SqlMigrator {
 
             -- HVL Value
             INSERT INTO tmp_obs
-                (obs_group_id, value_text, source_patient_id, source_encounter_id, concept_uuid)
+                (obs_group_id, value_numeric, source_patient_id, source_encounter_id, concept_uuid)
             SELECT obs_id, value_numeric, source_patient_id, source_encounter_id, '3cd4a882-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_lab_results
             WHERE test_type = 'viral_load' AND value_numeric IS NOT NULL;
             
-            -- Detectable
+            -- Beyond detectable limit
             INSERT INTO tmp_obs
                 (obs_group_id, value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT obs_id, '1302AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', source_patient_id, source_encounter_id, '1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+            SELECT obs_id, '1306AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', source_patient_id, source_encounter_id, '1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
             FROM hivmigration_lab_results
             WHERE test_type = 'viral_load' AND vl_beyond_detectable_limit = 1; 
+            
+            -- Detectable limit
+            INSERT INTO tmp_obs
+                (obs_group_id, value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT obs_id, '1301AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', source_patient_id, source_encounter_id, '1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+            FROM hivmigration_lab_results
+            WHERE test_type = 'viral_load' AND vl_beyond_detectable_limit = 0; 
             
             -- Detectable lower limit
             INSERT INTO tmp_obs
