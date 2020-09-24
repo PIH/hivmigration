@@ -234,7 +234,7 @@ class MedpickupsMigrator extends ObsMigrator {
             SET @medication_order_uuid = '3cd9491e-26fe-102b-80cb-0017a47871b2';
             
             INSERT INTO tmp_obs
-                (obs_group_id, value_coded_uuid, drug_uuid, source_patient_id, source_encounter_id, concept_uuid)
+                (obs_group_id, value_coded_uuid, value_drug_uuid, source_patient_id, source_encounter_id, concept_uuid)
             SELECT d.obs_id, 
                      case when (d.source_product_name is not null) then 
                             (select h.concept_uuid from hivmigration_openmrs_drugs h where h.hiv_med_name=d.source_product_name)
