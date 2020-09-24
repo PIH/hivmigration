@@ -23,8 +23,11 @@ class MedpickupsMigrator extends SqlMigrator{
                 concept_uuid) 
             values
                 ('3TC 10 mg sp','Lamivudine (3TC), Oral solution, 10mg/mL, 240mL bottle','78f96684-dfbe-11e9-8a34-2a2ae2dbcce4','3cd24e3e-26fe-102b-80cb-0017a47871b2'),
-                ('ABC 20 mg','Abacavir sulfate (ABC), Oral solution, 20mg/mL, 240mL bottle','78f98308-dfbe-11e9-8a34-2a2ae2dbcce4','70057AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
-                ('ABC 300 mg','Abacavir sulfate (ABC), 300mg tablet','78f981d2-dfbe-11e9-8a34-2a2ae2dbcce4','70057AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
+                ('ABC 20 mg','Abacavir sulfate (ABC), Oral solution, 20mg/mL, 240mL bottle','78f98308-dfbe-11e9-8a34-2a2ae2dbcce4','3cd466b0-26fe-102b-80cb-0017a47871b2'),
+                ('ABC 300 mg','Abacavir sulfate (ABC), 300mg tablet','78f981d2-dfbe-11e9-8a34-2a2ae2dbcce4','3cd466b0-26fe-102b-80cb-0017a47871b2'),
+                ('ABC 60 mg','Abacavir (ABC) sulfate, 60mg dispersible tablet','35c6041e-0af3-4bab-887d-9db682a02248','3cd466b0-26fe-102b-80cb-0017a47871b2'),
+                ('ABC/3TC 120/60 mg','Abacavir (ABC) sulfate 120mg + Lamivudine (3TC) 60mg, tablet for oral suspension','a6985b15-5fd6-4bdf-93f6-62930a438464','103166AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
+                ('ABC/3TC 300/300 mg','Abacavir sulfate (ABC) 300mg + Lamivudine (3TC) 300mg tablet','f2a2c2d9-16a6-4138-9074-6fdf3307e107','103166AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('ABC/3TC 60/30 mg','Abacavir sulfate (ABC) 60mg + Lamivudine (3TC) 30mg, tablet for oral suspension','78faa9b8-dfbe-11e9-8a34-2a2ae2dbcce4','103166AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('ATV/r 300/100 mg','Atazanavir sulfate (ATV) 300mg + Ritonavir (r) 100mg tablet','78f95d38-dfbe-11e9-8a34-2a2ae2dbcce4','159809AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('AZT 10 mg sp','Zidovudine (AZT), Oral solution, 10mg/mL, 240mL bottle','78f95bc6-dfbe-11e9-8a34-2a2ae2dbcce4','3cd444be-26fe-102b-80cb-0017a47871b2'),
@@ -33,10 +36,12 @@ class MedpickupsMigrator extends SqlMigrator{
                 ('AZT/3TC/NVP 300/150/200 mg','Lamivudine (3TC) 150mg + Nevirapine (NVP) 200mg + Zidovudine (AZT) 300mg tablet','78f9739a-dfbe-11e9-8a34-2a2ae2dbcce4','3cdc4a42-26fe-102b-80cb-0017a47871b2'),
                 ('AZT/3TC/NVP 60/30/50 mg','Lamivudine (3TC) 30mg + Nevirapine (NVP) 50mg + Zidovudine (AZT) 60mg dispersible tablet','78f97cfa-dfbe-11e9-8a34-2a2ae2dbcce4','3cdc4a42-26fe-102b-80cb-0017a47871b2'),
                 ('Dapsone 100 mg','Dapsone, 100mg tablet','1156a9ca-14f3-4c57-9ed2-7154e82447c7','3cccd95e-26fe-102b-80cb-0017a47871b2'),
+                ('DAR/ETV 300/100 mg','Darunavir (DRV) 300mg + Etravirine (ETV) 100mg, tablet','0fc3d5c1-fd39-4899-b5c0-b094e28ff359','7239d569-00ba-4a53-84de-f8754c4ca8dd'),
                 ('DTG 50 mg','Dolutegravir (DTG), 50 mg tablet','78fab02a-dfbe-11e9-8a34-2a2ae2dbcce4','165085AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('DTG/3TC/TDF 50/300/300 mg','Dolutegravir (DTG) 50mg + Lamivudine (3TC) 300mg + Tenofovir disoproxil fumarate (TDF) 300mg, tablet','78faac2e-dfbe-11e9-8a34-2a2ae2dbcce4','165086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('EFV 200 mg','Efavirenz (EFV), 200mg tablet','78f97b9c-dfbe-11e9-8a34-2a2ae2dbcce4','3cd25622-26fe-102b-80cb-0017a47871b2'),
                 ('EFV 600 mg','Efavirenz (EFV), 600mg tablet','78f96210-dfbe-11e9-8a34-2a2ae2dbcce4','3cd25622-26fe-102b-80cb-0017a47871b2'),
+                ('ETV 100mg','Etravirine (ETV), 100mg tablet','29c9dd27-25f2-45c6-9708-93fe142a46ba','159810AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('INH 100 mg','Isoniazid (H), 100mg tablet','e47fa273-0c52-4f0f-b57b-34001a3e9677','3cd27a8a-26fe-102b-80cb-0017a47871b2'),
                 ('INH 300 mg','Isoniazid (H), 300mg tablet','849218ee-901c-46b3-80f9-7c808132893b','3cd27a8a-26fe-102b-80cb-0017a47871b2'),
                 ('LPV/r 100/25 mg','Lopinavir (LPV) 100mg + Ritonavir (r) 25mg tablet','78f976c4-dfbe-11e9-8a34-2a2ae2dbcce4','794AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
@@ -44,11 +49,16 @@ class MedpickupsMigrator extends SqlMigrator{
                 ('LPV/r 40/10 mg','Lopinavir (LPV) 40mg + Ritonavir (r) 10mg, tablet','78faaaf8-dfbe-11e9-8a34-2a2ae2dbcce4','794AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('LPV/r 80/20 mg','Lopinavir (LPV) 80mg/mL + Ritonavir (r) 20mg/mL, Oral suspension, 160mL bottle','78faa710-dfbe-11e9-8a34-2a2ae2dbcce4','794AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('NVP 10 mg sp','Nevirapine (NVP), Oral solution, 10mg/mL, 240mL bottle','78f967ba-dfbe-11e9-8a34-2a2ae2dbcce4','3cd252f8-26fe-102b-80cb-0017a47871b2'),
+                ('NVP 50 mg','Nevirapine (NVP), 50mg dispersible tablet','78f96526-dfbe-11e9-8a34-2a2ae2dbcce4','3cd252f8-26fe-102b-80cb-0017a47871b2'),
                 ('NVP 200 mg','Nevirapine (NVP), 200mg tablet','78f9780e-dfbe-11e9-8a34-2a2ae2dbcce4','3cd252f8-26fe-102b-80cb-0017a47871b2'),
+                ('RAL/DAR/r 400/600/100mg','Raltegravir (RAL) 400mg + Darunavir (DRV) 600mg + Ritonavir (r) 100mg, tablet','08d3817b-4e54-4825-bc4b-0512b627d567','69041e6c-aeb9-4c36-9c76-cd9c5ef4e81d'),
+                ('RAL/ETV 400/100 mg','Raltegravir (RAL) 400mg + Etravirine (ETV) 100mg, tablet','c893970e-22b5-4cb9-8be2-1a9bff480235','891dcb9a-3c80-4917-a10f-07c209499413'),
                 ('TDF 300 mg','Tenofovir disoproxil fumarate (TDF), 300mg tablet','78faa576-dfbe-11e9-8a34-2a2ae2dbcce4','3cd45166-26fe-102b-80cb-0017a47871b2'),
                 ('TDF/3TC 300/300 mg','Tenofovir disoproxil fumarate (TDF) 300mg + Lamivudine (3TC) 300mg tablet','78f96a76-dfbe-11e9-8a34-2a2ae2dbcce4','161364AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('TDF/3TC/EFV 300/300/600 mg','Efavirenz (EVF) 600mg + Lamivudine (3TC) 300mg + Tenofovir disoproxil fumarate (TDF) 300mg tablet','78f960da-dfbe-11e9-8a34-2a2ae2dbcce4','e43b308c-a303-4524-b4bd-a728a9f52faf'),
+                ('TMS 120 mg','Cotrimoxazole (Sulfamethoxazole/Trimethoprim), 100mg/20mg tablet','160d7a20-f710-48b3-9c9b-0a1b98ab5871','3cd51772-26fe-102b-80cb-0017a47871b2'),
                 ('TMS 240 mg sp','Cotrimoxazole (Sulfamethoxazole/Trimethoprim), Oral suspension, 40mg/mL + 8mg/mL, 100mL bottle','b3910fb7-2b17-44e6-8a52-8543af46c935','3cd51772-26fe-102b-80cb-0017a47871b2'),
+                ('TMS 480 mg','Cotrimoxazole (Sulfamethoxazole/Trimethoprim), 400mg/80mg tablet','54972d88-156e-465e-8483-9a9e97d5898f','3cd51772-26fe-102b-80cb-0017a47871b2'),
                 ('TMS 960 mg','Cotrimoxazole (Sulfamethoazxole/Trimethoprim), 800mg/160mg tablet','85153088-b868-4723-aacd-27f25f121685','3cd51772-26fe-102b-80cb-0017a47871b2');    
            ''')
 
