@@ -85,11 +85,11 @@ public class Migrator {
             }
         } else {
             if (shouldRevert || shouldRevertOnly) {
+                revert(new VisitMigrator());
                 revert(new MedpickupsMigrator());
                 revert(new VitalsMigrator());
                 revert(new ExamExtraMigrator());
                 revert(new LabResultMigrator());
-                revert(new VisitMigrator());
                 revert(new EncounterMigrator());
                 revert(new ProviderMigrator());
                 revert(new ProgramMigrator());
@@ -108,11 +108,11 @@ public class Migrator {
                 migrate(new ProgramMigrator(), limit);
                 migrate(new ProviderMigrator(), limit);
                 migrate(new EncounterMigrator(), limit);
-                migrate(new VisitMigrator(), limit);
                 migrate(new LabResultMigrator(), limit);
                 migrate(new VitalsMigrator(), limit);
                 migrate(new MedpickupsMigrator(), limit);
                 migrate(new ExamExtraMigrator(), limit);
+                migrate(new VisitMigrator(), limit);
                 if (deIdentify) {
                     migrate(new DeIdentifyMigrator(), -1);
                 }
