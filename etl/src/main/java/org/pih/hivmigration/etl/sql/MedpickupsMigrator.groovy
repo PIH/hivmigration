@@ -172,7 +172,7 @@ class MedpickupsMigrator extends SqlMigrator{
              WHERE dac is not null;
             
              -- Treatment Line
-             SET @arv_regimen_concept_uuid = '164432AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+             SET @arv_regimen_concept_uuid = '0c709500-0cf8-4959-b244-3e9d24dcacc0';
              SET @first_line_concept_uuid = '697e9461-f2d6-4ab1-a140-48f768ce002a';
              SET @second_line_uuid = '11c0f708-6950-4e94-b080-5c76174a4947';
              SET @third_line_concept_uuid = '224e3d57-f6d1-4244-bbe2-b81a574ba7aa';
