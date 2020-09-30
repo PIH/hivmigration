@@ -35,7 +35,8 @@ abstract class ObsMigrator extends SqlMigrator {
         ''')
         Long tmpObsCount = (Long) selectMysql("(select count(1) from tmp_obs)", new ScalarHandler())
         Long batchesMigrated = 0
-        Long batchSize = 10000
+        Long batchSize = 50000
+        log.info("Migrating obs from tmp_obs to obs table...")
         while (batchesMigrated * batchSize < tmpObsCount) {
             String query = '''
                 INSERT INTO obs (
@@ -53,9 +54,9 @@ abstract class ObsMigrator extends SqlMigrator {
                 LEFT JOIN  drug d ON d.uuid = o.value_drug_uuid
                 ORDER BY o.obs_id
                 LIMIT ''' + batchSize + " OFFSET " + (batchesMigrated * batchSize) + ";"
-            log.info(query)
-            executeMysql("Migrate tmp_obs to obs", query)
-            log.info("Obs migrated: " + batchesMigrated * batchSize + " / " + tmpObsCount)
+            executeMysql(query, false)
+            batchesMigrated += 1
+            log.info("    Obs migrated: " + batchesMigrated * batchSize + " / " + tmpObsCount)
         }
     }
 }
