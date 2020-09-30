@@ -222,6 +222,11 @@ class TreatmentObsMigrator extends ObsMigrator {
             FROM hivmigration_ordered_other
             WHERE ordered = 'arv_regimen';
             
+            INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
+            SELECT source_encounter_id, value
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.art';
+            
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, obs_id)
             SELECT source_encounter_id, concept_uuid_from_mapping('PIH', '10742'), obs_group_id
             FROM hivmigration_arv_regimen;
@@ -230,11 +235,11 @@ class TreatmentObsMigrator extends ObsMigrator {
             SELECT
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '1282'),
-                CASE comments
-                    WHEN 'azt_3tc_efv' THEN concept_uuid_from_mapping('CIEL', '160124')
-                    WHEN 'azt_3tc_nvp' THEN concept_uuid_from_mapping('CIEL', '1652')
-                    WHEN 'd4t_3tc_efv' THEN concept_uuid_from_mapping('CIEL', '160104')
-                    WHEN 'd4t_3tc_nvp' THEN concept_uuid_from_mapping('CIEL', '792')
+                CASE
+                    WHEN comments IN ('azt_3tc_efv', 'AZT_3TC_EFV') THEN concept_uuid_from_mapping('CIEL', '160124')
+                    WHEN comments IN ('azt_3tc_nvp', 'AZT_3TC_NVP') THEN concept_uuid_from_mapping('CIEL', '1652')
+                    WHEN comments IN ('d4t_3tc_efv', 'D4T_3TC_EFV') THEN concept_uuid_from_mapping('CIEL', '160104')
+                    WHEN comments IN ('d4t_3tc_nvp', 'D4T_3TC_NVP') THEN concept_uuid_from_mapping('CIEL', '792')
                     ELSE concept_uuid_from_mapping('CIEL', '5424')  -- other
                     END,
                 obs_group_id
