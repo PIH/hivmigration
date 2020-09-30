@@ -24,8 +24,8 @@ class ExamExtraMigrator extends SqlMigrator{
                 select x.encounter_id as source_encounter_id,
                         e.patient_id as source_patient_id,
                         to_char(x.next_exam_date, 'yyyy-mm-dd') as next_exam_date
-                from hiv_exam_extra x,hiv_encounters e 
-                where x.next_exam_date is not null and x.encounter_id = e.encounter_id
+                from hiv_exam_extra x,hiv_encounters e, hiv_demographics_real d 
+                where x.next_exam_date is not null and x.encounter_id = e.encounter_id and e.patient_id = d.patient_id
             ''')
 
         executeMysql("Create tmp_obs_table", ''' 
