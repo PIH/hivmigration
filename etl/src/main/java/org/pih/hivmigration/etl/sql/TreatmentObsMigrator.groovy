@@ -1,6 +1,6 @@
 package org.pih.hivmigration.etl.sql
 
-class TreatmentObsMigrator extends SqlMigrator {
+class TreatmentObsMigrator extends ObsMigrator {
 
     @Override
     def void migrate() {
@@ -24,9 +24,7 @@ class TreatmentObsMigrator extends SqlMigrator {
             FROM hiv_ordered_other
         ''')
 
-        executeMysql("CALL create_tmp_obs_table();")
-        setAutoIncrement("tmp_obs", "(SELECT max(obs_id) + 1 FROM obs)")
-
+        create_tmp_obs_table()
 
         // doesn't appear in the OpenMRS UI but is meaningful data
         executeMysql("Add Prophylaxis Not Indicated to tmp obs table", '''
@@ -170,9 +168,8 @@ class TreatmentObsMigrator extends SqlMigrator {
         // END prophylaxis group
         //
 
-        executeMysql("CALL migrate_tmp_obs();")
-        executeMysql("CALL create_tmp_obs_table();")
-        setAutoIncrement("tmp_obs", "(SELECT max(obs_id) + 1 FROM obs)")
+        migrate_tmp_obs()
+        create_tmp_obs_table()
 
         executeMysql("Migrate 'Does patient need ART?'", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
@@ -206,9 +203,8 @@ class TreatmentObsMigrator extends SqlMigrator {
 //            WHERE observation = 'arv_start_date';
 //        ''')
 
-        executeMysql("CALL migrate_tmp_obs();")
-        executeMysql("CALL create_tmp_obs_table();")
-        setAutoIncrement("tmp_obs", "(SELECT max(obs_id) + 1 FROM obs)")
+        migrate_tmp_obs()
+        create_tmp_obs_table()
 
         // TODO: map the common arv_regimen_other values into the new regimens
         executeMysql("Set up for ARV Regimen migration", '''
@@ -245,12 +241,11 @@ class TreatmentObsMigrator extends SqlMigrator {
             FROM hivmigration_arv_regimen;
         ''')
 
-        executeMysql("CALL migrate_tmp_obs();")
-        executeMysql("CALL create_tmp_obs_table();")
-        setAutoIncrement("tmp_obs", "(SELECT max(obs_id) + 1 FROM obs)")
+        migrate_tmp_obs()
+        create_tmp_obs_table()
 
         executeMysql("Migrate old ARV Regimens into other text box", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text)
             SELECT
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '5424'),
@@ -261,7 +256,7 @@ class TreatmentObsMigrator extends SqlMigrator {
         ''')
 
         executeMysql("Migrate ARV Other text", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text)
             SELECT
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '5424'),
@@ -270,9 +265,8 @@ class TreatmentObsMigrator extends SqlMigrator {
             WHERE ordered = 'arv_regimen_other';
         ''')
 
-        executeMysql("CALL migrate_tmp_obs();")
-        executeMysql("CALL create_tmp_obs_table();")
-        setAutoIncrement("tmp_obs", "(SELECT max(obs_id) + 1 FROM obs)")
+        migrate_tmp_obs()
+        create_tmp_obs_table()
 
         executeMysql("Migrate TB Treatment Needed", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
@@ -317,7 +311,7 @@ class TreatmentObsMigrator extends SqlMigrator {
             WHERE ordered = 'tb_treatment';
         ''')
 
-        executeMysql("CALL migrate_tmp_obs();")
+        migrate_tmp_obs()
     }
 
     @Override
