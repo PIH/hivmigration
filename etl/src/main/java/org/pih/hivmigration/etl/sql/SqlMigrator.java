@@ -296,7 +296,6 @@ abstract class SqlMigrator {
         return count == 1;
     }
 
-
     public void clearTable(String tableName) throws SQLException {
         executeMysql("Deleting entries from table '" + tableName + "'",
                 "SET FOREIGN_KEY_CHECKS = 0;\n TRUNCATE TABLE " + tableName + ";\n SET FOREIGN_KEY_CHECKS = 1;");

@@ -1,6 +1,6 @@
 package org.pih.hivmigration.etl.sql
 
-class MedpickupsMigrator extends SqlMigrator{
+class MedpickupsMigrator extends ObsMigrator {
 
 
     @Override
@@ -135,10 +135,7 @@ class MedpickupsMigrator extends SqlMigrator{
             where m.encounter_id=e.encounter_id and m.product_id = p.product_id 
          ''')
 
-        executeMysql("Create tmp_obs_table", ''' 
-            CALL create_tmp_obs_table();
-            ''')
-
+        create_tmp_obs_table()
         setAutoIncrement("tmp_obs", "(select max(obs_id)+1 from hivmigration_dispensing_meds)")
 
         executeMysql("Load meds dispensing as observations", ''' 
@@ -270,9 +267,9 @@ class MedpickupsMigrator extends SqlMigrator{
                     , @quantity_of_medication_dispensed_uuid
             FROM hivmigration_dispensing_meds
             WHERE quantity IS NOT NULL;
-                                    
-            CALL migrate_tmp_obs();
         ''')
+
+        migrate_tmp_obs()
     }
 
     @Override

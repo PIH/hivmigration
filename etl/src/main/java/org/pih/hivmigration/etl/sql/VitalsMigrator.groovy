@@ -2,7 +2,7 @@ package org.pih.hivmigration.etl.sql
 
 import org.apache.commons.dbutils.handlers.ScalarHandler
 
-class VitalsMigrator extends SqlMigrator {
+class VitalsMigrator extends ObsMigrator {
     @Override
     def void migrate() {
 
@@ -72,9 +72,7 @@ class VitalsMigrator extends SqlMigrator {
             GROUP BY e.source_encounter_id;
         ''')
 
-        executeMysql("CALL create_tmp_obs_table();")
-
-        setAutoIncrement("tmp_obs", "(SELECT max(obs_id) + 1 FROM obs)")
+        create_tmp_obs_table()
 
         executeMysql("Prepare vitals obs for migration", '''
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, value_numeric, concept_uuid)

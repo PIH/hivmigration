@@ -1,6 +1,6 @@
 package org.pih.hivmigration.etl.sql
 
-class LabResultMigrator extends SqlMigrator {
+class LabResultMigrator extends ObsMigrator {
 
     @Override
     def void migrate() {
@@ -59,10 +59,10 @@ class LabResultMigrator extends SqlMigrator {
             order by d.patient_id desc, e.encounter_id desc
         ''')
 
+        create_tmp_obs_table()
+
         executeMysql("Load lab results as observations",
         '''
-            CALL create_tmp_obs_table();
-
             -- Viral load
             --
             
@@ -138,10 +138,10 @@ class LabResultMigrator extends SqlMigrator {
                 source_encounter_id,
                 '3cd6c946-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_lab_results
-            WHERE test_type = 'tr';
-            
-            CALL migrate_tmp_obs();
+            WHERE test_type = 'tr';            
         ''')
+
+        migrate_tmp_obs()
     }
 
     @Override

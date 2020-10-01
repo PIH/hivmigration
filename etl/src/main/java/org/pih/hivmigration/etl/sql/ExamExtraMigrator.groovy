@@ -1,6 +1,6 @@
 package org.pih.hivmigration.etl.sql
 
-class ExamExtraMigrator extends SqlMigrator{
+class ExamExtraMigrator extends ObsMigrator {
 
     @Override
     def void migrate() {
@@ -28,11 +28,7 @@ class ExamExtraMigrator extends SqlMigrator{
                 where x.next_exam_date is not null and x.encounter_id = e.encounter_id and e.patient_id = d.patient_id
             ''')
 
-        executeMysql("Create tmp_obs_table", ''' 
-            CALL create_tmp_obs_table();
-            ''')
-
-        setAutoIncrement("tmp_obs", "(select max(obs_id)+1 from obs)")
+        create_tmp_obs_table()
 
         executeMysql("Load next visit date as observations", ''' 
                       
@@ -41,11 +37,10 @@ class ExamExtraMigrator extends SqlMigrator{
             INSERT INTO tmp_obs (value_datetime, source_patient_id, source_encounter_id, concept_uuid)
             SELECT next_exam_date, source_patient_id, source_encounter_id, @next_visit_date_concept_uuid
             FROM hivmigration_exam_extra
-            WHERE next_exam_date is not null;
-            
-            CALL migrate_tmp_obs();
-            
+            WHERE next_exam_date is not null;            
         ''')
+
+        migrate_tmp_obs()
     }
 
     @Override
