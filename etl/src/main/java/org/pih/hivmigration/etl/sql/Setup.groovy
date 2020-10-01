@@ -6,7 +6,7 @@ class Setup extends SqlMigrator {
     def void migrate() {
 
         executeMysql('''
-            DROP FUNCTION concept_uuid_from_mapping;
+            DROP FUNCTION IF EXISTS concept_uuid_from_mapping;
             DELIMITER //
             CREATE FUNCTION concept_uuid_from_mapping ( _source varchar(80), _code varchar(80))
             RETURNS char(38)
