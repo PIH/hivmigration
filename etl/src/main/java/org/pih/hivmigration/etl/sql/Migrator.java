@@ -86,6 +86,8 @@ public class Migrator {
         } else {
             if (shouldRevert || shouldRevertOnly) {
                 revert(new VisitMigrator());
+                revert(new TreatmentObsMigrator());
+                revert(new ObsLoadingMigrator());
                 revert(new MedpickupsMigrator());
                 revert(new VitalsMigrator());
                 revert(new ExamExtraMigrator());
@@ -112,6 +114,8 @@ public class Migrator {
                 migrate(new VitalsMigrator(), limit);
                 migrate(new MedpickupsMigrator(), limit);
                 migrate(new ExamExtraMigrator(), limit);
+                migrate(new ObsLoadingMigrator(), limit);
+                migrate(new TreatmentObsMigrator(), limit);
                 migrate(new VisitMigrator(), limit);
                 if (deIdentify) {
                     migrate(new DeIdentifyMigrator(), -1);
