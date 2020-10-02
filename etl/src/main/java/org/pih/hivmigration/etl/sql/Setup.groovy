@@ -9,7 +9,7 @@ class Setup extends SqlMigrator {
             DROP FUNCTION IF EXISTS concept_uuid_from_mapping;
             DELIMITER //
             CREATE FUNCTION concept_uuid_from_mapping ( _source varchar(80), _code varchar(80))
-            RETURNS char(38)
+            RETURNS char(38) DETERMINISTIC
             BEGIN
                 RETURN (SELECT uuid FROM concept WHERE concept_id = concept_from_mapping(_source, _code));
             END;
