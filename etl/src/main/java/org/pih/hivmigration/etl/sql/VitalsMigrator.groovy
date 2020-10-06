@@ -27,9 +27,9 @@ class VitalsMigrator extends ObsMigrator {
                 v.RESULT, 
                 v.RESULT_UNIT,
                 e.PATIENT_ID
-            from HIV_EXAM_VITAL_SIGNS v, HIV_ENCOUNTERS e
-            where v.ENCOUNTER_ID = e.ENCOUNTER_ID 
-            and e.PATIENT_ID is not null
+            from HIV_EXAM_VITAL_SIGNS v, HIV_ENCOUNTERS e, HIV_DEMOGRAPHICS_REAL d
+            where v.ENCOUNTER_ID = e.ENCOUNTER_ID
+            and e.PATIENT_ID = d.PATIENT_ID
             and v.RESULT is not null  -- there are 28 rows with no result
         ''')
 
