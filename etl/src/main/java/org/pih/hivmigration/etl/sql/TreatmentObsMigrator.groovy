@@ -170,7 +170,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             FROM hivmigration_prophylaxis;
         ''')
 
-        executeMysql("Add treatment value (check the checkbox)", '''
+        executeMysql("Add prophylaxis value (check the checkbox)", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
             SELECT
                    source_encounter_id,
@@ -185,7 +185,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE name IN ('CTX', 'Isoniazid', 'Fluconazole');
         ''')
 
-        executeMysql("Add treatment other value", '''
+        executeMysql("Add prophylaxis other value", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, comments, obs_group_id)
             SELECT
                 source_encounter_id,
@@ -210,7 +210,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE name NOT IN ('CTX', 'Isoniazid', 'Fluconazole', 'other');
         ''')
 
-        executeMysql("Add treatment started date", '''
+        executeMysql("Add prophylaxis started date", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime, obs_group_id)
             SELECT
                 source_encounter_id,
@@ -225,7 +225,7 @@ class TreatmentObsMigrator extends ObsMigrator {
         // TODO: figure out how to populate end date
 
         // Mark any prophylaxes with Inite or Continue as "Current Use"
-        executeMysql("Add Current Use", '''
+        executeMysql("Add prophylaxis Current Use", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
             SELECT
                 source_encounter_id,
@@ -321,7 +321,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
             SELECT
                 source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', '6116'),
                 CASE
                     WHEN comments LIKE 'azt%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164511')
                     WHEN comments LIKE 'azt%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160124')
