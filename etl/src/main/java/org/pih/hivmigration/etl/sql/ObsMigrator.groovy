@@ -21,7 +21,8 @@ abstract class ObsMigrator extends SqlMigrator {
                 value_drug_uuid CHAR(38),
                 value_datetime DATETIME,
                 value_numeric DOUBLE,
-                value_text TEXT
+                value_text TEXT,
+                comments VARCHAR(255)
             );
         ''')
         setAutoIncrement('tmp_obs', '(select max(obs_id)+1 from obs)')
@@ -41,11 +42,13 @@ abstract class ObsMigrator extends SqlMigrator {
             String query = '''
                 INSERT INTO obs (
                     obs_id, person_id, encounter_id, obs_group_id, obs_datetime, location_id, concept_id,
-                    value_coded, value_drug, value_numeric, value_datetime, value_text, creator, date_created, voided, uuid
+                    value_coded, value_drug, value_numeric, value_datetime, value_text, comments,
+                    creator, date_created, voided, uuid
                 )
                 SELECT
                     o.obs_id, p.person_id, e.encounter_id, o.obs_group_id, e.encounter_date, ifnull(e.location_id, 1), q.concept_id,
-                    a.concept_id, d.drug_id, o.value_numeric, o.value_datetime, o.value_text, 1, e.date_created, 0, uuid()
+                    a.concept_id, d.drug_id, o.value_numeric, o.value_datetime, o.value_text, o.comments,
+                    1, e.date_created, 0, uuid()
                 FROM tmp_obs o
                 JOIN       hivmigration_encounters e ON o.source_encounter_id = e.source_encounter_id
                 JOIN       hivmigration_patients p ON o.source_patient_id = p.source_patient_id
@@ -56,7 +59,9 @@ abstract class ObsMigrator extends SqlMigrator {
                 LIMIT ''' + batchSize + " OFFSET " + (batchesMigrated * batchSize) + ";"
             executeMysql(query, false)
             batchesMigrated += 1
-            log.info("    Obs migrated: " + batchesMigrated * batchSize + " / " + tmpObsCount)
+            if (batchesMigrated * batchSize < tmpObsCount) {
+                log.info("    Obs migrated: " + batchesMigrated * batchSize + " / " + tmpObsCount)
+            }
         }
     }
 }

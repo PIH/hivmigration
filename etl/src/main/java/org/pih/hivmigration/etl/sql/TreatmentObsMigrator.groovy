@@ -1,5 +1,8 @@
 package org.pih.hivmigration.etl.sql
 
+import com.fasterxml.jackson.module.scala.introspect.ScalaAnnotationIntrospector
+import org.apache.commons.dbutils.handlers.ScalarHandler
+
 class TreatmentObsMigrator extends ObsMigrator {
 
     @Override
@@ -58,7 +61,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             CREATE TABLE hivmigration_prophylaxis (
                 obs_group_id int primary key auto_increment,
                 name varchar(80),
-                start boolean,
+                start_date datetime,
                 cont boolean,
                 stopped boolean,
                 other_value varchar(80),
@@ -75,10 +78,15 @@ class TreatmentObsMigrator extends ObsMigrator {
             CREATE PROCEDURE load_prophylaxis(_txName varchar(80))
             BEGIN
                 INSERT INTO hivmigration_prophylaxis
-                    (name, start, cont, stopped, other_value, source_encounter_id, encounter_date)
+                    (name, start_date, cont, stopped, other_value, source_encounter_id, encounter_date)
                 SELECT
-                    _txName,
-                    IF(MAX(base.ordered = _txName), TRUE, FALSE) AS start,
+                   CASE  -- normalize to the names used in the follow-up form
+                       WHEN _txName = 'tmp_smx_prophylaxis' THEN 'CTX'
+                       WHEN _txName = 'inh_prophylaxis' THEN 'Isoniazid'
+                       WHEN _txName LIKE 'fluconazole%' THEN 'Fluconazole'
+                       WHEN _txName = 'other_prophylaxis' THEN 'other'
+                       END,
+                    IF(MAX(base.ordered = _txName), he.encounter_date, NULL) AS start_date,  -- use current date if Initée is checked
                     IF(MAX(base.ordered = CONCAT(_txName, '_continue')), TRUE, FALSE) AS cont,
                     IF(MAX(base.ordered = CONCAT(_txName, '_stopped')), TRUE, FALSE) AS stopped,
                     other.comments AS other_value,
@@ -98,10 +106,63 @@ class TreatmentObsMigrator extends ObsMigrator {
             CALL load_prophylaxis('tmp_smx_prophylaxis');
             CALL load_prophylaxis('inh_prophylaxis');
             CALL load_prophylaxis('fluconazole');
+            CALL load_prophylaxis('fluconazole_low');
+            CALL load_prophylaxis('fluconazole_high');
+            CALL load_prophylaxis('mosquito_net');
             CALL load_prophylaxis('other_prophylaxis');
             
             DROP PROCEDURE load_prophylaxis;
         ''')
+
+        executeMysql("Load intermediate prophylaxis table from follow-up form", '''
+            DROP PROCEDURE IF EXISTS load_follow_up_prophylaxis;
+            DELIMITER $$ ;
+            CREATE PROCEDURE load_follow_up_prophylaxis(_txName varchar(80))
+            BEGIN
+                INSERT INTO hivmigration_prophylaxis
+                (name, source_encounter_id, encounter_date)
+                SELECT
+                    _txName,
+                    base.source_encounter_id,
+                    he.encounter_date
+                FROM hivmigration_observations base
+                JOIN hivmigration_encounters he ON base.source_encounter_id = he.source_encounter_id
+                WHERE base.observation = CONCAT('current_tx.prophylaxis_', _txName)
+                GROUP BY base.source_encounter_id;
+                
+                -- Insert start date. MySQL offers no way to validate dates without throwing an error, so we do
+                -- this in two steps. First, add the dates using IGNORE, while attempting to correct any invalid dates.
+                -- Then, validate that none of the dates that were added are invalid.
+                -- The only kind of invalid dates in the data (at time of writing) are ones for which day values
+                -- that exceed the month length. For these, we use the first day of the following month.
+                UPDATE IGNORE hivmigration_prophylaxis pro
+                JOIN hivmigration_observations start
+                ON  pro.source_encounter_id = start.source_encounter_id
+                    AND start.observation = CONCAT('current_tx.prophylaxis_', _txName, '_start_date')
+                    AND start.value IS NOT NULL
+                SET start_date = IF(DAYNAME(start.value) IS NOT NULL,
+                                    start.value,
+                                    CONCAT(LEFT(start.value, 6), CAST(SUBSTR(start.value, 6, 2) AS UNSIGNED)+1, '-01'))
+                WHERE start_date != '0000-00-00 00:00:00';  -- Leave these as NULL
+            END $$
+            DELIMITER ;
+            
+            CALL load_follow_up_prophylaxis('CTX');
+            CALL load_follow_up_prophylaxis('Fluconazole');
+            CALL load_follow_up_prophylaxis('Isoniazid');
+            DROP PROCEDURE load_follow_up_prophylaxis;
+        ''')
+
+        // Check that there are no invalid dates
+        Long numInvalidDates = selectMysql('''
+            SELECT count(start_date)
+            FROM hivmigration_prophylaxis
+            WHERE start_date IS NOT NULL AND DAYNAME(start_date) IS NULL;''',
+            new ScalarHandler()
+        )
+        if (numInvalidDates > 0) {
+            throw new Error("Invalid dates were inserted into the hivmigration_prophylaxis table's `start_date` column. Please review the data in that column and fix the logic by which it is inserted.")
+        }
 
         executeMysql("Create obsgroups for prophylaxis prescriptions", '''
             INSERT INTO tmp_obs (obs_id, concept_uuid, source_encounter_id)
@@ -115,37 +176,49 @@ class TreatmentObsMigrator extends ObsMigrator {
                    source_encounter_id,
                    concept_uuid_from_mapping('CIEL', '1282'),
                    CASE name
-                       WHEN 'tmp_smx_prophylaxis' THEN concept_uuid_from_mapping('CIEL', '105281')
-                       WHEN 'inh_prophylaxis' THEN concept_uuid_from_mapping('CIEL', '78280')
-                       WHEN 'fluconazole' THEN concept_uuid_from_mapping('CIEL', '76488')
-                       WHEN 'other_prophylaxis' THEN concept_uuid_from_mapping('PIH', '3120')
-                    END,
+                       WHEN 'CTX' THEN concept_uuid_from_mapping('CIEL', '105281')
+                       WHEN 'Isoniazid' THEN concept_uuid_from_mapping('CIEL', '78280')
+                       WHEN 'Fluconazole' THEN concept_uuid_from_mapping('CIEL', '76488')
+                       END,
                    obs_group_id
-            FROM hivmigration_prophylaxis;
+            FROM hivmigration_prophylaxis
+            WHERE name IN ('CTX', 'Isoniazid', 'Fluconazole');
         ''')
 
         executeMysql("Add treatment other value", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text, obs_group_id)
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, comments, obs_group_id)
             SELECT
                 source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '163526'),
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', '3120'),
                 other_value,
                 obs_group_id
             FROM hivmigration_prophylaxis
-            WHERE name = 'other_prophylaxis';
+            WHERE name = 'other';
         ''')
-        // TODO: include old prophylaxes
 
-        // Set start date if prophylaxis has Inite
+        // Right now this is just mosquito_net
+        executeMysql("Add old prophylaxes", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, comments, obs_group_id)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', '3120'),
+                name,
+                obs_group_id
+            FROM hivmigration_prophylaxis
+            WHERE name NOT IN ('CTX', 'Isoniazid', 'Fluconazole', 'other');
+        ''')
+
         executeMysql("Add treatment started date", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime, obs_group_id)
             SELECT
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '163526'),
-                encounter_date,
+                start_date,
                 obs_group_id
             FROM hivmigration_prophylaxis
-            WHERE start = 1;
+            WHERE start_date IS NOT NULL;
         ''')
         // TODO: populate start date for the same prophylaxis on subsequent forms
 
@@ -160,7 +233,7 @@ class TreatmentObsMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('CIEL', '1065'),
                 obs_group_id
             FROM hivmigration_prophylaxis
-            WHERE start = 1 OR cont = 1;
+            WHERE start_date IS NOT NULL OR cont = 1;
         ''')
 
         // TODO: migrate reason stopped
@@ -206,7 +279,6 @@ class TreatmentObsMigrator extends ObsMigrator {
         migrate_tmp_obs()
         create_tmp_obs_table()
 
-        // TODO: map the common arv_regimen_other values into the new regimens
         executeMysql("Set up for ARV Regimen migration", '''
             CREATE TABLE hivmigration_arv_regimen (
                 obs_group_id int primary key auto_increment,
@@ -216,59 +288,99 @@ class TreatmentObsMigrator extends ObsMigrator {
         ''')
         setAutoIncrement('hivmigration_arv_regimen', '(select max(obs_id)+1 from obs)')
 
-        executeMysql("Migrate ARV Regimen", '''
+        executeMysql("Populate ARV regimen staging table", '''
             INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
             SELECT source_encounter_id, comments
             FROM hivmigration_ordered_other
             WHERE ordered = 'arv_regimen';
             
             INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
+            SELECT source_encounter_id, comments
+            FROM hivmigration_ordered_other
+            WHERE ordered = 'arv_regimen_other';
+            
+            INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
             SELECT source_encounter_id, value
             FROM hivmigration_observations
             WHERE observation = 'current_tx.art';
             
+            INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
+            SELECT source_encounter_id, value
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.art_other'
+                AND LENGTH(TRIM(value)) > 0;  -- skip one weird entry that's 297 chars of whitespace
+        ''')
+
+        executeMysql("Create ARV regimen obs group ", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, obs_id)
             SELECT source_encounter_id, concept_uuid_from_mapping('PIH', '10742'), obs_group_id
             FROM hivmigration_arv_regimen;
+        ''')
 
+        executeMysql("Migrate known ARV regimens into coded obs",'''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
             SELECT
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '1282'),
                 CASE
-                    WHEN comments IN ('azt_3tc_efv', 'AZT_3TC_EFV') THEN concept_uuid_from_mapping('CIEL', '160124')
-                    WHEN comments IN ('azt_3tc_nvp', 'AZT_3TC_NVP') THEN concept_uuid_from_mapping('CIEL', '1652')
-                    WHEN comments IN ('d4t_3tc_efv', 'D4T_3TC_EFV') THEN concept_uuid_from_mapping('CIEL', '160104')
-                    WHEN comments IN ('d4t_3tc_nvp', 'D4T_3TC_NVP') THEN concept_uuid_from_mapping('CIEL', '792')
+                    WHEN comments LIKE 'azt%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164511')
+                    WHEN comments LIKE 'azt%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160124')
+                    WHEN comments LIKE 'azt%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '1652')
+                    WHEN comments LIKE 'd4t%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160104')
+                    WHEN comments LIKE 'd4t%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '792')
+                    WHEN comments LIKE 'tdf%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164512')
+                    WHEN comments LIKE 'tdf%3tc%dtg' THEN concept_uuid_from_mapping('CIEL', '165086')
+                    WHEN comments LIKE 'tdf%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '164505')
+                    WHEN comments LIKE 'tdf%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '162565')
                     ELSE concept_uuid_from_mapping('CIEL', '5424')  -- other
                     END,
                 obs_group_id
             FROM hivmigration_arv_regimen;
         ''')
 
-        migrate_tmp_obs()
-        create_tmp_obs_table()
-
-        executeMysql("Migrate old ARV Regimens into other text box", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text)
+        executeMysql("Migrate old ARV Regimens into 'other' text box", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text, obs_group_id)
             SELECT
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '5424'),
-                comments
-            FROM hivmigration_ordered_other
-            WHERE ordered = 'arv_regimen'
-                AND comments NOT IN ('azt_3tc_efv', 'azt_3tc_nvp', 'd4t_3tc_efv', 'd4t_3tc_nvp', 'other');
+                comments,
+                obs_group_id
+            FROM hivmigration_arv_regimen
+            WHERE comments NOT LIKE 'azt%3tc%atv/r'
+              AND comments NOT LIKE 'azt%3tc%efv' 
+              AND comments NOT LIKE 'azt%3tc%nvp' 
+              AND comments NOT LIKE 'd4t%3tc%efv' 
+              AND comments NOT LIKE 'd4t%3tc%nvp' 
+              AND comments NOT LIKE 'tdf%3tc%atv/r'
+              AND comments NOT LIKE 'tdf%3tc%dtg'
+              AND comments NOT LIKE 'tdf%3tc%efv' 
+              AND comments NOT LIKE 'tdf%3tc%nvp';
         ''')
 
-        executeMysql("Migrate ARV Other text", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text)
+        executeMysql("Migrate ART start date from follow-up form", '''
+            INSERT IGNORE INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime)
             SELECT
                 source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '5424'),
-                comments
-            FROM hivmigration_ordered_other
-            WHERE ordered = 'arv_regimen_other';
+                concept_uuid_from_mapping('CIEL', '159599'),
+                IF(DAYNAME(value) IS NOT NULL,
+                   value,
+                   CONCAT(LEFT(value, 6), CAST(SUBSTR(value, 6, 2) AS UNSIGNED)+1, '-01'))
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.art_start_date';
+            
+            DELETE FROM tmp_obs
+            WHERE value_datetime = '0000-00-00';
         ''')
+        // Check that there are no invalid dates
+        numInvalidDates = selectMysql('''
+                SELECT count(value_datetime)
+                FROM tmp_obs
+                WHERE value_datetime IS NOT NULL AND DAYNAME(value_datetime) IS NULL;''',
+                new ScalarHandler()
+        )
+        if (numInvalidDates > 0) {
+            throw new Error("Invalid dates were inserted into the hivmigration_prophylaxis table's `start_date` column. Please review the data in that column and fix the logic by which it is inserted.")
+        }
 
         migrate_tmp_obs()
         create_tmp_obs_table()
@@ -292,6 +404,20 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE observation = 'tb_treatment_needed' AND value IS NOT NULL;
         ''')
 
+        executeMysql("Migrate TB treatment from follow-up form", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '6150'),
+                CASE
+                    WHEN value LIKE 'tb_initial%' OR value LIKE 'tb_infant%' THEN concept_uuid_from_mapping('PIH', '2125')
+                    WHEN value LIKE 'tb_retreatment%%' THEN concept_uuid_from_mapping('PIH', '13011')
+                    WHEN value = 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')
+                    END
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.tb' AND value IS NOT NULL AND value != 'none';
+        ''')
+
         executeMysql("Migrate TB treatment start date", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime)
             SELECT
@@ -299,7 +425,15 @@ class TreatmentObsMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('CIEL', '1113'),
                 comments
             FROM hivmigration_ordered_other
-            WHERE ordered = 'tb_start_date';
+            WHERE ordered = 'tb_start_date' AND comments IS NOT NULL;
+            
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '1113'),
+                value
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.tb_start_date AND value IS NOT NULL';
         ''')
 
         // TODO: map 'hrez', '2S+HRZE_1HRZE_5HR+E'
