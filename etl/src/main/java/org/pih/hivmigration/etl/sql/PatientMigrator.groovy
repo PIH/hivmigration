@@ -168,7 +168,7 @@ class PatientMigrator extends SqlMigrator {
 
         // TODO: see https://pihemr.atlassian.net/browse/UHM-4817
         executeMysql("Note NULL names", '''
-            INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)
+            INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, priority, note)
             SELECT
                 person_id,
                 CASE
@@ -177,6 +177,7 @@ class PatientMigrator extends SqlMigrator {
                     WHEN family_name IS NULL THEN 'family name'
                 END,
                 NULL,
+                'WARN',
                 'Patient missing name. Defaulted to "UNKNOWN"'
             FROM person_name
             WHERE (given_name IS NULL OR family_name IS NULL)
@@ -215,8 +216,8 @@ class PatientMigrator extends SqlMigrator {
             order by person_id
         ''')
         executeMysql("Note long addresses", '''
-            INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)
-            SELECT p.person_id, 'address', pa.address, 'Address too long. Truncated to 255 characters.'
+            INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, priority, note)
+            SELECT p.person_id, 'address', pa.address, 'WARN', 'Address too long. Truncated to 255 characters.'
             FROM  hivmigration_patient_addresses pa, hivmigration_patients p
             WHERE pa.source_patient_id = p.source_patient_id AND LENGTH(pa.address) > 255;
         ''')
