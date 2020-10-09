@@ -330,6 +330,18 @@ class PatientMigrator extends SqlMigrator {
             order by p.source_patient_id;
         ''')
 
+        executeMysql("Duplicate National IDs",
+                '''
+                INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)       
+                SELECT person_id, 'national_id', national_id, 'Duplicate National_ID' 
+                from hivmigration_patients where national_id in (      
+                        select distinct(national_id)
+                        from hivmigration_patients 
+                        where national_id is not null  
+                        group by national_id 
+                        having count(*) > 1 );   
+        ''')
+
         executeMysql("Insert Fiscal Numbers into Patient Identifier Table",
                 '''
             insert into patient_identifier(patient_id, uuid, identifier_type, location_id, identifier, preferred, creator, date_created)
@@ -350,6 +362,18 @@ class PatientMigrator extends SqlMigrator {
                 users u on u.uuid = hu.user_uuid
                 where p.nif_id is not null
                 order by p.source_patient_id;
+        ''')
+
+        executeMysql("Duplicate Fiscal Numbers",
+                '''
+                INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)       
+                SELECT person_id, 'nif_id', nif_id, 'Duplicate nif_id' 
+                from hivmigration_patients where nif_id in (      
+                        select distinct(nif_id)
+                        from hivmigration_patients 
+                        where nif_id is not null and nif_id != ' ' 
+                        group by nif_id 
+                        having count(*) > 1 );   
         ''')
 
         executeMysql('Insert Phone Numbers into Person Attribute Table',
