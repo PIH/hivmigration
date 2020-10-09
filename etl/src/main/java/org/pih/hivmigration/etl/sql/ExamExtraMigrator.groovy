@@ -15,13 +15,12 @@ class ExamExtraMigrator extends ObsMigrator {
 
         // note any next_exam_dates not on intake and followup form
         loadFromOracleToMySql('''
-            INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, priority, note) values(?,?,?,?,?,?) 
+            INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note) values(?,?,?,?,?) 
             ''', '''
                 select  e.patient_id as patient_id,
                         e.encounter_id as encounter_id,
                         'next_exam_date' as field_name,
                         to_char(x.next_exam_date, 'yyyy-mm-dd') as field_value,
-                        'WARN',
                         CONCAT('next_exam_date found on encounter of type ', e.type)
                 from hiv_exam_extra x,hiv_encounters e, hiv_demographics_real d 
                 where x.next_exam_date is not null and x.encounter_id = e.encounter_id and e.patient_id = d.patient_id

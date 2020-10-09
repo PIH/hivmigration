@@ -23,7 +23,6 @@ class Setup extends SqlMigrator {
                 encounter_id INT,
                 field_name VARCHAR(100),
                 field_value VARCHAR(1000),
-                priority VARCHAR(100),
                 note VARCHAR(1000)
             );
         ''')
