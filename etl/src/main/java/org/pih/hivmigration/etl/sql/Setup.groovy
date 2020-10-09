@@ -20,6 +20,7 @@ class Setup extends SqlMigrator {
             CREATE TABLE IF NOT EXISTS hivmigration_data_warnings (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 patient_id INT,
+                encounter_id INT,
                 field_name VARCHAR(100),
                 field_value VARCHAR(1000),
                 note VARCHAR(1000)
