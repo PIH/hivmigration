@@ -8,6 +8,7 @@ class VisitMigrator extends SqlMigrator {
             -- Get visit type "Clinic or Hospital Visit"
             SET @visit_type_id = (SELECT visit_type_id FROM visit_type WHERE uuid = 'f01c54cb-2225-471a-9cd5-d348552c337c');
             SET @encounter_type_exclusions = '';  -- a comma-separated string like '1,2,3'
+            SET @unknown_location_id = 1;
             
             INSERT INTO visit
             (patient_id,   visit_type_id,  date_started,   date_stopped,   location_id,   creator,   date_created, voided, uuid)
@@ -33,6 +34,14 @@ class VisitMigrator extends SqlMigrator {
                     AND Date(e.encounter_datetime) = Date(v.date_started)
             SET    e.visit_id = v.visit_id
             WHERE FIND_IN_SET(e.encounter_type, @encounter_type_exclusions) = 0;
+            
+            -- If a encounter location is "Unknown" and it's Visit Location is *not* "Unknown", update encounter with that location
+            UPDATE encounter e
+                INNER JOIN visit v
+                ON e.visit_id = v.visit_id
+            SET e.location_id = v.location_id
+            WHERE e.location_id = @unknown_location_id and v.location_id != @unknown_location_id
+            
         ''')
 
         executeMysql("Log visits with encounters at multiple locations",
