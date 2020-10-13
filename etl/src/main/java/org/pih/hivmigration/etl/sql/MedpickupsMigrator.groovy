@@ -162,11 +162,17 @@ class MedpickupsMigrator extends ObsMigrator {
              SET @dispensing_location_concept_uuid = '6c2f54c5-e3f5-44e7-b4bb-215cfdab5e82';
              SET @community_health_location_concept_uuid = '5d4db9da-ae1e-4863-98de-cd5095c01cc8';
             
-             INSERT INTO tmp_obs (value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
-             SELECT IF(dac=true, @community_health_location_concept_uuid, null), 
-                source_patient_id, source_encounter_id, @dispensing_location_concept_uuid
+             INSERT INTO tmp_obs (
+                    value_coded_uuid, 
+                    source_patient_id, 
+                    source_encounter_id, 
+                    concept_uuid)
+             SELECT @community_health_location_concept_uuid, 
+                    source_patient_id, 
+                    source_encounter_id, 
+                    @dispensing_location_concept_uuid
              FROM hivmigration_dispensing
-             WHERE dac is not null;
+             WHERE dac = true;
             
              -- Treatment Line
              SET @arv_regimen_concept_uuid = '0c709500-0cf8-4959-b244-3e9d24dcacc0';
