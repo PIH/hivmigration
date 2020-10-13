@@ -35,6 +35,25 @@ class VisitMigrator extends SqlMigrator {
             WHERE FIND_IN_SET(e.encounter_type, @encounter_type_exclusions) = 0;
         ''')
 
+        executeMysql("Log visits with encounters at multiple locations",
+                 '''
+                INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, encounter_date, field_name, field_value, note)  
+                select
+                    src_p.source_patient_id as patient_id,
+                    src_e.source_encounter_id as encounter_id,
+                    src_e.encounter_date as encounter_date,
+                    'encounter_location' as field_name,
+                    CONCAT(e_loc.name, ", ", v_loc.name) as field_value,
+                    'Patient has encounters at different locations on same day' as note
+                from encounter e, visit v, location v_loc, location e_loc, hivmigration_patients src_p, hivmigration_encounters src_e
+                where e.visit_id=v.visit_id
+                    and e.location_id != v.location_id
+                    and src_p.person_id = e.patient_id
+                    and src_e.encounter_id = e.encounter_id
+                    and e.location_id = e_loc.location_id
+                    and v.location_id = v_loc.location_id;
+            ''')
+
     }
 
     void revert() {
