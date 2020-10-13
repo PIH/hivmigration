@@ -436,20 +436,22 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE observation = 'current_tx.tb_start_date AND value IS NOT NULL';
         ''')
 
-        // TODO: map 'hrez', '2S+HRZE_1HRZE_5HR+E'
         executeMysql("Migrate TB regimen", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
             SELECT
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', '6150'),
                 CASE comments
-                    WHEN '2HRZE_4HR' THEN concept_uuid_from_mapping('PIH', '2125')  -- 'Initial'
+                    WHEN '2HRZE_4HR' THEN concept_uuid_from_mapping('PIH', '2RHEZ / 4RH')  -- 'Initial'
                     WHEN 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')  -- 'MDR TB'
+                    WHEN 'hrez' THEN concept_uuid_from_mapping('PIH', 'HRZE')
+                    WHEN '2S+HRZE_1HRZE_5HR+E' THEN concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
                 END
             FROM hivmigration_ordered_other
             WHERE ordered = 'tb_treatment';
         ''')
 
+        // TODO: migrate 'other' TB treatments
         migrate_tmp_obs()
     }
 
