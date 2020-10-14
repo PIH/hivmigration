@@ -100,7 +100,7 @@ class EncounterMigrator extends SqlMigrator {
                 where e.source_location_id = hc.hiv_emr_id;
             ''')
 
-        executeMysql("Nonsensical encounter date",
+        executeMysql("Log warnings about encounters with nonsensical encounter dates",
                 '''
                 INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)       
                 SELECT p.person_id as patient_id, 
@@ -113,7 +113,7 @@ class EncounterMigrator extends SqlMigrator {
                 and e.source_patient_id = p.source_patient_id;  
         ''')
 
-        executeMysql("Before system roll-out encounters",
+        executeMysql("Log warnings about encounters with dates before system roll-out date, October 1, 2002",
                 '''
                 INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)       
                 SELECT p.person_id as patient_id, 
@@ -126,7 +126,7 @@ class EncounterMigrator extends SqlMigrator {
                 and e.source_patient_id = p.source_patient_id;  
         ''')
 
-        executeMysql("Future encounters",
+        executeMysql("Log warnings about encounters with future dates",
                 '''
                 INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)       
                 SELECT p.person_id as patient_id, 
@@ -139,7 +139,7 @@ class EncounterMigrator extends SqlMigrator {
                 and e.source_patient_id = p.source_patient_id;  
         ''')
 
-        executeMysql("Encounter date after entry date",
+        executeMysql("Log warnings about encounters with encounter date after the entry date",
                 '''
                 INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)       
                 SELECT p.person_id as patient_id, 
