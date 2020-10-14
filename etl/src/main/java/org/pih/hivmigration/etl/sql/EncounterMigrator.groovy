@@ -122,6 +122,19 @@ class EncounterMigrator extends SqlMigrator {
               and e.encounter_date is not null   # TODO: figure out what to do with these https://pihemr.atlassian.net/browse/UHM-3237
             ;
         ''')
+
+        executeMysql("Log warnings for encounters with null encounter dates", '''
+            INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, note)
+            SELECT patient_id,
+                   encounter_id,
+                   'encounter_date',
+                   CONCAT('Encounter date is null. Encounter not migrated to encounter table. ',
+                       'Source encounter_id ', source_encounter_id,
+                       '. Source patient_id ', source_patient_id,
+                       '. Source encounter_type ', source_encounter_type, '.')
+            FROM hivmigration_encounters
+            WHERE encounter_date IS NULL;
+        ''')
     }
 
     void revert() {

@@ -25,7 +25,7 @@ class ProviderMigrator extends SqlMigrator {
                     select EXAMINING_DOCTOR as name from HIV_INTAKE_FORMS UNION
                     select  EXAMINING_DOCTOR as name from HIV_FOLLOWUP_FORMS) n 
                 order by UPPER(TRIM(n.name))
-            ''');
+            ''')
     }
 
     @Override
