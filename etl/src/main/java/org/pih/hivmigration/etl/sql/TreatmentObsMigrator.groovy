@@ -408,10 +408,10 @@ class TreatmentObsMigrator extends ObsMigrator {
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
             SELECT
                 source_encounter_id,
-                concept_uuid_from_mapping('PIH', '6150'),
+                concept_uuid_from_mapping('CIEL', '159792'),
                 CASE
-                    WHEN value LIKE 'tb_initial%' OR value LIKE 'tb_infant%' THEN concept_uuid_from_mapping('CIEL', '159792')
-                    WHEN value LIKE 'tb_retreatment%%' THEN concept_uuid_from_mapping('CIEL', '159795')
+                    WHEN value LIKE 'tb_initial%' OR value LIKE 'tb_infant%' THEN concept_uuid_from_mapping('CIEL', '159795')
+                    WHEN value LIKE 'tb_retreatment%' THEN concept_uuid_from_mapping('CIEL', '159793')
                     WHEN value = 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')
                     END
             FROM hivmigration_observations
