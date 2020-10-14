@@ -1,1 +1,0 @@
-delete from obs where uuid in (select exam_extra_uuid from hivmigration_exam_extra);
