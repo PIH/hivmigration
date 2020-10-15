@@ -21,6 +21,7 @@ class Setup extends SqlMigrator {
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 patient_id INT,
                 encounter_id INT,
+                encounter_date DATE,
                 field_name VARCHAR(100),
                 field_value VARCHAR(1000),
                 note VARCHAR(1000)
