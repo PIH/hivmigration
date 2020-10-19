@@ -119,7 +119,7 @@ class EncounterMigrator extends SqlMigrator {
             left join
               hivmigration_users hu on e.source_creator_id = hu.source_user_id
             where e.encounter_type_id is not null  # TODO: still need to migrate 'note' and 'regime' https://pihemr.atlassian.net/browse/UHM-3244
-              and e.encounter_date is not null   # TODO: figure out what to do with these https://pihemr.atlassian.net/browse/UHM-3237
+              and e.encounter_date is not null
             ;
         ''')
 
