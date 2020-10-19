@@ -125,14 +125,15 @@ class EncounterMigrator extends SqlMigrator {
 
         executeMysql("Log warnings for encounters with null encounter dates", '''
             INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, note)
-            SELECT patient_id,
-                   encounter_id,
+            SELECT p.person_id,
+                   e.encounter_id,
                    'encounter_date',
                    CONCAT('Encounter date is null. Encounter not migrated to encounter table. ',
-                       'Source encounter_id ', source_encounter_id,
-                       '. Source patient_id ', source_patient_id,
-                       '. Source encounter_type ', source_encounter_type, '.')
-            FROM hivmigration_encounters
+                          'Source encounter_id ', e.source_encounter_id,
+                          '. Source patient_id ', e.source_patient_id,
+                          '. Source encounter_type ', e.source_encounter_type, '.')
+            FROM hivmigration_encounters e
+            JOIN hivmigration_patients p ON p.source_patient_id = e.source_patient_id
             WHERE encounter_date IS NULL;
         ''')
     }
