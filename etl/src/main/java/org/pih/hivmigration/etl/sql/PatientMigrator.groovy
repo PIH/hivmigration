@@ -330,7 +330,7 @@ class PatientMigrator extends SqlMigrator {
             order by p.source_patient_id;
         ''')
 
-        executeMysql("Duplicate National IDs",
+        executeMysql("Log warnings about duplicate National IDs",
                 '''
                 INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)       
                 SELECT person_id, 'national_id', national_id, 'Duplicate National_ID' 
@@ -364,7 +364,7 @@ class PatientMigrator extends SqlMigrator {
                 order by p.source_patient_id;
         ''')
 
-        executeMysql("Duplicate Fiscal Numbers",
+        executeMysql("Log warnings about duplicate Fiscal Numbers",
                 '''
                 INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)       
                 SELECT person_id, 'nif_id', nif_id, 'Duplicate nif_id' 
