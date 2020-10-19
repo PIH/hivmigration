@@ -313,7 +313,7 @@ class TreatmentObsMigrator extends ObsMigrator {
 
         executeMysql("Create ARV regimen obs group ", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, obs_id)
-            SELECT source_encounter_id, concept_uuid_from_mapping('PIH', '10742'), obs_group_id
+            SELECT source_encounter_id, concept_uuid_from_mapping('PIH', '1282'), obs_group_id
             FROM hivmigration_arv_regimen;
         ''')
 
@@ -321,7 +321,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
             SELECT
                 source_encounter_id,
-                concept_uuid_from_mapping('PIH', '6116'),
+                concept_uuid_from_mapping('PIH', '1613'),
                 CASE
                     WHEN comments LIKE 'azt%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164511')
                     WHEN comments LIKE 'azt%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160124')
