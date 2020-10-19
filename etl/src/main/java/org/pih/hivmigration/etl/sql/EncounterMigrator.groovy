@@ -118,9 +118,22 @@ class EncounterMigrator extends SqlMigrator {
                 hivmigration_patients p on e.source_patient_id = p.source_patient_id 
             left join
               hivmigration_users hu on e.source_creator_id = hu.source_user_id
-            where e.encounter_type_id is not null  -- TODO: still need to migrate 'note' and 'regime' https://pihemr.atlassian.net/browse/UHM-3244
-              and e.encounter_date is not null   -- The encounters without encounter_dates have no data
+            where e.encounter_type_id is not null  # TODO: still need to migrate 'note' and 'regime' https://pihemr.atlassian.net/browse/UHM-3244
+              and e.encounter_date is not null   # TODO: figure out what to do with these https://pihemr.atlassian.net/browse/UHM-3237
             ;
+        ''')
+
+        executeMysql("Log warnings for encounters with null encounter dates", '''
+            INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, note)
+            SELECT patient_id,
+                   encounter_id,
+                   'encounter_date',
+                   CONCAT('Encounter date is null. Encounter not migrated to encounter table. ',
+                       'Source encounter_id ', source_encounter_id,
+                       '. Source patient_id ', source_patient_id,
+                       '. Source encounter_type ', source_encounter_type, '.')
+            FROM hivmigration_encounters
+            WHERE encounter_date IS NULL;
         ''')
     }
 
