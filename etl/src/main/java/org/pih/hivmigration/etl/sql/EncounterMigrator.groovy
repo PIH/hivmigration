@@ -154,24 +154,23 @@ class EncounterMigrator extends SqlMigrator {
 
         executeMysql("Load encounter table from staging table", '''
             insert into encounter (encounter_id, uuid, encounter_datetime, date_created, encounter_type, form_id, patient_id, creator, location_id)
-            select 
+            select
                 e.encounter_id,
                 e.encounter_uuid,
-                e.encounter_date,
+                IF(e.encounter_date IS NULL, e.date_created, e.encounter_date),
                 e.date_created,
                 e.encounter_type_id,
                 e.form_id,
                 p.person_id,
                 COALESCE(hu.user_id, 1),
                 COALESCE(e.location_id, 1)
-            from 
-                hivmigration_encounters e 
-            inner join 
-                hivmigration_patients p on e.source_patient_id = p.source_patient_id 
-            left join
-              hivmigration_users hu on e.source_creator_id = hu.source_user_id
+            from
+                hivmigration_encounters e
+                    inner join
+                hivmigration_patients p on e.source_patient_id = p.source_patient_id
+                    left join
+                hivmigration_users hu on e.source_creator_id = hu.source_user_id
             where e.encounter_type_id is not null  # TODO: still need to migrate 'note' and 'regime' https://pihemr.atlassian.net/browse/UHM-3244
-              and e.encounter_date is not null
             ;
         ''')
 
@@ -180,7 +179,7 @@ class EncounterMigrator extends SqlMigrator {
             SELECT p.person_id,
                    e.encounter_id,
                    'encounter_date',
-                   CONCAT('Encounter date is null. Encounter not migrated to encounter table. ',
+                   CONCAT('Encounter date is null. `date_created` used as encounter date. ',
                           'Source encounter_id ', e.source_encounter_id,
                           '. Source patient_id ', e.source_patient_id,
                           '. Source encounter_type ', e.source_encounter_type, '.')
