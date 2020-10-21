@@ -60,15 +60,6 @@ class ExamExtraMigrator extends ObsMigrator {
 
         migrate_tmp_obs()
 
-        executeMysql("Create staging table for migrating transfer_p obs", '''
-            create table hivmigration_transfer_p (                            
-              source_encounter_id int PRIMARY KEY,
-              source_patient_id int,                            
-              transfer_p BOOLEAN,               
-              obs_date date             
-            );
-        ''')
-
         executeMysql("Create staging table for migrating transfer_out_to obs", '''
             create table hivmigration_transfer_out_to (                            
               source_encounter_id int PRIMARY KEY,
@@ -76,27 +67,6 @@ class ExamExtraMigrator extends ObsMigrator {
               transfer_out_to VARCHAR(48) ,               
               obs_date date             
             );
-        ''')
-
-        loadFromOracleToMySql('''
-            insert into hivmigration_transfer_p
-                (source_encounter_id,
-                 source_patient_id,
-                 transfer_p,
-                 obs_date)
-            values (?, ?, ?, ?)
-            ''', '''
-            select o.encounter_id as source_encounter_id,
-                    e.patient_id as source_patient_id,         
-                    case o.value 
-                        when 't' then 1 
-                        when 'f' then 0 
-                        else null
-                    end transfer_p,
-                    to_char(o.entry_date, 'yyyy-mm-dd') as obs_date 
-             from hiv_observations o, hiv_encounters e 
-             where o.ENCOUNTER_ID = e.ENCOUNTER_ID and o.observation='transfer_p' and o.VALUE is not null 
-             order by o.ENCOUNTER_ID 
         ''')
 
         loadFromOracleToMySql('''
@@ -124,11 +94,7 @@ class ExamExtraMigrator extends ObsMigrator {
             SET @disposition_category = 'c8b22b09-e2f2-4606-af7d-e52579996de3'; 
             SET @transferred_out = '3cdd5c02-26fe-102b-80cb-0017a47871b2';           
             
-            INSERT INTO tmp_obs (value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT @transferred_out, source_patient_id, source_encounter_id, @disposition_category
-            FROM hivmigration_transfer_p
-            WHERE transfer_p = 1;  
-                        
+                         
             INSERT INTO tmp_obs (value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
             SELECT @transferred_out, source_patient_id, source_encounter_id, @disposition_category
             FROM hivmigration_transfer_out_to
@@ -176,7 +142,6 @@ class ExamExtraMigrator extends ObsMigrator {
                     );          
         ''')
         executeMysql("drop table if exists hivmigration_exam_extra")
-        executeMysql("drop table if exists hivmigration_transfer_p")
         executeMysql("drop table if exists hivmigration_transfer_out_to")
     }
 }
