@@ -78,7 +78,7 @@ class InfantMigrator extends SqlMigrator {
 
         // TODO: see https://pihemr.atlassian.net/browse/UHM-4817
         executeMysql("Note NULL names", '''
-            INSERT INTO hivmigration_data_warnings (patient_id, field_name, field_value, note)
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, field_name, field_value, warning_type)
             SELECT
                 person_id,
                 CASE

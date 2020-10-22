@@ -102,12 +102,13 @@ class EncounterMigrator extends SqlMigrator {
 
         executeMysql("Log warnings about encounters with nonsensical encounter dates",
                 '''
-                INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)       
+                INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, encounter_date, field_name, field_value, warning_type)       
                 SELECT p.person_id as patient_id, 
                        e.encounter_id as encounter_id, 
+                       e.encounter_date as encounter_date,
                        'encounter_date' as field_name,
                        e.encounter_date as field_value,
-                       'Encounter with nonsensical date' as note
+                       'Encounter with nonsensical date' as warning_type
                 from hivmigration_encounters e, hivmigration_patients p
                 where (e.encounter_date < '1990-01-01' or e.encounter_date > date_add(now(), INTERVAL 5 YEAR)) 
                 and e.source_patient_id = p.source_patient_id;  
@@ -115,12 +116,13 @@ class EncounterMigrator extends SqlMigrator {
 
         executeMysql("Log warnings about encounters with dates before system roll-out date, October 1, 2002",
                 '''
-                INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)       
+                INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, encounter_date, field_name, field_value, warning_type)       
                 SELECT p.person_id as patient_id, 
                        e.encounter_id as encounter_id, 
+                       e.encounter_date as encounter_date,
                        'encounter_date' as field_name,
                        e.encounter_date as field_value,
-                       'Encounter before system roll out' as note
+                       'Encounter before system roll out' as warning_type
                 from hivmigration_encounters e, hivmigration_patients p
                 where (e.encounter_date > '1990-01-01' and e.encounter_date < '2002-10-01') 
                 and e.source_patient_id = p.source_patient_id;  
@@ -128,12 +130,13 @@ class EncounterMigrator extends SqlMigrator {
 
         executeMysql("Log warnings about encounters with future dates",
                 '''
-                INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)       
+                INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, encounter_date, field_name, field_value, warning_type)       
                 SELECT p.person_id as patient_id, 
                        e.encounter_id as encounter_id, 
+                       e.encounter_date as encounter_date,
                        'encounter_date' as field_name,
                        e.encounter_date as field_value,
-                       'Encounter in the future' as note
+                       'Encounter in the future' as warning_type
                 from hivmigration_encounters e, hivmigration_patients p
                 where (e.encounter_date > now() and e.encounter_date < date_add(now(), INTERVAL 5 YEAR)) 
                 and e.source_patient_id = p.source_patient_id;  
@@ -141,12 +144,13 @@ class EncounterMigrator extends SqlMigrator {
 
         executeMysql("Log warnings about encounters with encounter date after the entry date",
                 '''
-                INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)       
+                INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, encounter_date, field_name, field_value, warning_type)       
                 SELECT p.person_id as patient_id, 
                        e.encounter_id as encounter_id, 
+                       e.encounter_date as encounter_date,
                        'encounter_date' as field_name,
                        e.encounter_date as field_value,
-                       'Encounter date after entry date' as note
+                       'Encounter date after entry date' as warning_type
                 from hivmigration_encounters e, hivmigration_patients p
                 where e.encounter_date > e.date_created  
                 and e.source_patient_id = p.source_patient_id;  
@@ -176,14 +180,12 @@ class EncounterMigrator extends SqlMigrator {
         ''')
 
         executeMysql("Log warnings for encounters with null encounter dates", '''
-            INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, note)
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, warning_type, warning_details)
             SELECT p.person_id,
                    e.encounter_id,
                    'encounter_date',
-                   CONCAT('Encounter date is null. Encounter not migrated to encounter table. ',
-                          'Source encounter_id ', e.source_encounter_id,
-                          '. Source patient_id ', e.source_patient_id,
-                          '. Source encounter_type ', e.source_encounter_type, '.')
+                   'Encounter date is null. `date_created` used as encounter date.',
+                   CONCAT('Source encounter_type :', e.source_encounter_type)
             FROM hivmigration_encounters e
             JOIN hivmigration_patients p ON p.source_patient_id = e.source_patient_id
             WHERE encounter_date IS NULL;
