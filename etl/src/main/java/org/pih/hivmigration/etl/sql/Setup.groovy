@@ -16,6 +16,12 @@ class Setup extends SqlMigrator {
             DELIMITER ;
         ''')
 
+        executeMysql('''
+            DROP FUNCTION IF EXISTS is_number;
+            CREATE FUNCTION is_number (_value text) RETURNS boolean DETERMINISTIC
+            RETURN concat('', _value * 1) = _value;
+        ''')
+
         executeMysql("Create table for logging data irregularities", '''
             CREATE TABLE IF NOT EXISTS hivmigration_data_warnings (
                 id INT PRIMARY KEY AUTO_INCREMENT,
