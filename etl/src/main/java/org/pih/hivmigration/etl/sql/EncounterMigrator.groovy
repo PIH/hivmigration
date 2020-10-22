@@ -112,7 +112,7 @@ class EncounterMigrator extends SqlMigrator {
                 where (e.encounter_date < '1990-01-01' or e.encounter_date > date_add(now(), INTERVAL 5 YEAR)) 
                 and e.source_patient_id = p.source_patient_id;  
         ''')
-
+        /*
         executeMysql("Log warnings about encounters with dates before system roll-out date, October 1, 2002",
                 '''
                 INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)       
@@ -125,6 +125,7 @@ class EncounterMigrator extends SqlMigrator {
                 where (e.encounter_date > '1990-01-01' and e.encounter_date < '2002-10-01') 
                 and e.source_patient_id = p.source_patient_id;  
         ''')
+        */
 
         executeMysql("Log warnings about encounters with future dates",
                 '''
@@ -138,7 +139,7 @@ class EncounterMigrator extends SqlMigrator {
                 where (e.encounter_date > now() and e.encounter_date < date_add(now(), INTERVAL 5 YEAR)) 
                 and e.source_patient_id = p.source_patient_id;  
         ''')
-
+        /*
         executeMysql("Log warnings about encounters with encounter date after the entry date",
                 '''
                 INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)       
@@ -151,6 +152,7 @@ class EncounterMigrator extends SqlMigrator {
                 where e.encounter_date > e.date_created  
                 and e.source_patient_id = p.source_patient_id;  
         ''')
+        */
 
         executeMysql("Load encounter table from staging table", '''
             insert into encounter (encounter_id, uuid, encounter_datetime, date_created, encounter_type, form_id, patient_id, creator, location_id)
