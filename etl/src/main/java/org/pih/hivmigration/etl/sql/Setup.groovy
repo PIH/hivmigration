@@ -17,6 +17,7 @@ class Setup extends SqlMigrator {
         ''')
 
         executeMysql('''
+            -- Checks whether a string value represents a number. Allows trailing whitespace, but not leading whitespace.
             -- from https://stackoverflow.com/a/5065007/1464495
             DROP FUNCTION IF EXISTS is_number;
             CREATE FUNCTION is_number (_value text) RETURNS boolean DETERMINISTIC
