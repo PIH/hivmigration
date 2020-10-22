@@ -52,26 +52,10 @@ class DataWarningsMigrator extends SqlMigrator {
                 dw.openmrs_encounter_id is not null;        
         ''')
 
-        executeMysql("Create aggregrate data warning table",  '''
-            CREATE TABLE IF NOT EXISTS hivmigration_aggregrate_data_warnings (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                warning_type VARCHAR(255),
-                count INT   
-            )
-        ''')
-
-        executeMysql("Calculate aggregrate warning counts", '''
-            INSERT INTO hivmigration_aggregrate_data_warnings (warning_type,count)
-            SELECT
-                warning_type, 
-                count(*) as count 
-            FROM hivmigration_data_warnings 
-            GROUP BY warning_type
-        ''')
     }
 
     @Override
     def void revert() {
-        executeMysql("DROP TABLE IF EXISTS hivmigration_aggregrate_warnings;")
+
     }
 }
