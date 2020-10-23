@@ -22,6 +22,8 @@ class LabResultMigrator extends ObsMigrator {
             );
         ''')
 
+        setAutoIncrement("hivmigration_lab_results", "(select max(obs_id)+1 from obs)")
+
         loadFromOracleToMySql('''
             insert into hivmigration_lab_results
                (source_patient_id,
@@ -59,7 +61,28 @@ class LabResultMigrator extends ObsMigrator {
             order by d.patient_id desc, e.encounter_id desc
         ''')
 
+        loadFromOracleToMySql('''
+            insert into hivmigration_lab_results
+               (source_patient_id,
+                source_encounter_id,                                
+                test_type,
+                value_boolean,
+                obs_datetime)
+            values (?, ?, ?, ?, ?)
+        ''', '''
+            select e.PATIENT_ID as source_patient_id,  
+                    e.ENCOUNTER_ID as source_encounter_id, 
+                    r.LAB_TEST,
+                    case when ( r.RESULT='t' ) then 1 else 0 end as value_boolean,
+                    case when (r.test_date is null) then to_char(e.encounter_date, 'yyyy-mm-dd') 
+                    else to_char(r.test_date, 'yyyy-mm-dd') 
+                    end as obs_datetime
+            from  HIV_EXAM_LAB_RESULTS r, hiv_encounters e 
+            where r.encounter_id = e.encounter_id and LAB_TEST='tr' and r.RESULT is not null
+        ''')
+
         create_tmp_obs_table()
+        setAutoIncrement("tmp_obs", "(select max(obs_id)+1 from hivmigration_lab_results)")
 
         executeMysql("Load lab results as observations",
         '''
@@ -130,13 +153,24 @@ class LabResultMigrator extends ObsMigrator {
             WHERE test_type = 'ppd';
 
             -- Rapid Test
-            --
-            INSERT INTO tmp_obs (value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
+            -- 
+            -- HIV rapid test set construct
+            INSERT INTO tmp_obs (obs_id, source_patient_id, source_encounter_id, concept_uuid)
             SELECT
-                IF(value_boolean=1, '3cd3a7a2-26fe-102b-80cb-0017a47871b2', '3cd28732-26fe-102b-80cb-0017a47871b2'),
+                obs_id,                     
                 source_patient_id,
                 source_encounter_id,
-                '3cd6c946-26fe-102b-80cb-0017a47871b2'
+                concept_uuid_from_mapping('PIH', '13135')
+            FROM hivmigration_lab_results
+            WHERE test_type = 'tr'; 
+            
+            INSERT INTO tmp_obs (obs_group_id, value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT  
+                obs_id,
+                IF(value_boolean=1, concept_uuid_from_mapping('CIEL', '703'), concept_uuid_from_mapping('CIEL', '664')),
+                source_patient_id,
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '163722')
             FROM hivmigration_lab_results
             WHERE test_type = 'tr';            
         ''')
