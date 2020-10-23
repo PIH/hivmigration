@@ -119,6 +119,7 @@ public class Migrator {
                 migrate(new ObsLoadingMigrator(), limit);
                 migrate(new TreatmentObsMigrator(), limit);
                 migrate(new VisitMigrator(), limit);
+                migrate(new DataWarningsMigrator(), limit);
                 if (deIdentify) {
                     migrate(new DeIdentifyMigrator(), -1);
                 }
