@@ -90,6 +90,7 @@ public class Migrator {
                 revert(new ObsLoadingMigrator());
                 revert(new MedpickupsMigrator());
                 revert(new VitalsMigrator());
+                revert(new ExamLabResultsMigrator());
                 revert(new ExamExtraMigrator());
                 revert(new LabResultMigrator());
                 revert(new EncounterMigrator());
@@ -114,6 +115,7 @@ public class Migrator {
                 migrate(new VitalsMigrator(), limit);
                 migrate(new MedpickupsMigrator(), limit);
                 migrate(new ExamExtraMigrator(), limit);
+                migrate(new ExamLabResultsMigrator(), limit);
                 migrate(new ObsLoadingMigrator(), limit);
                 migrate(new TreatmentObsMigrator(), limit);
                 migrate(new VisitMigrator(), limit);
