@@ -19,7 +19,8 @@ class ExamLabResultsMigrator extends ObsMigrator {
             ) VALUES (?, ?, ?, ?)
         ''',
         '''
-            SELECT encounter_id, lab_test, result, test_date FROM HIV_EXAM_LAB_RESULTS
+            SELECT encounter_id, lab_test, result, test_date 
+            FROM HIV_EXAM_LAB_RESULTS
         ''')
 
         create_tmp_obs_table()
@@ -35,10 +36,10 @@ class ExamLabResultsMigrator extends ObsMigrator {
                     END
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
-            JOIN encounter e on he.encounter_id = e.encounter_id
+            JOIN encounter e on he.encounter_id = e.encounter_id  -- only migrate lab results corresponding to an encounter that was successfully migrated
             WHERE
                 lab_test = 'cd4'    
-                AND is_number(result) OR result REGEXP '^\\d*\\s*mm$';
+                AND is_number(result) OR result REGEXP '^\\d*\\s*mm$';  -- e.g. '20 mm'
         ''')
 
         executeMysql("Log warning about invalid CD4 values", '''
