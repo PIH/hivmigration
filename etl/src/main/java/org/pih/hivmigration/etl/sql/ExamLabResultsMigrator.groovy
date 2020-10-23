@@ -112,7 +112,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
             WHERE lab_test = 'ppd' AND is_number(result);
         ''')
 
-        executeMysql("Log warning about invalid CD4 values", '''
+        executeMysql("Log warning about invalid PPD values", '''
             INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)
             SELECT
                 hp.person_id,
