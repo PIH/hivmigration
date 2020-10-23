@@ -22,6 +22,8 @@ class LabResultMigrator extends ObsMigrator {
             );
         ''')
 
+        setAutoIncrement("hivmigration_lab_results", "(select max(obs_id)+1 from obs)")
+
         loadFromOracleToMySql('''
             insert into hivmigration_lab_results
                (source_patient_id,
@@ -80,6 +82,7 @@ class LabResultMigrator extends ObsMigrator {
         ''')
 
         create_tmp_obs_table()
+        setAutoIncrement("tmp_obs", "(select max(obs_id)+1 from hivmigration_lab_results)")
 
         executeMysql("Load lab results as observations",
         '''
@@ -161,8 +164,9 @@ class LabResultMigrator extends ObsMigrator {
             FROM hivmigration_lab_results
             WHERE test_type = 'tr'; 
             
-            INSERT INTO tmp_obs (value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
+            INSERT INTO tmp_obs (obs_group_id, value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
             SELECT  
+                obs_id,
                 IF(value_boolean=1, concept_uuid_from_mapping('CIEL', '703'), concept_uuid_from_mapping('CIEL', '664')),
                 source_patient_id,
                 source_encounter_id,
