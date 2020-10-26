@@ -75,6 +75,48 @@ class ExamLabResultsMigrator extends ObsMigrator {
             WHERE lab_test = 'cd4' AND e.encounter_id IS NULL;
         ''')
 
+
+        executeMysql("Hematocrit", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_numeric)
+            SELECT
+                helr.source_encounter_id, 
+                concept_uuid_from_mapping('PIH', 'HEMATOCRIT') as concept_uuid,
+                extract_number(helr.result)
+            FROM hivmigration_exam_lab_results helr
+            JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id 
+            JOIN encounter e on he.encounter_id = e.encounter_id
+            where lab_test ='hematocrite' and helr.result is not null and is_number(extract_number(helr.result)); 
+        ''')
+
+        executeMysql("Log warning about invalid hematocrite values", '''
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type)
+            SELECT                
+                hp.person_id,
+                he.encounter_id,
+                'HIV_EXAM_LAB_RESULTS hematocrite',
+                helr.result,
+                'Invalid hematocrite value. Not migrated.'
+            FROM hivmigration_exam_lab_results helr
+            JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id 
+            JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id 
+            where lab_test ='hematocrite' and (helr.result is null or !is_number(extract_number(helr.result)));
+        ''')
+
+        executeMysql("Log warning about missing encounters", '''
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type)
+            SELECT
+                hp.person_id,    
+                he.encounter_id,
+                'HIV_EXAM_LAB_RESULTS hematocrite',
+                helr.result,
+                'Belongs to an encounter that was not migrated. Value not migrated.'
+            FROM hivmigration_exam_lab_results helr
+            JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
+            JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
+            LEFT JOIN encounter e on he.encounter_id = e.encounter_id
+            WHERE lab_test = 'hematocrite' AND e.encounter_id IS NULL;
+        ''')
+
         migrate_tmp_obs()
 
         //
