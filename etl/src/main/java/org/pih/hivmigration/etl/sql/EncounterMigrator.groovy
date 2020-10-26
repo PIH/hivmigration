@@ -54,8 +54,8 @@ class EncounterMigrator extends SqlMigrator {
                     e.note_title,
                     e.response_to
                 from
-                    hiv_encounters e, hiv_demographics p 
-                    where e.patient_id = p.patient_id and (p.treatment_status is null or p.treatment_status != 'test')
+                    hiv_encounters e, hiv_demographics_real p 
+                    where e.patient_id = p.patient_id 
 
             '''
         )
