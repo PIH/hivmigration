@@ -109,7 +109,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 he.encounter_id,
                 'HIV_EXAM_LAB_RESULTS hematocrite',
                 helr.result,
-                'Belongs to an encounter that was not migrated. Value not migrated.'
+                'Hematocrite value belongs to an encounter that was not migrated. Value not migrated.'
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
             JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
