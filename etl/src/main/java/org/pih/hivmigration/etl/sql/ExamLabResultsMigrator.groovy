@@ -53,7 +53,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 he.encounter_id,
                 'HIV_EXAM_LAB_RESULTS cd4',
                 helr.result,
-                'Invalid value. Not migrated.'
+                'Invalid CD4 value. Not migrated.'
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
             JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
@@ -67,7 +67,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 he.encounter_id,
                 'HIV_EXAM_LAB_RESULTS cd4',
                 helr.result,
-                'Belongs to an encounter that was not migrated. Value not migrated.'
+                'CD4 value belongs to an encounter that was not migrated. Value not migrated.'
             FROM hivmigration_exam_lab_results helr
                      JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
                      JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
@@ -119,7 +119,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 he.encounter_id,
                 'HIV_EXAM_LAB_RESULTS ppd',
                 helr.result,
-                'Invalid value. Not migrated.'
+                'Invalid PPD value. Not migrated.'
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
             JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
@@ -133,7 +133,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 he.encounter_id,
                 'HIV_EXAM_LAB_RESULTS ppd',
                 helr.result,
-                'Belongs to an encounter that was not migrated. Value not migrated.'
+                'PPD value belongs to an encounter that was not migrated. Value not migrated.'
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
             JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
@@ -173,7 +173,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 he.encounter_id,
                 'HIV_EXAM_LAB_RESULTS rpr',
                 helr.result,
-                'Invalid value. Not migrated.'
+                'Invalid RPR value. Not migrated.'
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
             JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
@@ -187,7 +187,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 he.encounter_id,
                 'HIV_EXAM_LAB_RESULTS rpr',
                 helr.result,
-                'Belongs to an encounter that was not migrated. Value not migrated.'
+                'RPR value belongs to an encounter that was not migrated. Value not migrated.'
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
             JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
