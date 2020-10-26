@@ -75,6 +75,14 @@ class ExamLabResultsMigrator extends ObsMigrator {
             WHERE lab_test = 'cd4' AND NOT is_number(result) AND NOT result REGEXP '^\\d*\\s*mm$';
         ''')
 
+        migrate_tmp_obs()
+
+        //
+        // -------- Hematocrit
+        //
+
+        create_tmp_obs_table()
+
         executeMysql("Hematocrit", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_numeric)
             SELECT
@@ -189,6 +197,49 @@ class ExamLabResultsMigrator extends ObsMigrator {
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
             JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
             WHERE lab_test = 'rpr' AND result NOT IN ('negative', 'positive');
+        ''')
+
+        migrate_tmp_obs()
+
+        //
+        // -------- Sputum
+        //
+
+        create_tmp_obs_table()
+
+        executeMysql("Migrate Sputum", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
+            SELECT
+                he.source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'TUBERCULOSIS SMEAR RESULT'),
+                CASE result
+                    WHEN 'negative' THEN concept_uuid_from_mapping('PIH', 'NEGATIVE')
+                    WHEN 'negatif' THEN concept_uuid_from_mapping('PIH', 'NEGATIVE')
+                    WHEN 'positive' THEN concept_uuid_from_mapping('CIEL', '1362')  // +
+                    WHEN '+++' THEN concept_uuid_from_mapping('CIEL', '1364')  // +++
+                    WHEN '++' THEN concept_uuid_from_mapping('CIEL', '1363')  // ++
+                    WHEN '+' THEN concept_uuid_from_mapping('CIEL', '1362')  // +
+                    END
+            FROM hivmigration_exam_lab_results helr
+            JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
+            JOIN encounter e on he.encounter_id = e.encounter_id
+            WHERE
+                lab_test = 'sputum'
+                AND result IN ('negative', 'negatif', 'positive', '+++', '++', '+');
+        ''')
+
+        executeMysql("Log warning about invalid sputum values", '''
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type)
+            SELECT
+                hp.person_id,
+                he.encounter_id,
+                'HIV_EXAM_LAB_RESULTS sputum',
+                helr.result,
+                'Invalid sputum test value. Not migrated.'
+            FROM hivmigration_exam_lab_results helr
+            JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
+            JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
+            WHERE lab_test = 'sputum' AND result NOT IN ('negative', 'negatif', 'positive', '+++', '++', '+');
         ''')
 
         migrate_tmp_obs()
