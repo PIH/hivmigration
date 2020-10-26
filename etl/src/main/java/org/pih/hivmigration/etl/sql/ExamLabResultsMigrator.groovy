@@ -47,7 +47,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
         ''')
 
         executeMysql("Log warning about invalid CD4 values", '''
-            INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type)
             SELECT
                 hp.person_id,
                 he.encounter_id,
@@ -61,13 +61,13 @@ class ExamLabResultsMigrator extends ObsMigrator {
         ''')
 
         executeMysql("Log warning about missing encounters", '''
-            INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type)
             SELECT
                 hp.person_id,
                 he.encounter_id,
                 'HIV_EXAM_LAB_RESULTS cd4',
                 helr.result,
-                CONCAT('Belongs to an encounter that was not migrated, source ID ', he.source_encounter_id, '. Not migrated')
+                'Belongs to an encounter that was not migrated. Value not migrated.'
             FROM hivmigration_exam_lab_results helr
                      JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
                      JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
@@ -113,7 +113,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
         ''')
 
         executeMysql("Log warning about invalid PPD values", '''
-            INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type)
             SELECT
                 hp.person_id,
                 he.encounter_id,
@@ -127,18 +127,72 @@ class ExamLabResultsMigrator extends ObsMigrator {
         ''')
 
         executeMysql("Log warning about missing encounters", '''
-            INSERT INTO hivmigration_data_warnings (patient_id, encounter_id, field_name, field_value, note)
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type)
             SELECT
                 hp.person_id,
                 he.encounter_id,
                 'HIV_EXAM_LAB_RESULTS ppd',
                 helr.result,
-                CONCAT('Belongs to an encounter that was not migrated, source ID ', he.source_encounter_id, '. Not migrated')
+                'Belongs to an encounter that was not migrated. Value not migrated.'
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
             JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
             LEFT JOIN encounter e on he.encounter_id = e.encounter_id
             WHERE lab_test = 'ppd' AND e.encounter_id IS NULL;
+        ''')
+
+        migrate_tmp_obs()
+        
+        //
+        // -------- RPR
+        //
+
+        create_tmp_obs_table()
+
+        executeMysql("Migrate coded rpr", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
+            SELECT
+                he.source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '1619'),
+                CASE result
+                    WHEN 'negative' THEN concept_uuid_from_mapping('PIH', 'NON-REACTIVE')
+                    WHEN 'positive' THEN concept_uuid_from_mapping('PIH', 'REACTIVE')
+                    END
+            FROM hivmigration_exam_lab_results helr
+            JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
+            JOIN encounter e on he.encounter_id = e.encounter_id
+            WHERE
+                lab_test = 'rpr'
+                AND result IN ('negative', 'positive');
+        ''')
+
+        executeMysql("Log warning about invalid rpr values", '''
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type)
+            SELECT
+                hp.person_id,
+                he.encounter_id,
+                'HIV_EXAM_LAB_RESULTS rpr',
+                helr.result,
+                'Invalid value. Not migrated.'
+            FROM hivmigration_exam_lab_results helr
+            JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
+            JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
+            WHERE lab_test = 'rpr' AND result NOT IN ('negative', 'positive');
+        ''')
+
+        executeMysql("Log warning about missing encounters", '''
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type)
+            SELECT
+                hp.person_id,
+                he.encounter_id,
+                'HIV_EXAM_LAB_RESULTS rpr',
+                helr.result,
+                'Belongs to an encounter that was not migrated. Value not migrated.'
+            FROM hivmigration_exam_lab_results helr
+            JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
+            JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
+            LEFT JOIN encounter e on he.encounter_id = e.encounter_id
+            WHERE lab_test = 'rpr' AND e.encounter_id IS NULL;
         ''')
 
         migrate_tmp_obs()
