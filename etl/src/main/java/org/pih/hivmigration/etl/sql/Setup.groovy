@@ -28,7 +28,7 @@ class Setup extends SqlMigrator {
             -- from https://stackoverflow.com/a/991802/1464495
             DROP FUNCTION IF EXISTS extract_number;
             DELIMITER |
-            CREATE FUNCTION extract_number( str CHAR(32) ) RETURNS CHAR(32)
+            CREATE FUNCTION extract_number( str CHAR(32) ) RETURNS CHAR(32) DETERMINISTIC
             BEGIN
                 DECLARE i, len SMALLINT DEFAULT 1;
                 DECLARE ret CHAR(32) DEFAULT '';
