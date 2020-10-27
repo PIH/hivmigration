@@ -49,16 +49,14 @@ class ExamLabResultsMigrator extends ObsMigrator {
             SELECT
                 he.source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '5497'),
-                CASE
-                    WHEN is_number(result) THEN TRIM(result)
-                    WHEN result REGEXP '^\\d*\\s*mm$' THEN extract_number(result)
-                    END
+                extract_number(result)
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
             JOIN encounter e on he.encounter_id = e.encounter_id  -- only migrate lab results corresponding to an encounter that was successfully migrated
             WHERE
                 lab_test = 'cd4'    
-                AND is_number(result) OR result REGEXP '^\\d*\\s*mm$';  -- e.g. '20 mm'
+                AND (is_number(result) OR result REGEXP '[0-9]+cell.*')  -- e.g. '500 cell/mm3'
+            ;
         ''')
 
         executeMysql("Log warning about invalid CD4 values", '''
