@@ -215,10 +215,10 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 CASE result
                     WHEN 'negative' THEN concept_uuid_from_mapping('PIH', 'NEGATIVE')
                     WHEN 'negatif' THEN concept_uuid_from_mapping('PIH', 'NEGATIVE')
-                    WHEN 'positive' THEN concept_uuid_from_mapping('CIEL', '1362')  // +
-                    WHEN '+++' THEN concept_uuid_from_mapping('CIEL', '1364')  // +++
-                    WHEN '++' THEN concept_uuid_from_mapping('CIEL', '1363')  // ++
-                    WHEN '+' THEN concept_uuid_from_mapping('CIEL', '1362')  // +
+                    WHEN 'positive' THEN concept_uuid_from_mapping('CIEL', '1362') 
+                    WHEN '+++' THEN concept_uuid_from_mapping('CIEL', '1364')  
+                    WHEN '++' THEN concept_uuid_from_mapping('CIEL', '1363')  
+                    WHEN '+' THEN concept_uuid_from_mapping('CIEL', '1362')  
                     END
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
