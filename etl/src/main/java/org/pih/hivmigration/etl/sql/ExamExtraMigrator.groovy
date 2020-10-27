@@ -82,8 +82,8 @@ class ExamExtraMigrator extends ObsMigrator {
                     e.patient_id as source_patient_id,         
                     i.name as transfer_out_to,
                     to_char(o.entry_date, 'yyyy-mm-dd') as obs_date 
-            from hiv_observations o, hiv_encounters e, hiv_institutions i  
-            where o.ENCOUNTER_ID = e.ENCOUNTER_ID and o.VALUE = i.INSTITUTION_ID 
+            from hiv_observations o, hiv_encounters e, hiv_demographics_real d, hiv_institutions i  
+            where o.ENCOUNTER_ID = e.ENCOUNTER_ID and e.patient_id = d.patient_id and o.VALUE = i.INSTITUTION_ID 
                     and observation='transfer_out_to' and o.value is not null 
             order by o.ENCOUNTER_ID 
         ''')

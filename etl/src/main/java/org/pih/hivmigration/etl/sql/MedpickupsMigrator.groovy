@@ -110,8 +110,8 @@ class MedpickupsMigrator extends ObsMigrator {
                     , d.months_dispensed as months_dispensed,
                     to_char(d.next_dispense_date, 'yyyy-mm-dd') as next_dispense_date,
                     d.art_treatment_line as art_treatment_line
-            from hiv_dispensing d, hiv_encounters e 
-            where d.encounter_id = e.encounter_id 
+            from hiv_dispensing d, hiv_encounters e, hiv_demographics_real r  
+            where d.encounter_id = e.encounter_id and e.patient_id = r.patient_id
             order by d.encounter_id 
         ''')
 
@@ -131,8 +131,8 @@ class MedpickupsMigrator extends ObsMigrator {
                     m.med_reference as source_medication_category,       
                     p.combination_details as source_product_name,
                     m.quantity as quantity
-            from hiv_dispensing_meds m, hiv_encounters e, hiv_products p 
-            where m.encounter_id=e.encounter_id and m.product_id = p.product_id 
+            from hiv_dispensing_meds m, hiv_encounters e, hiv_demographics_real d, hiv_products p 
+            where m.encounter_id=e.encounter_id and e.patient_id = d.patient_id and m.product_id = p.product_id 
          ''')
 
         create_tmp_obs_table()

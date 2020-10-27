@@ -24,8 +24,9 @@ class ObsLoadingMigrator extends SqlMigrator {
             INSERT INTO hivmigration_observations (source_observation_id, source_encounter_id, observation, value, entry_date)
             VALUES (?, ?, ?, ?, ?)
         ''', '''
-            SELECT observation_id, encounter_id, observation, value, entry_date
-            FROM hiv_observations
+            SELECT o.observation_id, o.encounter_id, o.observation, o.value, o.entry_date
+            FROM hiv_observations o, hiv_encounters e, hiv_demographics_real d 
+            WHERE o.encounter_id=e.encounter_id and e.patient_id = d.patient_id 
         ''')
     }
 
