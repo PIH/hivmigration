@@ -24,7 +24,7 @@ class TreatmentObsMigrator extends ObsMigrator {
         ''', '''
             SELECT o.encounter_id, o.ordered, o.comments
             FROM hiv_ordered_other o, hiv_encounters e, hiv_demographics_real d 
-            WHERE o.encounter_id=e.encounter_id and e.patient_id=d.patient_id
+            WHERE o.encounter_id = e.encounter_id and e.patient_id = d.patient_id
         ''')
 
         create_tmp_obs_table()
