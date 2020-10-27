@@ -100,6 +100,7 @@ class VitalsMigrator extends ObsMigrator {
             SELECT
                 source_patient_id,
                 source_encounter_id,
+                -- assume if value less that 20, was recorded in shorthand, skipping last digit
                 IF(result < 20, result * 10, result),
                 '3ce93694-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_vitals
@@ -109,6 +110,7 @@ class VitalsMigrator extends ObsMigrator {
             SELECT
                 source_patient_id,
                 source_encounter_id,
+                 -- assume if value less that 30, was recorded in shorthand, skipping last digit
                 IF(result < 30, result * 10, result),
                 '3ce934fa-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_vitals
@@ -128,6 +130,7 @@ class VitalsMigrator extends ObsMigrator {
             SELECT 
                 source_patient_id,
                 source_encounter_id,
+                -- assume if value greater and 60, was recorded in F, and needs to be coverted to C
                 IF(result > 60, round((result - 32.0) * 0.555555, 1), result),
                 '3ce939d2-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_vitals
