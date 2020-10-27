@@ -1,7 +1,5 @@
 package org.pih.hivmigration.etl.sql
 
-import org.apache.commons.dbutils.handlers.ScalarHandler
-
 class VitalsMigrator extends ObsMigrator {
     @Override
     def void migrate() {
@@ -79,7 +77,7 @@ class VitalsMigrator extends ObsMigrator {
             SELECT
                 source_patient_id,
                 source_encounter_id,  -- this is only provided so that the procedure won't choke on the join. We overwrite the encounter_id below.
-                -- result unit is unreliable, but fortunately the values are unambiguous
+                -- unit on height is supposed to be cm, but we assume that all those under 3.0 were meant to be meters (currently results 80,000+ under 3.0)
                 IF(result < 3.0, round(result * 100, 1), result),
                 '3ce93cf2-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_vitals
