@@ -19,8 +19,9 @@ class ExamLabResultsMigrator extends ObsMigrator {
             ) VALUES (?, ?, ?, ?)
         ''',
         '''
-            SELECT encounter_id, lab_test, result, test_date 
-            FROM HIV_EXAM_LAB_RESULTS
+            SELECT r.encounter_id, r.lab_test, r.result, r.test_date 
+            FROM HIV_EXAM_LAB_RESULTS r, hiv_encounters e, hiv_demographics_real d 
+            WHERE r.encounter_id = e.encounter_id and e.patient_id = d.patient_id
         ''')
 
         executeMysql("Log warning about missing encounters", '''

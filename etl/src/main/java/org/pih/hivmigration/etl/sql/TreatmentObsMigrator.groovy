@@ -1,6 +1,5 @@
 package org.pih.hivmigration.etl.sql
 
-import com.fasterxml.jackson.module.scala.introspect.ScalaAnnotationIntrospector
 import org.apache.commons.dbutils.handlers.ScalarHandler
 
 class TreatmentObsMigrator extends ObsMigrator {
@@ -23,8 +22,9 @@ class TreatmentObsMigrator extends ObsMigrator {
             INSERT INTO hivmigration_ordered_other (source_encounter_id, ordered, comments)
             VALUES (?, ?, ?)
         ''', '''
-            SELECT encounter_id, ordered, comments
-            FROM hiv_ordered_other
+            SELECT o.encounter_id, o.ordered, o.comments
+            FROM hiv_ordered_other o, hiv_encounters e, hiv_demographics_real d 
+            WHERE o.encounter_id = e.encounter_id and e.patient_id = d.patient_id
         ''')
 
         create_tmp_obs_table()

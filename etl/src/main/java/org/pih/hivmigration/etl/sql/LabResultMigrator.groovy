@@ -77,8 +77,8 @@ class LabResultMigrator extends ObsMigrator {
                     case when (r.test_date is null) then to_char(e.encounter_date, 'yyyy-mm-dd') 
                     else to_char(r.test_date, 'yyyy-mm-dd') 
                     end as obs_datetime
-            from  HIV_EXAM_LAB_RESULTS r, hiv_encounters e 
-            where r.encounter_id = e.encounter_id and LAB_TEST='tr' and r.RESULT is not null
+            from  HIV_EXAM_LAB_RESULTS r, hiv_encounters e, hiv_demographics_real d 
+            where r.encounter_id = e.encounter_id and e.patient_id = d.patient_id and LAB_TEST='tr' and r.RESULT is not null
         ''')
 
         create_tmp_obs_table()
