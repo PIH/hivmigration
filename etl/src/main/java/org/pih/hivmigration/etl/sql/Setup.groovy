@@ -5,7 +5,7 @@ class Setup extends SqlMigrator {
     @Override
     def void migrate() {
 
-        executeMysql('''
+        executeMysql("Create function concept_uuid_from_mapping", '''
             DROP FUNCTION IF EXISTS concept_uuid_from_mapping;
             DELIMITER //
             CREATE FUNCTION concept_uuid_from_mapping ( _source varchar(80), _code varchar(80))
@@ -16,16 +16,23 @@ class Setup extends SqlMigrator {
             DELIMITER ;
         ''')
 
-        executeMysql('''
-            -- Checks whether a string value represents a number. Allows trailing whitespace, but not leading whitespace.
-            -- from https://stackoverflow.com/a/5065007/1464495
+        executeMysql("Create function is_number", '''
+            -- Checks whether a string value represents a number. Allows surrounding whitespace.
+            -- Allows an arbitrary number of decimal points or commas.
+            -- Recommended to use with 'extract_number', e.g.
+            --   SELECT extract_number(result) FROM tbl WHERE is_number(result)
             DROP FUNCTION IF EXISTS is_number;
             CREATE FUNCTION is_number (_value text) RETURNS boolean DETERMINISTIC
-            RETURN concat('', _value * 1) = _value;
+                RETURN _value REGEXP '^[0-9\\.,]+$' AND _value REGEXP '[0-9]';
         ''')
 
-        executeMysql('''
-            -- from https://stackoverflow.com/a/991802/1464495
+        executeMysql("Create function extract_number", '''
+            -- extracts the first number in any string. Normalizes commas to decimal points.
+            -- e.g.
+            --   'hey 9.0 33 f'  -->  '9.0'
+            --   '04,4%' --> '4.4'
+            -- returns NULL for NULL input
+            -- inspired by https://stackoverflow.com/a/991802/1464495
             DROP FUNCTION IF EXISTS extract_number;
             DELIMITER |
             CREATE FUNCTION extract_number( str CHAR(32) ) RETURNS CHAR(32) DETERMINISTIC
@@ -36,20 +43,21 @@ class Setup extends SqlMigrator {
             
                 IF str IS NULL
                 THEN
-                    RETURN "";
+                    RETURN NULL;
                 END IF;
             
                 SET len = CHAR_LENGTH( str );
                 REPEAT
                     BEGIN
                         SET c = MID( str, i, 1 );
-                        IF c BETWEEN '0' AND '9' THEN
-                            SET ret=CONCAT(ret,c);
+                        IF c REGEXP '[0-9\\.,]' THEN
+                            SET ret=CONCAT(ret, c);
                         END IF;
                         SET i = i + 1;
                     END;
-                UNTIL i > len END REPEAT;
-                RETURN ret;
+                UNTIL i > len OR (CHAR_LENGTH(ret) > 0 AND c NOT REGEXP '[0-9\\.,]') END REPEAT;
+                SET ret = TRIM(TRAILING '.' FROM TRIM(LEADING '0' FROM REPLACE(ret, ',', '.')));
+                RETURN IF(ret = '', '0', ret);
             END |
             DELIMITER ;
         ''')
