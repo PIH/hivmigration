@@ -39,6 +39,23 @@ class ExamLabResultsMigrator extends ObsMigrator {
             WHERE lab_test = \'''' + testName + '''\' AND NOT (''' + whenCondition + ''');'''
         )
 
+        executeMysql("Log warning about missing encounters for " + testName, '''
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type, warning_details)
+            SELECT
+                hp.person_id,
+                he.encounter_id,
+                'HIV_EXAM_LAB_RESULTS ''' + testName + '''',
+                result,
+                \'''' + testName + ''' value belongs to an encounter that was not migrated. Value not migrated.',
+                CONCAT('Source encounter type ', he.source_encounter_type)
+            FROM hivmigration_exam_lab_results helr
+                     JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
+                     JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
+                     LEFT JOIN encounter e on he.encounter_id = e.encounter_id 
+            WHERE lab_test = \'''' + testName + '''' AND e.encounter_id IS NULL;
+        ''')
+
+
         migrate_tmp_obs()
     }
 
@@ -64,22 +81,6 @@ class ExamLabResultsMigrator extends ObsMigrator {
             FROM HIV_EXAM_LAB_RESULTS r, hiv_encounters e, hiv_demographics_real d 
             WHERE r.encounter_id = e.encounter_id and e.patient_id = d.patient_id
         ''')
-
-        executeMysql("Log warning about missing encounters", '''
-            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type)
-            SELECT
-                hp.person_id,
-                he.encounter_id,
-                CONCAT('HIV_EXAM_LAB_RESULTS ', lab_test),
-                helr.result,
-                CONCAT(lab_test, ' value belongs to an encounter that was not migrated. Value not migrated.')
-            FROM hivmigration_exam_lab_results helr
-                     JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
-                     JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
-                     LEFT JOIN encounter e on he.encounter_id = e.encounter_id 
-            WHERE lab_test IN('cd4', 'hematocrite', 'ppd', 'rpr') AND e.encounter_id IS NULL;
-        ''')
-
 
         migrateLab("cd4",
                 "concept_uuid_from_mapping('CIEL', '5497')",
