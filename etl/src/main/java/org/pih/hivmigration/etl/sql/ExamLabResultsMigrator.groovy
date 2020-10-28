@@ -132,6 +132,16 @@ class ExamLabResultsMigrator extends ObsMigrator {
                     END''',
                 "result IN ('negative', 'negatif', 'positive', '+++', '++', '+')"
         )
+
+        migrateLab("hemoglobin",
+                "concept_uuid_from_mapping('PIH', 'HEMOGLOBIN')",
+                "extract_number(result)",
+                "NULL",
+                '''result REGEXP '^[[:blank:]]*[0-9\\.]+[[:blank:]]*gr?.dll?$' OR is_number(result)'''
+                // e.g. '9.8', '9.8 g/dl', or '9.8gr/dl'
+        )
+
+        migrate_tmp_obs()
     }
 
     @Override
