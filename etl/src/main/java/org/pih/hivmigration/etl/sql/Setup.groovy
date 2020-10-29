@@ -75,7 +75,8 @@ class Setup extends SqlMigrator {
                 field_name VARCHAR(100),
                 field_value VARCHAR(1000),
                 warning_type VARCHAR(255),
-                warning_details VARCHAR(1000)
+                warning_details VARCHAR(1000),
+                flag_for_review BOOLEAN DEFAULT FALSE
             );
         ''')
     }
