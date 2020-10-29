@@ -410,9 +410,9 @@ class TreatmentObsMigrator extends ObsMigrator {
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '159792'),
                 CASE
-                    WHEN value LIKE 'tb_initial%' OR value LIKE 'tb_infant%' THEN concept_uuid_from_mapping('CIEL', '159795')
-                    WHEN value LIKE 'tb_retreatment%' THEN concept_uuid_from_mapping('CIEL', '159793')
-                    WHEN value = 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')
+                    WHEN value LIKE 'tb_initial%' OR value LIKE 'tb_infant%' THEN concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR 
+                    WHEN value LIKE 'tb_retreatment%' THEN concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
+                    WHEN value = 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')  -- 'MDR TB'
                     END
             FROM hivmigration_observations
             WHERE observation = 'current_tx.tb' AND value IS NOT NULL AND value != 'none';
@@ -442,7 +442,7 @@ class TreatmentObsMigrator extends ObsMigrator {
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', '6150'),
                 CASE comments
-                    WHEN '2HRZE_4HR' THEN concept_uuid_from_mapping('PIH', '2RHEZ / 4RH')  -- 'Initial'
+                    WHEN '2HRZE_4HR' THEN concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR
                     WHEN 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')  -- 'MDR TB'
                     WHEN 'hrez' THEN concept_uuid_from_mapping('PIH', 'HRZE')
                     WHEN '2S+HRZE_1HRZE_5HR+E' THEN concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
