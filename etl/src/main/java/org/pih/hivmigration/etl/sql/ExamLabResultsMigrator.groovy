@@ -36,7 +36,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he ON helr.source_encounter_id = he.source_encounter_id
             JOIN hivmigration_patients hp ON he.source_patient_id = hp.source_patient_id
-            WHERE lab_test = \'''' + testName + '''\' AND NOT (''' + whenCondition + ''');'''
+            WHERE lab_test = \'''' + testName + '''\' AND (NOT (''' + whenCondition + ''') or result is NULL);'''
         )
 
         executeMysql("Log warning about missing encounters for " + testName, '''
@@ -79,7 +79,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 '''
             SELECT r.encounter_id, r.lab_test, r.result, r.test_date 
             FROM HIV_EXAM_LAB_RESULTS r, hiv_encounters e, hiv_demographics_real d 
-            WHERE r.encounter_id = e.encounter_id and e.patient_id = d.patient_id and result is not null
+            WHERE r.encounter_id = e.encounter_id and e.patient_id = d.patient_id and (result is not null or test_date is not null)
         ''')
 
         migrateLab("cd4",
