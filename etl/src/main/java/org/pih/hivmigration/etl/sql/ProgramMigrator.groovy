@@ -139,13 +139,14 @@ class ProgramMigrator extends SqlMigrator {
         ''')
 
         executeMysql("Note where art_start_date > outcome_date", '''
-            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, field_name, field_value, warning_type, warning_details)
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, field_name, field_value, warning_type, warning_details, flag_for_review)
             SELECT
                 p.person_id,
                 'art_start_date', 
                 hpr.art_start_date, 
                 'Patient has ART start date(s) after patient outcome date',
-                CONCAT('Outcome date: ', hpr.outcome_date)
+                CONCAT('Outcome date: ', hpr.outcome_date),
+                TRUE
             FROM hivmigration_programs_raw hpr
             JOIN hivmigration_patients p ON p.source_patient_id = hpr.source_patient_id
             WHERE hpr.art_start_date > hpr.outcome_date

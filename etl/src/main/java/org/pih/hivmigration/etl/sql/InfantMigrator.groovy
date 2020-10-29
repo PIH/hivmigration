@@ -78,7 +78,7 @@ class InfantMigrator extends SqlMigrator {
 
         // TODO: see https://pihemr.atlassian.net/browse/UHM-4817
         executeMysql("Note NULL names", '''
-            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, field_name, field_value, warning_type)
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, field_name, field_value, warning_type, flag_for_review)
             SELECT
                 person_id,
                 CASE
@@ -87,7 +87,8 @@ class InfantMigrator extends SqlMigrator {
                     WHEN family_name IS NULL THEN 'family name'
                 END,
                 NULL,
-                'Infant missing name. Defaulted to "UNKNOWN"'
+                'Infant missing name. Defaulted to "UNKNOWN"',
+                TRUE
             FROM person_name
             WHERE (given_name IS NULL OR family_name IS NULL)
                 AND person_id in (select person_id from hivmigration_infants);
