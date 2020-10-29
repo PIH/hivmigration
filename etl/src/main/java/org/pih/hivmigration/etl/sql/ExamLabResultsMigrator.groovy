@@ -141,7 +141,6 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 // e.g. '9.8', '9.8 g/dl', or '9.8gr/dl'
         )
 
-        migrate_tmp_obs()
     }
 
     @Override
