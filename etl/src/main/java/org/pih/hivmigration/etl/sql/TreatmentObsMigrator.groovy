@@ -410,7 +410,8 @@ class TreatmentObsMigrator extends ObsMigrator {
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '159792'),
                 CASE
-                    WHEN value LIKE 'tb_initial%' OR value LIKE 'tb_infant%' THEN concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR 
+                    WHEN value LIKE 'tb_initial%' THEN concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR
+                    WHEN value LIKE 'tb_infant%' THEN concept_uuid_from_mapping('PIH', '2RHZ / 4RH')  
                     WHEN value LIKE 'tb_retreatment%' THEN concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
                     WHEN value = 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')  -- 'MDR TB'
                     END
