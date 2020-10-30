@@ -156,10 +156,9 @@ class ExamExtraMigrator extends ObsMigrator {
               weight_loss_comments,
               cough,
               cough_comments,              
-              tb_contact,
-              tb_contact_comments 
+              tb_contact
             )
-            values(?,?,?,?,?,?,?,?,?) 
+            values(?,?,?,?,?,?,?,?) 
             ''', '''
                 SELECT t.encounter_id
                         , case 
@@ -173,8 +172,7 @@ class ExamExtraMigrator extends ObsMigrator {
                         , 'weight_loss_duration=' || weight_loss_duration || ',weight_loss_duration_unit=' || weight_loss_duration_unit as weight_loss_comments 
                         , COUGH_RESULT as cough
                         , 'cough_duration=' || cough_duration || ',cough_duration_unit=' || cough_duration_unit as cough_comments
-                        , TB_CONTACT_RESULT as tb_contact
-                        , 'tb_contact_duration=' || tb_contact_duration || ',tb_contact_duration_unit=' || tb_contact_duration_unit as tb_contact_comments
+                        , TB_CONTACT_RESULT as tb_contact                        
                 FROM HIV_TB_SCREENING_OBS t, hiv_encounters e, hiv_demographics_real d
                 WHERE ((FEVER_RESULT is not null) 
                     or (NIGHT_SWEAT_RESULT is not null) 
@@ -217,12 +215,11 @@ class ExamExtraMigrator extends ObsMigrator {
             WHERE cough = 1 or cough = 0; 
             
             -- TB contact                                            
-            INSERT INTO tmp_obs (value_coded_uuid, source_encounter_id, concept_uuid, comments)
+            INSERT INTO tmp_obs (value_coded_uuid, source_encounter_id, concept_uuid)
             SELECT 
                   concept_uuid_from_mapping('PIH', '11568')
                   , source_encounter_id
-                  , IF(tb_contact=1, concept_uuid_from_mapping('PIH', '11563'), concept_uuid_from_mapping('PIH', '11564'))
-                  , tb_contact_comments
+                  , IF(tb_contact=1, concept_uuid_from_mapping('PIH', '11563'), concept_uuid_from_mapping('PIH', '11564'))                  
             FROM hivmigration_tb_screening
             WHERE tb_contact = 1 or tb_contact = 0;            
         ''')
