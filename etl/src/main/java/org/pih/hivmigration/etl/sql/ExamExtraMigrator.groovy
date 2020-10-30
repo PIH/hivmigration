@@ -129,6 +129,102 @@ class ExamExtraMigrator extends ObsMigrator {
         ''')
 
         migrate_tmp_obs()
+
+        create_tmp_obs_table()
+
+        executeMysql("Create staging table for migrating TB screening questions", '''
+            create table hivmigration_tb_screening (                            
+              source_encounter_id int,
+              fever_night_sweat BOOLEAN,
+              fever_night_sweat_comments VARCHAR(255),
+              weight_loss BOOLEAN,
+              weight_loss_comments VARCHAR(255),
+              cough BOOLEAN,
+              cough_comments VARCHAR(255),              
+              tb_contact BOOLEAN,
+              tb_contact_comments VARCHAR(255)                     
+            );
+        ''')
+
+        // migrate TB Screening questions
+        loadFromOracleToMySql('''
+            insert into hivmigration_tb_screening (
+              source_encounter_id,
+              fever_night_sweat,
+              fever_night_sweat_comments,
+              weight_loss,
+              weight_loss_comments,
+              cough,
+              cough_comments,              
+              tb_contact
+            )
+            values(?,?,?,?,?,?,?,?) 
+            ''', '''
+                SELECT t.encounter_id
+                        , case 
+                            when ((FEVER_RESULT = 1) or (night_sweat_result=1)) then 1 
+                            when ((FEVER_RESULT is null) and (night_sweat_result is null)) then null 
+                            else 0 
+                          end as fever_night_sweat              
+                        , 'fever_result=' || fever_result || ',fever_duration=' || fever_duration || ',fever_duration_unit=' || fever_duration_unit 
+                        || '; night_sweat_result=' || night_sweat_result || ',night_sweat_duration=' || night_sweat_duration || ',night_sweat_duration_unit=' || night_sweat_duration_unit as fever_comments
+                        , WEIGHT_LOSS_RESULT as weight_loss
+                        , 'weight_loss_duration=' || weight_loss_duration || ',weight_loss_duration_unit=' || weight_loss_duration_unit as weight_loss_comments 
+                        , COUGH_RESULT as cough
+                        , 'cough_duration=' || cough_duration || ',cough_duration_unit=' || cough_duration_unit as cough_comments
+                        , TB_CONTACT_RESULT as tb_contact                        
+                FROM HIV_TB_SCREENING_OBS t, hiv_encounters e, hiv_demographics_real d
+                WHERE ((FEVER_RESULT is not null) 
+                    or (NIGHT_SWEAT_RESULT is not null) 
+                    or (WEIGHT_LOSS_RESULT is not null)
+                    or (COUGH_RESULT is not null) 
+                    or (TB_CONTACT_RESULT is not null)) 
+                and t.encounter_id=e.encounter_id and e.patient_id = d.patient_id;
+            ''')
+
+        executeMysql("Load TB screening questions as observations", ''' 
+                     
+            -- Fever and night sweats                                            
+            INSERT INTO tmp_obs (value_coded_uuid, source_encounter_id, concept_uuid, comments)
+            SELECT 
+                  concept_uuid_from_mapping('PIH', '11565')
+                  , source_encounter_id
+                  , IF(fever_night_sweat=1, concept_uuid_from_mapping('PIH', '11563'), concept_uuid_from_mapping('PIH', '11564'))
+                  , fever_night_sweat_comments
+            FROM hivmigration_tb_screening
+            WHERE fever_night_sweat = 1 or fever_night_sweat = 0;  
+            
+            -- Weight loss                                            
+            INSERT INTO tmp_obs (value_coded_uuid, source_encounter_id, concept_uuid, comments)
+            SELECT 
+                  concept_uuid_from_mapping('PIH', '11566')
+                  , source_encounter_id
+                  , IF(weight_loss=1, concept_uuid_from_mapping('PIH', '11563'), concept_uuid_from_mapping('PIH', '11564'))
+                  , weight_loss_comments
+            FROM hivmigration_tb_screening
+            WHERE weight_loss = 1 or weight_loss = 0; 
+            
+            -- Cough                                            
+            INSERT INTO tmp_obs (value_coded_uuid, source_encounter_id, concept_uuid, comments)
+            SELECT 
+                  concept_uuid_from_mapping('PIH', '11567')
+                  , source_encounter_id
+                  , IF(cough=1, concept_uuid_from_mapping('PIH', '11563'), concept_uuid_from_mapping('PIH', '11564'))
+                  , cough_comments
+            FROM hivmigration_tb_screening
+            WHERE cough = 1 or cough = 0; 
+            
+            -- TB contact                                            
+            INSERT INTO tmp_obs (value_coded_uuid, source_encounter_id, concept_uuid)
+            SELECT 
+                  concept_uuid_from_mapping('PIH', '11568')
+                  , source_encounter_id
+                  , IF(tb_contact=1, concept_uuid_from_mapping('PIH', '11563'), concept_uuid_from_mapping('PIH', '11564'))                  
+            FROM hivmigration_tb_screening
+            WHERE tb_contact = 1 or tb_contact = 0;            
+        ''')
+
+        migrate_tmp_obs()
     }
 
     @Override
@@ -144,5 +240,6 @@ class ExamExtraMigrator extends ObsMigrator {
         ''')
         executeMysql("drop table if exists hivmigration_exam_extra")
         executeMysql("drop table if exists hivmigration_transfer_out_to")
+        executeMysql("drop table if exists hivmigration_tb_screening")
     }
 }
