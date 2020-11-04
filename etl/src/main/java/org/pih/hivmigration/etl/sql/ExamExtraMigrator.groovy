@@ -141,8 +141,13 @@ class ExamExtraMigrator extends ObsMigrator {
               weight_loss_comments VARCHAR(255),
               cough BOOLEAN,
               cough_comments VARCHAR(255),              
-              tb_contact BOOLEAN,
-              tb_contact_comments VARCHAR(255)                     
+              tb_contact BOOLEAN,              
+              bloodyCough BOOLEAN,
+              bloodyCough_comments VARCHAR(255),
+              dyspnea BOOLEAN,
+              dyspnea_comments VARCHAR(255),
+              chestPain BOOLEAN, 
+              chestPain_comments VARCHAR(255)                     
             );
         ''')
 
@@ -156,30 +161,52 @@ class ExamExtraMigrator extends ObsMigrator {
               weight_loss_comments,
               cough,
               cough_comments,              
-              tb_contact
+              tb_contact,
+              bloodyCough,
+              bloodyCough_comments,
+              dyspnea,
+              dyspnea_comments,
+              chestPain, 
+              chestPain_comments
             )
-            values(?,?,?,?,?,?,?,?) 
+            values(?,?,?,?,?,?,?,?,?,?,?,?,?,?) 
             ''', '''
-                SELECT t.encounter_id
-                        , case 
-                            when ((FEVER_RESULT = 1) or (night_sweat_result=1)) then 1 
-                            when ((FEVER_RESULT is null) and (night_sweat_result is null)) then null 
-                            else 0 
-                          end as fever_night_sweat              
-                        , 'fever_result=' || fever_result || ',fever_duration=' || fever_duration || ',fever_duration_unit=' || fever_duration_unit 
-                        || '; night_sweat_result=' || night_sweat_result || ',night_sweat_duration=' || night_sweat_duration || ',night_sweat_duration_unit=' || night_sweat_duration_unit as fever_comments
-                        , WEIGHT_LOSS_RESULT as weight_loss
-                        , 'weight_loss_duration=' || weight_loss_duration || ',weight_loss_duration_unit=' || weight_loss_duration_unit as weight_loss_comments 
-                        , COUGH_RESULT as cough
-                        , 'cough_duration=' || cough_duration || ',cough_duration_unit=' || cough_duration_unit as cough_comments
-                        , TB_CONTACT_RESULT as tb_contact                        
-                FROM HIV_TB_SCREENING_OBS t, hiv_encounters e, hiv_demographics_real d
-                WHERE ((FEVER_RESULT is not null) 
-                    or (NIGHT_SWEAT_RESULT is not null) 
-                    or (WEIGHT_LOSS_RESULT is not null)
-                    or (COUGH_RESULT is not null) 
-                    or (TB_CONTACT_RESULT is not null)) 
-                and t.encounter_id=e.encounter_id and e.patient_id = d.patient_id;
+                select      e.encounter_id,
+                            case 
+                                when ((fever.result = 't') or (ntsweat.result='t')) then 1 
+                                when ((fever.result is null) and (ntsweat.result is null)) then null 
+                                else 0 
+                            end as fever_night_sweat,                   
+                            'fever_result=' || fever.result || ',fever_duration=' || fever.duration || ',fever_duration_unit=' || fever.duration_unit 
+                                    || '; night_sweat_result=' || ntsweat.result || ',night_sweat_duration=' || ntsweat.duration || ',night_sweat_duration_unit=' || ntsweat.duration_unit as fever_comments
+                            ,                                
+                            decode(wtloss.result, 't', 1, 'f', 0, null) as weight_loss, 
+                            'weight_loss_duration=' || wtloss.duration || ',weight_loss_duration_unit=' || wtloss.duration_unit as weight_loss_comments,                               
+                            decode(cough.result, 't', 1, 'f', 0, null) as cough, 
+                            'cough_duration=' || cough.duration || ',cough_duration_unit=' || cough.duration_unit as cough_comments,                              
+                            decode(tbcontact.result, 't', 1, 'f', 0, null) as tb_contact, 
+                            decode(bloodyCough.result, 't', 1, 'f', 0, null) as bloodyCough, 
+                            'bloodyCough_duration=' || bloodyCough.duration || ',bloodyCough_duration_unit=' || bloodyCough.duration_unit as bloodyCough_comments,
+                            decode(dyspnea.result, 't', 1, 'f', 0, null) as dyspnea_result, 
+                            'dyspnea_duration=' || dyspnea.duration || ',dyspnea_duration_unit=' || dyspnea.duration_unit as dyspnea_comments, 
+                            decode(chestPain.result, 't', 1, 'f', 0, null) as chestPain_result, 
+                            'chestPain_duration=' || chestPain.duration || ',chestPain_duration_unit=' || chestPain.duration_unit as chestPain_comments
+                from        hiv_encounters e 
+                join hiv_demographics_real d on e.patient_id = d.patient_id 
+                left join   (select encounter_id, symptom, result, duration, duration_unit from hiv_exam_symptoms) cough on cough.ENCOUNTER_ID = e.ENCOUNTER_ID and cough.SYMPTOM = 'cough\'
+                left join   (select encounter_id, symptom, result, duration, duration_unit from hiv_exam_symptoms) fever on fever.ENCOUNTER_ID = e.ENCOUNTER_ID and fever.SYMPTOM = 'fever\'
+                left join   (select encounter_id, symptom, result, duration, duration_unit from hiv_exam_symptoms) wtloss on wtloss.ENCOUNTER_ID = e.ENCOUNTER_ID and wtloss.SYMPTOM = 'loss_of_weight\'
+                left join   (select encounter_id, symptom, result, duration, duration_unit from hiv_exam_symptoms) ntsweat on ntsweat.ENCOUNTER_ID = e.ENCOUNTER_ID and ntsweat.SYMPTOM = 'night_sweats\'
+                left join   (select encounter_id, symptom, result, duration, duration_unit from hiv_exam_symptoms) tbcontact on tbcontact.ENCOUNTER_ID = e.ENCOUNTER_ID and tbcontact.SYMPTOM = 'tb_contact\'
+                left join   (select encounter_id, symptom, result, duration, duration_unit from hiv_exam_symptoms) bloodyCough on bloodyCough.ENCOUNTER_ID = e.ENCOUNTER_ID and bloodyCough.SYMPTOM = 'hymoptusis\'
+                left join   (select encounter_id, symptom, result, duration, duration_unit from hiv_exam_symptoms) dyspnea on dyspnea.ENCOUNTER_ID = e.ENCOUNTER_ID and dyspnea.SYMPTOM = 'dyspnea' 
+                left join   (select encounter_id, symptom, result, duration, duration_unit from hiv_exam_symptoms) chestPain on chestPain.ENCOUNTER_ID = e.ENCOUNTER_ID and chestPain.SYMPTOM = 'chest_pain\'
+                where       ( cough.result is not null or fever.result is not null or wtloss.result is not null 
+                            or ntsweat.result is not null 
+                            or tbcontact.result is not null 
+                            or bloodyCough.result is not null 
+                            or dyspnea.result is not null 
+                            or chestPain.result is not null);            
             ''')
 
         executeMysql("Load TB screening questions as observations", ''' 
@@ -221,7 +248,38 @@ class ExamExtraMigrator extends ObsMigrator {
                   , source_encounter_id
                   , IF(tb_contact=1, concept_uuid_from_mapping('PIH', '11563'), concept_uuid_from_mapping('PIH', '11564'))                  
             FROM hivmigration_tb_screening
-            WHERE tb_contact = 1 or tb_contact = 0;            
+            WHERE tb_contact = 1 or tb_contact = 0;   
+            
+            -- Bloody Cough(Hymoptusis)                                            
+            INSERT INTO tmp_obs (value_coded_uuid, source_encounter_id, concept_uuid, comments)
+            SELECT 
+                  concept_uuid_from_mapping('PIH', '970')
+                  , source_encounter_id
+                  , IF(bloodyCough=1, concept_uuid_from_mapping('PIH', '11563'), concept_uuid_from_mapping('PIH', '11564'))
+                  , bloodyCough_comments
+            FROM hivmigration_tb_screening
+            WHERE bloodyCough = 1 or bloodyCough = 0;       
+            
+            -- Difficulty breathing(Dyspnea)                                            
+            INSERT INTO tmp_obs (value_coded_uuid, source_encounter_id, concept_uuid, comments)
+            SELECT 
+                  concept_uuid_from_mapping('PIH', '5960')
+                  , source_encounter_id
+                  , IF(dyspnea=1, concept_uuid_from_mapping('PIH', '11563'), concept_uuid_from_mapping('PIH', '11564'))
+                  , dyspnea_comments
+            FROM hivmigration_tb_screening
+            WHERE dyspnea = 1 or dyspnea = 0;     
+            
+            -- Chest Pain                                            
+            INSERT INTO tmp_obs (value_coded_uuid, source_encounter_id, concept_uuid, comments)
+            SELECT 
+                  concept_uuid_from_mapping('PIH', '136')
+                  , source_encounter_id
+                  , IF(chestPain=1, concept_uuid_from_mapping('PIH', '11563'), concept_uuid_from_mapping('PIH', '11564'))
+                  , chestPain_comments
+            FROM hivmigration_tb_screening
+            WHERE chestPain = 1 or chestPain = 0;  
+                     
         ''')
 
         migrate_tmp_obs()
@@ -235,7 +293,7 @@ class ExamExtraMigrator extends ObsMigrator {
                     and encounter_id not in( 
                         select e.encounter_id
                         from encounter e, encounter_type t 
-                        where  e.encounter_type=t.encounter_type_id and t.uuid='cc1720c9-3e4c-4fa8-a7ec-40eeaad1958c\'
+                        where  e.encounter_type=t.encounter_type_id and t.uuid='cc1720c9-3e4c-4fa8-a7ec-40eeaad1958c'
                     );          
         ''')
         executeMysql("drop table if exists hivmigration_exam_extra")
