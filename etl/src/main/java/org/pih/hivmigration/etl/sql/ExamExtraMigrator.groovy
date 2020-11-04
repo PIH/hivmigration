@@ -206,7 +206,7 @@ class ExamExtraMigrator extends ObsMigrator {
                             or tbcontact.result is not null 
                             or bloodyCough.result is not null 
                             or dyspnea.result is not null 
-                            or chestPain.result is not null);
+                            or chestPain.result is not null);            
             ''')
 
         executeMysql("Load TB screening questions as observations", ''' 
@@ -279,8 +279,7 @@ class ExamExtraMigrator extends ObsMigrator {
                   , chestPain_comments
             FROM hivmigration_tb_screening
             WHERE chestPain = 1 or chestPain = 0;  
-            
-         
+                     
         ''')
 
         migrate_tmp_obs()
