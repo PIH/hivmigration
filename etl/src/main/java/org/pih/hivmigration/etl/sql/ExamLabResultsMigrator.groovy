@@ -89,7 +89,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 "is_number(result) OR result REGEXP '[0-9]+cell.*'"  // e.g. '500 cell/mm3'
         )
 
-        migrateLab("hematocrit",
+        migrateLab("hematocrite",
                 "concept_uuid_from_mapping('PIH', 'HEMATOCRIT')",
                 "extract_number(result)",
                 "NULL",
