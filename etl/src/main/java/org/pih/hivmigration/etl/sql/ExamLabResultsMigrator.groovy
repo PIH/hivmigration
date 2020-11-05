@@ -141,6 +141,13 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 // e.g. '9.8', '9.8 g/dl', or '9.8gr/dl'
         )
 
+        migrateLab("eryth_sed_rate",
+                "concept_uuid_from_mapping('PIH', 'ERYTHROCYTE SEDIMENTATION RATE')",
+                "extract_number(result)",
+                "NULL",
+                "result is not null and is_number(extract_number(result))"
+        )
+
     }
 
     @Override
