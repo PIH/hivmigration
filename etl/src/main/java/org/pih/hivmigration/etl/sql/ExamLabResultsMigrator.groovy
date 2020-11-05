@@ -11,12 +11,13 @@ class ExamLabResultsMigrator extends ObsMigrator {
         create_tmp_obs_table()
 
         executeMysql("Migrate " + testName, '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_numeric, value_coded_uuid)
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_numeric, value_coded_uuid, obs_datetime)
             SELECT
                 he.source_encounter_id,
                 ''' + conceptUuid + ''',
                 ''' + numericValue + ''',
-                ''' + codedValue + '''
+                ''' + codedValue + ''',
+                helr.test_date
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he on helr.source_encounter_id = he.source_encounter_id
             JOIN encounter e on he.encounter_id = e.encounter_id  -- only migrate lab results corresponding to an encounter that was successfully migrated
