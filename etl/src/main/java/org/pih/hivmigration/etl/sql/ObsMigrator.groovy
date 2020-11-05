@@ -14,6 +14,7 @@ abstract class ObsMigrator extends SqlMigrator {
             CREATE TABLE tmp_obs (
                 obs_id INT PRIMARY KEY AUTO_INCREMENT,
                 obs_group_id INT,
+                obs_datetime DATETIME,  -- optional, defaults to the encounter datetime
                 source_patient_id INT,  -- optional, defaults to the one from source_encounter_id
                 source_encounter_id INT,
                 concept_uuid CHAR(38),
@@ -34,6 +35,11 @@ abstract class ObsMigrator extends SqlMigrator {
             JOIN hivmigration_encounters he ON tmp_obs.source_encounter_id = he.source_encounter_id
             SET tmp_obs.source_patient_id = IFNULL(tmp_obs.source_patient_id, he.source_patient_id);
         ''')
+        executeMysql("Fill in obs datetime from encounter", '''
+            UPDATE tmp_obs
+            JOIN hivmigration_encounters he ON tmp_obs.source_encounter_id = he.source_encounter_id
+            SET tmp_obs.obs_datetime = IFNULL(tmp_obs.obs_datetime, he.encounter_date);
+        ''')
         Long tmpObsCount = (Long) selectMysql("(select count(1) from tmp_obs)", new ScalarHandler())
         Long batchesMigrated = 0
         Long batchSize = 50000
@@ -46,7 +52,7 @@ abstract class ObsMigrator extends SqlMigrator {
                     creator, date_created, voided, uuid
                 )
                 SELECT
-                    o.obs_id, p.person_id, e.encounter_id, o.obs_group_id, e.encounter_date, ifnull(e.location_id, 1), q.concept_id,
+                    o.obs_id, p.person_id, e.encounter_id, o.obs_group_id, o.obs_datetime, ifnull(e.location_id, 1), q.concept_id,
                     a.concept_id, d.drug_id, o.value_numeric, o.value_datetime, o.value_text, o.comments,
                     1, e.date_created, 0, uuid()
                 FROM tmp_obs o
