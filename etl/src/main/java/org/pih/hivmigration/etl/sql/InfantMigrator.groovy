@@ -48,18 +48,16 @@ class InfantMigrator extends SqlMigrator {
         ''')
 
         loadFromOracleToMySql('''
-                insert into hivmigration_data_warnings (
-                    hivemr_v1_id,
+                insert into hivmigration_data_warnings (                    
                     field_name,
                     field_value,
                     warning_type,
                     flag_for_review
-                ) values (?, ?, ?, ?, ?)
+                ) values (?, ?, ?, ?)
             ''', '''
-                select 
-                    i.INFANT_ID,
-                    'patient_id',
-                    i.PATIENT_ID, 
+                select                     
+                    'infant_id',
+                    i.INFANT_ID, 
                     'Infant already has a patient_id record',
                     1 			
                 from HIV_INFANTS i 
