@@ -17,6 +17,7 @@ class PatientMigrator extends SqlMigrator {
                 first_name varchar(100),
                 first_name2 varchar(100),
                 last_name varchar(100),
+                nickname varchar(100),
                 gender varchar(50),
                 birthdate date,
                 birthdate_estimated tinyint,
@@ -61,9 +62,9 @@ class PatientMigrator extends SqlMigrator {
 
         // load patients into staging table
         loadFromOracleToMySql('''
-                    insert into hivmigration_patients(source_patient_id,pih_id, nif_id, national_id, first_name, first_name2, last_name, gender, birthdate,
+                    insert into hivmigration_patients(source_patient_id,pih_id, nif_id, national_id, first_name, first_name2, last_name, nickname, gender, birthdate,
                         birthdate_estimated, phone_number, birth_place, accompagnateur_name, patient_created_by, patient_created_date, outcome, outcome_date)
-                    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             ''',
             '''
                 select
@@ -74,6 +75,7 @@ class PatientMigrator extends SqlMigrator {
                     d.FIRST_NAME,
                     d.FIRST_NAME2,
                     d.LAST_NAME,
+                    d.NICKNAME,
                     upper(d.GENDER) as GENDER,
                     d.BIRTH_DATE AS BIRTHDATE,
                     decode(d.BIRTH_DATE_EXACT_P, 'f', 1, 't', 0, null) as BIRTHDATE_ESTIMATED,
@@ -148,12 +150,13 @@ class PatientMigrator extends SqlMigrator {
 
         executeMysql("Insert Patients into Person Name Table",
         '''
-            insert into person_name(person_id, uuid, given_name, family_name, preferred, creator, date_created)
+            insert into person_name(person_id, uuid, given_name, family_name, middle_name, preferred, creator, date_created)
             select
                 p.person_id,
                 uuid() as uuid,
                 concat(p.first_name, if(p.first_name2 is null, '', concat(' ', p.first_name2))) as given_name,
                 p.last_name as family_name,
+                p.nickname,
                 1 as preferred,
                 u.user_id as creator,
                 date_format(p.patient_created_date, '%Y-%m-%d %T') as date_created
@@ -166,7 +169,7 @@ class PatientMigrator extends SqlMigrator {
             order by p.source_patient_id;
         ''')
 
-        // TODO: see https://pihemr.atlassian.net/browse/UHM-4817
+        // TODO: figure out what to do about null names. https://pihemr.atlassian.net/browse/UHM-4817
         executeMysql("Note NULL names", '''
             INSERT INTO hivmigration_data_warnings (openmrs_patient_id, field_name, field_value, warning_type, flag_for_review)
             SELECT
