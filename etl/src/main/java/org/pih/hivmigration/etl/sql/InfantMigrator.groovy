@@ -58,7 +58,7 @@ class InfantMigrator extends SqlMigrator {
                 select                     
                     'infant_id',
                     i.INFANT_ID, 
-                    'Infant already has a patient_id record',
+                    'Infant with INFANT_ID ' || i.INFANT_ID || ' has patient record with with PATIENT_ID ' || i.PATIENT_ID || ', skipping importing infant record',
                     1 			
                 from HIV_INFANTS i 
                 where i.patient_id is not null; 
