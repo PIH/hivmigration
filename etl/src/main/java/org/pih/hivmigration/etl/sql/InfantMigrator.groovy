@@ -40,7 +40,28 @@ class InfantMigrator extends SqlMigrator {
                     i.LAST_NAME, 
                     upper(i.GENDER), 
                     i.BIRTH_DATE  			
-                from HIV_INFANTS i
+                from HIV_INFANTS i 
+                where (i.patient_id is null) and ((i.MOTHER_PATIENT_ID is null) or (
+                    i.MOTHER_PATIENT_ID is not null 
+                    and i.MOTHER_PATIENT_ID in (select patient_id from HIV_DEMOGRAPHICS_REAL))
+                ); 
+        ''')
+
+        loadFromOracleToMySql('''
+                insert into hivmigration_data_warnings (                    
+                    field_name,
+                    field_value,
+                    warning_type,
+                    flag_for_review
+                ) values (?, ?, ?, ?)
+            ''', '''
+                select                     
+                    'infant_id',
+                    i.INFANT_ID, 
+                    'Infant with INFANT_ID ' || i.INFANT_ID || ' has patient record with with PATIENT_ID ' || i.PATIENT_ID || ', skipping importing infant record',
+                    1 			
+                from HIV_INFANTS i 
+                where i.patient_id is not null; 
         ''')
 
         executeMysql("Add UUIDs", "update hivmigration_infants set person_uuid = uuid();")
