@@ -2,6 +2,11 @@ package org.pih.hivmigration.etl.sql
 
 import org.apache.commons.dbutils.handlers.ScalarHandler
 
+/* References:
+ *  Legacy model: https://pihemr.atlassian.net/wiki/spaces/ZL/pages/996507669/ART+Regimens+modeling+and+migration
+ *  Original ticket: https://pihemr.atlassian.net/browse/UHM-4832
+ */
+
 class TreatmentObsMigrator extends ObsMigrator {
 
     @Override
@@ -26,6 +31,14 @@ class TreatmentObsMigrator extends ObsMigrator {
             FROM hiv_ordered_other o, hiv_encounters e, hiv_demographics_real d 
             WHERE o.encounter_id = e.encounter_id and e.patient_id = d.patient_id
         ''')
+
+        migrateProphylaxes()
+        migrateArtStatus()
+        migrateArtPlan()
+        migrateTB()
+    }
+
+    def void migrateProphylaxes() {
 
         create_tmp_obs_table()
 
@@ -158,7 +171,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             SELECT count(start_date)
             FROM hivmigration_prophylaxis
             WHERE start_date IS NOT NULL AND DAYNAME(start_date) IS NULL;''',
-            new ScalarHandler()
+                new ScalarHandler()
         )
         if (numInvalidDates > 0) {
             throw new Error("Invalid dates were inserted into the hivmigration_prophylaxis table's `start_date` column. Please review the data in that column and fix the logic by which it is inserted.")
@@ -242,8 +255,46 @@ class TreatmentObsMigrator extends ObsMigrator {
         //
 
         migrate_tmp_obs()
-        create_tmp_obs_table()
+    }
 
+    def void migrateArtStatus() {
+        create_tmp_obs_table()
+        executeMysql("Set up for ARV Regimen migration", '''
+            DROP TABLE IF EXISTS hivmigration_arv_regimen;
+            CREATE TABLE hivmigration_arv_regimen (
+                obs_group_id int primary key auto_increment,
+                source_encounter_id int,
+                comments varchar(255)
+            );
+        ''')
+        setAutoIncrement('hivmigration_arv_regimen', '(select max(obs_id)+1 from obs)')
+
+        executeMysql("Populate ARV regimen staging table", '''
+            INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
+            SELECT source_encounter_id, value
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.art';
+            
+            INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
+            SELECT source_encounter_id, value
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.art_other'
+                AND LENGTH(TRIM(value)) > 0;  -- skip one weird entry that's 297 chars of whitespace
+        ''')
+
+        executeMysql("Create ARV regimen status obs group ", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, obs_id)
+            SELECT source_encounter_id, concept_uuid_from_mapping('PIH', '13156'), obs_group_id
+            FROM hivmigration_arv_regimen;
+        ''')
+
+        migrateArvsFromHivmigrationArvRegimenTableToTmpObs()
+
+        migrate_tmp_obs()
+    }
+
+    def void migrateArtPlan() {
+        create_tmp_obs_table()
         executeMysql("Migrate 'Does patient need ART?'", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
             SELECT
@@ -280,6 +331,7 @@ class TreatmentObsMigrator extends ObsMigrator {
         create_tmp_obs_table()
 
         executeMysql("Set up for ARV Regimen migration", '''
+            DROP TABLE IF EXISTS hivmigration_arv_regimen;
             CREATE TABLE hivmigration_arv_regimen (
                 obs_group_id int primary key auto_increment,
                 source_encounter_id int,
@@ -298,17 +350,6 @@ class TreatmentObsMigrator extends ObsMigrator {
             SELECT source_encounter_id, comments
             FROM hivmigration_ordered_other
             WHERE ordered = 'arv_regimen_other';
-            
-            INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
-            SELECT source_encounter_id, value
-            FROM hivmigration_observations
-            WHERE observation = 'current_tx.art';
-            
-            INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
-            SELECT source_encounter_id, value
-            FROM hivmigration_observations
-            WHERE observation = 'current_tx.art_other'
-                AND LENGTH(TRIM(value)) > 0;  -- skip one weird entry that's 297 chars of whitespace
         ''')
 
         executeMysql("Create ARV regimen obs group ", '''
@@ -317,45 +358,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             FROM hivmigration_arv_regimen;
         ''')
 
-        executeMysql("Migrate known ARV regimens into coded obs",'''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
-            SELECT
-                source_encounter_id,
-                concept_uuid_from_mapping('PIH', '1282'),
-                CASE
-                    WHEN comments LIKE 'azt%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164511')
-                    WHEN comments LIKE 'azt%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160124')
-                    WHEN comments LIKE 'azt%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '1652')
-                    WHEN comments LIKE 'd4t%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160104')
-                    WHEN comments LIKE 'd4t%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '792')
-                    WHEN comments LIKE 'tdf%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164512')
-                    WHEN comments LIKE 'tdf%3tc%dtg' THEN concept_uuid_from_mapping('CIEL', '165086')
-                    WHEN comments LIKE 'tdf%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '164505')
-                    WHEN comments LIKE 'tdf%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '162565')
-                    ELSE concept_uuid_from_mapping('CIEL', '5424')  -- other
-                    END,
-                obs_group_id
-            FROM hivmigration_arv_regimen;
-        ''')
-
-        executeMysql("Migrate old ARV Regimens into 'other' text box", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text, obs_group_id)
-            SELECT
-                source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '5424'),
-                comments,
-                obs_group_id
-            FROM hivmigration_arv_regimen
-            WHERE comments NOT LIKE 'azt%3tc%atv/r'
-              AND comments NOT LIKE 'azt%3tc%efv' 
-              AND comments NOT LIKE 'azt%3tc%nvp' 
-              AND comments NOT LIKE 'd4t%3tc%efv' 
-              AND comments NOT LIKE 'd4t%3tc%nvp' 
-              AND comments NOT LIKE 'tdf%3tc%atv/r'
-              AND comments NOT LIKE 'tdf%3tc%dtg'
-              AND comments NOT LIKE 'tdf%3tc%efv' 
-              AND comments NOT LIKE 'tdf%3tc%nvp';
-        ''')
+        migrateArvsFromHivmigrationArvRegimenTableToTmpObs()
 
         executeMysql("Migrate ART start date from follow-up form", '''
             INSERT IGNORE INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime)
@@ -372,7 +375,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE value_datetime = '0000-00-00';
         ''')
         // Check that there are no invalid dates
-        numInvalidDates = selectMysql('''
+        Long numInvalidDates = selectMysql('''
                 SELECT count(value_datetime)
                 FROM tmp_obs
                 WHERE value_datetime IS NOT NULL AND DAYNAME(value_datetime) IS NULL;''',
@@ -383,6 +386,9 @@ class TreatmentObsMigrator extends ObsMigrator {
         }
 
         migrate_tmp_obs()
+    }
+
+    def void migrateTB() {
         create_tmp_obs_table()
 
         executeMysql("Migrate TB Treatment Needed", '''
@@ -454,6 +460,48 @@ class TreatmentObsMigrator extends ObsMigrator {
 
         // TODO: migrate 'other' TB treatments
         migrate_tmp_obs()
+    }
+
+    def migrateArvsFromHivmigrationArvRegimenTableToTmpObs() {
+        executeMysql("Migrate known ARV regimens into coded obs", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '1282'),
+                CASE
+                    WHEN comments LIKE 'azt%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164511')
+                    WHEN comments LIKE 'azt%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160124')
+                    WHEN comments LIKE 'azt%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '1652')
+                    WHEN comments LIKE 'd4t%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160104')
+                    WHEN comments LIKE 'd4t%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '792')
+                    WHEN comments LIKE 'tdf%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164512')
+                    WHEN comments LIKE 'tdf%3tc%dtg' THEN concept_uuid_from_mapping('CIEL', '165086')
+                    WHEN comments LIKE 'tdf%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '164505')
+                    WHEN comments LIKE 'tdf%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '162565')
+                    ELSE concept_uuid_from_mapping('CIEL', '5424')  -- other
+                    END,
+                obs_group_id
+            FROM hivmigration_arv_regimen;
+        ''')
+
+        executeMysql("Migrate old ARV Regimens into 'other' text box", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text, obs_group_id)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '5424'),
+                comments,
+                obs_group_id
+            FROM hivmigration_arv_regimen
+            WHERE comments NOT LIKE 'azt%3tc%atv/r'
+              AND comments NOT LIKE 'azt%3tc%efv' 
+              AND comments NOT LIKE 'azt%3tc%nvp' 
+              AND comments NOT LIKE 'd4t%3tc%efv' 
+              AND comments NOT LIKE 'd4t%3tc%nvp' 
+              AND comments NOT LIKE 'tdf%3tc%atv/r'
+              AND comments NOT LIKE 'tdf%3tc%dtg'
+              AND comments NOT LIKE 'tdf%3tc%efv' 
+              AND comments NOT LIKE 'tdf%3tc%nvp';
+        ''')
     }
 
     @Override
