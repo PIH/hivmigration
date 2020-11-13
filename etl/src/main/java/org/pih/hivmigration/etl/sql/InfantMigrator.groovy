@@ -52,12 +52,14 @@ class InfantMigrator extends SqlMigrator {
                     field_name,
                     field_value,
                     warning_type,
+                    warning_details,
                     flag_for_review
-                ) values (?, ?, ?, ?)
+                ) values (?, ?, ?, ?, ?)
             ''', '''
                 select                     
                     'infant_id',
                     i.INFANT_ID, 
+                    'Infant has patient record, skipping importing infant record',
                     'Infant with INFANT_ID ' || i.INFANT_ID || ' has patient record with with PATIENT_ID ' || i.PATIENT_ID || ', skipping importing infant record',
                     1 			
                 from HIV_INFANTS i 
