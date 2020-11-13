@@ -12,7 +12,8 @@ class PcrTestsMigrator extends SqlMigrator {
               source_infant_id int,
               sample_id varchar(255),
               result varchar(32), 
-              date_of_result date,              
+              date_of_result date,   
+              result_entry_date date,           
               comments varchar(255)            
             );
         ''')
@@ -26,8 +27,9 @@ class PcrTestsMigrator extends SqlMigrator {
                 source_encounter_date,
                 result, 
                 date_of_result,
+                result_entry_date,
                 comments
-            ) VALUES (?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
         ''',
                 '''
             select  INFANT_ID, 
@@ -36,11 +38,9 @@ class PcrTestsMigrator extends SqlMigrator {
                         when (SAMPLE_DATE is not null ) then to_char(SAMPLE_DATE, 'yyyy-mm-dd') 
                         else to_char(RESULT_ENTRY_DATE, 'yyyy-mm-dd')  
                     end as encounter_date,         
-                    lower(RESULT) as result,        
-                    case 
-                        when (DATE_RESULT_RECEIVED is not null ) then to_char(DATE_RESULT_RECEIVED, 'yyyy-mm-dd') 
-                        else to_char(RESULT_ENTRY_DATE, 'yyyy-mm-dd')  
-                    end as date_of_result,    
+                    lower(RESULT) as result,  
+                    to_char(DATE_RESULT_RECEIVED, 'yyyy-mm-dd') as date_of_result,                         
+                    to_char(RESULT_ENTRY_DATE, 'yyyy-mm-dd'),
                     COMMENTS
             from HIV_PCR_TRACKING_VIEW 
             where result is not null
@@ -66,7 +66,7 @@ class PcrTestsMigrator extends SqlMigrator {
                     r.encounter_id,
                     uuid(),
                     r.source_encounter_date,
-                    r.source_encounter_date,
+                    now(),
                     @encounter_type_lab_results,
                     @form_lab_results,
                     i.person_id,
@@ -99,10 +99,10 @@ class PcrTestsMigrator extends SqlMigrator {
                     @date_of_test_results as conceptId,
                     r.date_of_result as valueDatetime, 
                     1 as creator, 
-                    r.source_encounter_date as dateCreated, 
+                    r.result_entry_date as dateCreated, 
                     uuid() as uuid
             from hivmigration_pcr_tests r, hivmigration_infants i 
-            where r.source_infant_id = i.source_infant_id;  
+            where (r.date_of_result is not null) and (r.source_infant_id = i.source_infant_id);  
             
             -- Add PCR Results
             SET @pcr_test_results = (concept_from_mapping('CIEL', '1030'));
@@ -131,7 +131,7 @@ class PcrTestsMigrator extends SqlMigrator {
                         when 'indeterminate'  then  concept_from_mapping('CIEL', '1138') 
                     end as valueCoded, 
                     1 as creator, 
-                    r.source_encounter_date as dateCreated, 
+                    r.result_entry_date as dateCreated, 
                     r.sample_id,
                     r.comments,
                     uuid() as uuid
