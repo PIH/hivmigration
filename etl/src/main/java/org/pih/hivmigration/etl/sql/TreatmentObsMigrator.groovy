@@ -451,7 +451,7 @@ class TreatmentObsMigrator extends ObsMigrator {
                 CASE comments
                     WHEN '2HRZE_4HR' THEN concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR
                     WHEN 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')  -- 'MDR TB'
-                    WHEN 'hrez' THEN concept_uuid_from_mapping('PIH', 'HRZE')
+                    WHEN 'hrez' THEN concept_uuid_from_mapping('PIH', 'RHZE')
                     WHEN '2S+HRZE_1HRZE_5HR+E' THEN concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
                 END
             FROM hivmigration_ordered_other
