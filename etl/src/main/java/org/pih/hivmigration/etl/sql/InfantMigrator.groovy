@@ -99,6 +99,24 @@ class InfantMigrator extends SqlMigrator {
               hivmigration_infants i
         ''')
 
+        // log birthdates in the future or birthdates older than 120 years
+        executeMysql("Log abnormal birthdate values", '''
+                insert into hivmigration_data_warnings (                    
+                    openmrs_patient_id,
+                    field_name,
+                    field_value,
+                    warning_type,                    
+                    flag_for_review) 
+                select
+                	p.person_id as openmrsPatientId,                     
+                    'birthdate' as fieldName,
+                    p.birthdate as fieldValue, 
+                    'Abnormal birthdate value' as warningType,                    
+                    1 			
+                from person p 
+                where (p.person_id in (select person_id from hivmigration_infants)) and (birthdate is not null  and (birthdate > now() || birthdate < (SELECT DATE_SUB(now(), INTERVAL 120 YEAR)))); 
+        ''')
+
         // TODO: see https://pihemr.atlassian.net/browse/UHM-4817
         executeMysql("Note NULL names", '''
             INSERT INTO hivmigration_data_warnings (openmrs_patient_id, field_name, field_value, warning_type, flag_for_review)
