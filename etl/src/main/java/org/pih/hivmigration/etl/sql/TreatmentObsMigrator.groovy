@@ -36,7 +36,8 @@ class TreatmentObsMigrator extends ObsMigrator {
         migrateProphylaxesPlan()
         migrateArtStatus()
         migrateArtPlan()
-        migrateTB()
+        migrateTbState()
+        migrateTbPlan()
     }
 
     def void migrateProphylaxesState() {
@@ -479,7 +480,49 @@ class TreatmentObsMigrator extends ObsMigrator {
         migrate_tmp_obs()
     }
 
-    def void migrateTB() {
+    def void migrateTbState() {
+        create_tmp_obs_table()
+
+        executeMysql("Fill 'anti-TB treatment' yes-no question", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '159798'),
+                concept_uuid_from_mapping('CIEL', '1065')
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.tb' AND value IS NOT NULL AND value != 'none';
+        ''')
+
+        executeMysql("Migrate TB treatment start date", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '1113'),
+                value
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.tb_start_date AND value IS NOT NULL';
+        ''')
+
+        executeMysql("Migrate TB treatment from follow-up form", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '1111'),
+                CASE
+                    WHEN value LIKE 'tb_initial%' THEN concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR
+                    WHEN value LIKE 'tb_infant%' THEN concept_uuid_from_mapping('PIH', '2RHZ / 4RH')  
+                    WHEN value LIKE 'tb_retreatment%' THEN concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
+                    WHEN value = 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')  -- 'MDR TB'
+                    END
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.tb' AND value IS NOT NULL AND value != 'none';
+        ''')
+
+        migrate_tmp_obs()
+
+    }
+
+    def void migrateTbPlan() {
         create_tmp_obs_table()
 
         executeMysql("Migrate TB Treatment Needed", '''
@@ -501,21 +544,6 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE observation = 'tb_treatment_needed' AND value IS NOT NULL;
         ''')
 
-        executeMysql("Migrate TB treatment from follow-up form", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT
-                source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '159792'),
-                CASE
-                    WHEN value LIKE 'tb_initial%' THEN concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR
-                    WHEN value LIKE 'tb_infant%' THEN concept_uuid_from_mapping('PIH', '2RHZ / 4RH')  
-                    WHEN value LIKE 'tb_retreatment%' THEN concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
-                    WHEN value = 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')  -- 'MDR TB'
-                    END
-            FROM hivmigration_observations
-            WHERE observation = 'current_tx.tb' AND value IS NOT NULL AND value != 'none';
-        ''')
-
         executeMysql("Migrate TB treatment start date", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime)
             SELECT
@@ -524,21 +552,13 @@ class TreatmentObsMigrator extends ObsMigrator {
                 comments
             FROM hivmigration_ordered_other
             WHERE ordered = 'tb_start_date' AND comments IS NOT NULL;
-            
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime)
-            SELECT
-                source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '1113'),
-                value
-            FROM hivmigration_observations
-            WHERE observation = 'current_tx.tb_start_date AND value IS NOT NULL';
         ''')
 
         executeMysql("Migrate TB regimen", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
             SELECT
                 source_encounter_id,
-                concept_uuid_from_mapping('PIH', '6150'),
+                concept_uuid_from_mapping('CIEL', '159792'),
                 CASE comments
                     WHEN '2HRZE_4HR' THEN concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR
                     WHEN 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')  -- 'MDR TB'
