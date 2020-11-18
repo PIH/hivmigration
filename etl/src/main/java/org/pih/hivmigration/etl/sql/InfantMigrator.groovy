@@ -15,7 +15,13 @@ class InfantMigrator extends SqlMigrator {
                 first_name varchar(100),
                 last_name varchar(100),
                 gender varchar(50),
-                birthdate date
+                birthdate date,
+                health_center int,
+                hiv_status varchar(16),
+                vital_status varchar(16),
+                vital_status_date date,
+                non_emr_mother varchar(48),
+                father_patient_id int
             );
         ''')
 
@@ -29,8 +35,14 @@ class InfantMigrator extends SqlMigrator {
                     first_name,
                     last_name,
                     gender,
-                    birthdate
-                ) values (?, ?, ?, ?, ?, ?, ?)
+                    birthdate,
+                    health_center,
+                    hiv_status,
+                    vital_status,
+                    vital_status_date,
+                    non_emr_mother,
+                    father_patient_id                    
+                ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', '''
                 select 
                     i.INFANT_ID,
@@ -38,13 +50,22 @@ class InfantMigrator extends SqlMigrator {
                     i.INFANT_CODE, 
                     i.FIRST_NAME,
                     i.LAST_NAME, 
-                    upper(i.GENDER), 
-                    i.BIRTH_DATE  			
+                    upper(i.GENDER) as gender, 
+                    i.BIRTH_DATE,
+                    i.HEALTH_CENTER,                   
+                    i.HIV_STATUS,                    
+                    i.VITAL_STATUS,
+                    to_char(i.VITAL_STATUS_DATE, 'yyyy-mm-dd') as vital_status_date,
+                    i.NON_EMR_MOTHER,
+                    i.FATHER_PATIENT_ID
                 from HIV_INFANTS i 
-                where (i.patient_id is null) and ((i.MOTHER_PATIENT_ID is null) or (
-                    i.MOTHER_PATIENT_ID is not null 
-                    and i.MOTHER_PATIENT_ID in (select patient_id from HIV_DEMOGRAPHICS_REAL))
-                ); 
+                where (i.patient_id is null) 
+                    and ((i.MOTHER_PATIENT_ID is null) or (
+                        i.MOTHER_PATIENT_ID is not null 
+                        and i.MOTHER_PATIENT_ID in (select patient_id from HIV_DEMOGRAPHICS_REAL))) 
+                    and ((i.FATHER_PATIENT_ID is null) or (
+                        i.FATHER_PATIENT_ID is not null 
+                        and i.FATHER_PATIENT_ID in (select patient_id from HIV_DEMOGRAPHICS_REAL))); 
         ''')
 
         loadFromOracleToMySql('''
@@ -179,7 +200,7 @@ class InfantMigrator extends SqlMigrator {
             order by p.source_infant_id;
         ''')
 
-        executeMysql("Create Mother-Child relationship", '''
+        executeMysql("Create Parent-Child relationship for mothers", '''
             insert into relationship
                 (person_a, relationship, person_b, start_date, creator, date_created, uuid)
             select
@@ -192,6 +213,21 @@ class InfantMigrator extends SqlMigrator {
                 uuid()
             from hivmigration_infants i 
             join hivmigration_patients p on i.mother_patient_id = p.source_patient_id;
+        ''')
+
+        executeMysql("Create Parent-Child relationship for fathers", '''
+            insert into relationship
+                (person_a, relationship, person_b, start_date, creator, date_created, uuid)
+            select
+                p.person_id,
+                (select relationship_type_id from relationship_type where a_is_to_b='Parent' and b_is_to_a='Child'),
+                i.person_id,
+                i.birthdate,
+                1,
+                date_format(curdate(), '%Y-%m-%d %T'),
+                uuid()
+            from hivmigration_infants i 
+            join hivmigration_patients p on i.father_patient_id = p.source_patient_id;
         ''')
 
     }
