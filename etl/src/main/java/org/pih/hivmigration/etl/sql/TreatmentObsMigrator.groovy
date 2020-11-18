@@ -32,13 +32,143 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE o.encounter_id = e.encounter_id and e.patient_id = d.patient_id
         ''')
 
-        migrateProphylaxes()
+        migrateProphylaxesState()
+        migrateProphylaxesPlan()
         migrateArtStatus()
         migrateArtPlan()
         migrateTB()
     }
 
-    def void migrateProphylaxes() {
+    def void migrateProphylaxesState() {
+        create_tmp_obs_table()
+        executeMysql("Create intermediate table for prophylaxis rows", '''
+            DROP TABLE IF EXISTS hivmigration_prophylaxis;
+            CREATE TABLE hivmigration_prophylaxis (
+                obs_group_id int primary key auto_increment,
+                name varchar(80),
+                start_date datetime,
+                cont boolean,
+                stopped boolean,
+                other_value varchar(80),
+                source_encounter_id int,
+                encounter_date date
+            );
+        ''')
+        setAutoIncrement('hivmigration_prophylaxis', '(select max(obs_id)+1 from obs)')
+
+        executeMysql("Load intermediate prophylaxis table from follow-up form", '''
+            DROP PROCEDURE IF EXISTS load_follow_up_prophylaxis;
+            DELIMITER $$ ;
+            CREATE PROCEDURE load_follow_up_prophylaxis(_txName varchar(80))
+            BEGIN
+                INSERT INTO hivmigration_prophylaxis
+                (name, source_encounter_id, encounter_date)
+                SELECT
+                    _txName,
+                    base.source_encounter_id,
+                    he.encounter_date
+                FROM hivmigration_observations base
+                JOIN hivmigration_encounters he ON base.source_encounter_id = he.source_encounter_id
+                WHERE base.observation = CONCAT('current_tx.prophylaxis_', _txName)
+                GROUP BY base.source_encounter_id;
+                
+                -- Insert start date. MySQL offers no way to validate dates without throwing an error, so we do
+                -- this in two steps. First, add the dates using IGNORE, while attempting to correct any invalid dates.
+                -- Then, validate that none of the dates that were added are invalid.
+                -- The only kind of invalid dates in the data (at time of writing) are ones for which day values
+                -- that exceed the month length. For these, we use the first day of the following month.
+                UPDATE IGNORE hivmigration_prophylaxis pro
+                JOIN hivmigration_observations start
+                ON  pro.source_encounter_id = start.source_encounter_id
+                    AND start.observation = CONCAT('current_tx.prophylaxis_', _txName, '_start_date')
+                    AND start.value IS NOT NULL
+                SET start_date = IF(DAYNAME(start.value) IS NOT NULL,
+                                    start.value,
+                                    CONCAT(LEFT(start.value, 6), CAST(SUBSTR(start.value, 6, 2) AS UNSIGNED)+1, '-01'))
+                WHERE start_date != '0000-00-00 00:00:00';  -- Leave these as NULL
+            END $$
+            DELIMITER ;
+            
+            CALL load_follow_up_prophylaxis('CTX');
+            CALL load_follow_up_prophylaxis('Fluconazole');
+            CALL load_follow_up_prophylaxis('Isoniazid');
+            DROP PROCEDURE load_follow_up_prophylaxis;
+        ''')
+
+        // Check that there are no invalid dates
+        Long numInvalidDates = selectMysql('''
+            SELECT count(start_date)
+            FROM hivmigration_prophylaxis
+            WHERE start_date IS NOT NULL AND DAYNAME(start_date) IS NULL;''',
+                new ScalarHandler()
+        )
+        if (numInvalidDates > 0) {
+            throw new Error("Invalid dates were inserted into the hivmigration_prophylaxis table's `start_date` column. Please review the data in that column and fix the logic by which it is inserted.")
+        }
+
+        executeMysql("Create obsgroups for prophylaxis state", '''
+            INSERT INTO tmp_obs (obs_id, concept_uuid, source_encounter_id)
+            SELECT obs_group_id, concept_uuid_from_mapping('PIH', '2739'), source_encounter_id
+            FROM hivmigration_prophylaxis;
+        ''')
+
+        executeMysql("Add prophylaxis value (check the checkbox)", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
+            SELECT
+                   source_encounter_id,
+                   concept_uuid_from_mapping('PIH', '2289'),
+                   CASE name
+                       WHEN 'CTX' THEN concept_uuid_from_mapping('CIEL', '105281')
+                       WHEN 'Isoniazid' THEN concept_uuid_from_mapping('CIEL', '78280')
+                       WHEN 'Fluconazole' THEN concept_uuid_from_mapping('CIEL', '76488')
+                       END,
+                   obs_group_id
+            FROM hivmigration_prophylaxis
+            WHERE name IN ('CTX', 'Isoniazid', 'Fluconazole');
+        ''')
+
+        executeMysql("Add prophylaxis other value", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, comments, obs_group_id)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '2289'),
+                concept_uuid_from_mapping('PIH', '3120'),
+                other_value,
+                obs_group_id
+            FROM hivmigration_prophylaxis
+            WHERE name = 'other';
+        ''')
+
+        // Right now this is just mosquito_net
+        executeMysql("Add old prophylaxes", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, comments, obs_group_id)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '2289'),
+                concept_uuid_from_mapping('PIH', '3120'),
+                name,
+                obs_group_id
+            FROM hivmigration_prophylaxis
+            WHERE name NOT IN ('CTX', 'Isoniazid', 'Fluconazole', 'other');
+        ''')
+
+        executeMysql("Add prophylaxis started date", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime, obs_group_id)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '163526'),
+                start_date,
+                obs_group_id
+            FROM hivmigration_prophylaxis
+            WHERE start_date IS NOT NULL;
+        ''')
+
+        // TODO: End date? Exists in target form but not HIV EMR data.
+
+        migrate_tmp_obs()
+    }
+
+    def void migrateProphylaxesPlan() {
 
         create_tmp_obs_table()
 
@@ -65,12 +195,12 @@ class TreatmentObsMigrator extends ObsMigrator {
                 'tmp_smx_prophylaxis_continue', 'inh_prophylaxis_continue', 'fluconazole_continue', 'mosquito_net_continue', 'other_prophylaxis_continue'
             );
         ''')
-        // TODO: include old prophylaxes
 
         //
-        // BEGIN prophylaxis group PIH:10742
+        // BEGIN prophylaxis plan group PIH:10742
 
         executeMysql("Create intermediate table for prophylaxis rows", '''
+            DROP TABLE IF EXISTS hivmigration_prophylaxis;
             CREATE TABLE hivmigration_prophylaxis (
                 obs_group_id int primary key auto_increment,
                 name varchar(80),
@@ -125,45 +255,6 @@ class TreatmentObsMigrator extends ObsMigrator {
             CALL load_prophylaxis('other_prophylaxis');
             
             DROP PROCEDURE load_prophylaxis;
-        ''')
-
-        executeMysql("Load intermediate prophylaxis table from follow-up form", '''
-            DROP PROCEDURE IF EXISTS load_follow_up_prophylaxis;
-            DELIMITER $$ ;
-            CREATE PROCEDURE load_follow_up_prophylaxis(_txName varchar(80))
-            BEGIN
-                INSERT INTO hivmigration_prophylaxis
-                (name, source_encounter_id, encounter_date)
-                SELECT
-                    _txName,
-                    base.source_encounter_id,
-                    he.encounter_date
-                FROM hivmigration_observations base
-                JOIN hivmigration_encounters he ON base.source_encounter_id = he.source_encounter_id
-                WHERE base.observation = CONCAT('current_tx.prophylaxis_', _txName)
-                GROUP BY base.source_encounter_id;
-                
-                -- Insert start date. MySQL offers no way to validate dates without throwing an error, so we do
-                -- this in two steps. First, add the dates using IGNORE, while attempting to correct any invalid dates.
-                -- Then, validate that none of the dates that were added are invalid.
-                -- The only kind of invalid dates in the data (at time of writing) are ones for which day values
-                -- that exceed the month length. For these, we use the first day of the following month.
-                UPDATE IGNORE hivmigration_prophylaxis pro
-                JOIN hivmigration_observations start
-                ON  pro.source_encounter_id = start.source_encounter_id
-                    AND start.observation = CONCAT('current_tx.prophylaxis_', _txName, '_start_date')
-                    AND start.value IS NOT NULL
-                SET start_date = IF(DAYNAME(start.value) IS NOT NULL,
-                                    start.value,
-                                    CONCAT(LEFT(start.value, 6), CAST(SUBSTR(start.value, 6, 2) AS UNSIGNED)+1, '-01'))
-                WHERE start_date != '0000-00-00 00:00:00';  -- Leave these as NULL
-            END $$
-            DELIMITER ;
-            
-            CALL load_follow_up_prophylaxis('CTX');
-            CALL load_follow_up_prophylaxis('Fluconazole');
-            CALL load_follow_up_prophylaxis('Isoniazid');
-            DROP PROCEDURE load_follow_up_prophylaxis;
         ''')
 
         // Check that there are no invalid dates
@@ -233,9 +324,9 @@ class TreatmentObsMigrator extends ObsMigrator {
             FROM hivmigration_prophylaxis
             WHERE start_date IS NOT NULL;
         ''')
-        // TODO: populate start date for the same prophylaxis on subsequent forms
+        // TODO: populate start date for the same prophylaxis on subsequent forms?
 
-        // TODO: figure out how to populate end date
+        // TODO: End date?
 
         // Mark any prophylaxes with Inite or Continue as "Current Use"
         executeMysql("Add prophylaxis Current Use", '''
@@ -251,7 +342,7 @@ class TreatmentObsMigrator extends ObsMigrator {
 
         // TODO: migrate reason stopped
 
-        // END prophylaxis group
+        // END prophylaxis plan group
         //
 
         migrate_tmp_obs()
