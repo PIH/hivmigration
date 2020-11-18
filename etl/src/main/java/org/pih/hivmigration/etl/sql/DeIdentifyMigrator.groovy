@@ -83,6 +83,66 @@ class DeIdentifyMigrator extends SqlMigrator {
                 END)
             where given_name != 'UNKNOWN' and pn.person_id = p.person_id and p.gender != 'F';
             
+            update person_name pn, person p
+            set pn.middle_name =
+                (CASE
+                    WHEN p.person_id % 21 = 0 THEN 'Charlotte'
+                    WHEN p.person_id % 21 = 1 THEN 'Sophia'
+                    WHEN p.person_id % 21 = 2 THEN 'Ava'
+                    WHEN p.person_id % 21 = 3 THEN 'Olivia'
+                    WHEN p.person_id % 21 = 4 THEN 'Emma'
+                    WHEN p.person_id % 21 = 5 THEN 'Roseline'
+                    WHEN p.person_id % 21 = 6 THEN 'Fabienne'
+                    WHEN p.person_id % 21 = 7 THEN 'Mirlande'
+                    WHEN p.person_id % 21 = 8 THEN 'Madeline'
+                    WHEN p.person_id % 21 = 9 THEN 'Islande'
+                    WHEN p.person_id % 21 = 10 THEN 'Mia'
+                    WHEN p.person_id % 21 = 11 THEN 'Louise'
+                    WHEN p.person_id % 21 = 12 THEN 'Noemi'
+                    WHEN p.person_id % 21 = 13 THEN 'Ella'
+                    WHEN p.person_id % 21 = 14 THEN 'Alba'
+                    WHEN p.person_id % 21 = 15 THEN 'Daniela'
+                    WHEN p.person_id % 21 = 16 THEN 'Martina'
+                    WHEN p.person_id % 21 = 17 THEN 'Maria'
+                    WHEN p.person_id % 21 = 18 THEN 'Lucia' 
+                    WHEN p.person_id % 21 = 19 THEN 'Mirela' 
+                    WHEN p.person_id % 21 = 20 THEN 'Emilia'
+                END)
+            where pn.middle_name is not null and pn.middle_name != 'UNKNOWN' 
+                and pn.person_id = p.person_id and p.gender = 'F' 
+                and (p.person_id in (select person_id from hivmigration_patients) 
+                    or p.person_id in (select person_id from hivmigration_infants));
+                    
+            update person_name pn, person p
+            set pn.middle_name =
+                (CASE
+                    WHEN p.person_id % 21 = 0 THEN 'Lucas'
+                    WHEN p.person_id % 21 = 1 THEN 'Alvaro'
+                    WHEN p.person_id % 21 = 2 THEN 'Innocent'
+                    WHEN p.person_id % 21 = 3 THEN 'Martin'
+                    WHEN p.person_id % 21 = 4 THEN 'Pablo'
+                    WHEN p.person_id % 21 = 5 THEN 'Hugo'
+                    WHEN p.person_id % 21 = 6 THEN 'Alejandro'
+                    WHEN p.person_id % 21 = 7 THEN 'Mark'
+                    WHEN p.person_id % 21 = 8 THEN 'Augustin'
+                    WHEN p.person_id % 21 = 9 THEN 'Louis'
+                    WHEN p.person_id % 21 = 10 THEN 'Mohamed'
+                    WHEN p.person_id % 21 = 11 THEN 'Alexandre'
+                    WHEN p.person_id % 21 = 12 THEN 'Paul'
+                    WHEN p.person_id % 21 = 13 THEN 'Peter'
+                    WHEN p.person_id % 21 = 14 THEN 'Octavian'
+                    WHEN p.person_id % 21 = 15 THEN 'Daniel'
+                    WHEN p.person_id % 21 = 16 THEN 'Marvin'
+                    WHEN p.person_id % 21 = 17 THEN 'Mario'
+                    WHEN p.person_id % 21 = 18 THEN 'Luciano' 
+                    WHEN p.person_id % 21 = 19 THEN 'Eugen' 
+                    WHEN p.person_id % 21 = 20 THEN 'Joseph'
+                END)
+            where pn.middle_name is not null and pn.middle_name != 'UNKNOWN' 
+                and pn.person_id = p.person_id and p.gender != 'F' 
+                and (p.person_id in (select person_id from hivmigration_patients) 
+                    or p.person_id in (select person_id from hivmigration_infants)); 
+            
             update person_name pn, hivmigration_infants p
             set family_name =
                 (CASE
@@ -157,7 +217,8 @@ class DeIdentifyMigrator extends SqlMigrator {
                     WHEN p.source_infant_id % 19 = 17 THEN 'Alvaro'
                     WHEN p.source_infant_id % 19 = 18 THEN 'Lucas'
                 END)
-            where given_name != 'UNKNOWN' and pn.person_id = p.person_id and (p.gender != 'F' or p.gender is null);
+            where given_name != 'UNKNOWN' and pn.person_id = p.person_id and (p.gender != 'F' or p.gender is null);                              
+            
             '''
         )
 
