@@ -23,7 +23,8 @@ abstract class ObsMigrator extends SqlMigrator {
                 value_datetime DATETIME,
                 value_numeric DOUBLE,
                 value_text TEXT,
-                comments VARCHAR(255)
+                comments VARCHAR(255),
+                accession_number VARCHAR(255)
             );
         ''')
         setAutoIncrement('tmp_obs', '(select max(obs_id)+1 from obs)')
@@ -48,12 +49,12 @@ abstract class ObsMigrator extends SqlMigrator {
             String query = '''
                 INSERT INTO obs (
                     obs_id, person_id, encounter_id, obs_group_id, obs_datetime, location_id, concept_id,
-                    value_coded, value_drug, value_numeric, value_datetime, value_text, comments,
+                    value_coded, value_drug, value_numeric, value_datetime, value_text, comments, accession_number, 
                     creator, date_created, voided, uuid
                 )
                 SELECT
                     o.obs_id, p.person_id, e.encounter_id, o.obs_group_id, o.obs_datetime, ifnull(e.location_id, 1), q.concept_id,
-                    a.concept_id, d.drug_id, o.value_numeric, o.value_datetime, o.value_text, o.comments,
+                    a.concept_id, d.drug_id, o.value_numeric, o.value_datetime, o.value_text, o.comments, o.accession_number,
                     1, e.date_created, 0, uuid()
                 FROM tmp_obs o
                 JOIN       hivmigration_encounters e ON o.source_encounter_id = e.source_encounter_id
