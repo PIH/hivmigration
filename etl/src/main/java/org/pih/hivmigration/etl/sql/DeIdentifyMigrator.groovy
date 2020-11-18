@@ -158,6 +158,64 @@ class DeIdentifyMigrator extends SqlMigrator {
                     WHEN p.source_infant_id % 19 = 18 THEN 'Lucas'
                 END)
             where given_name != 'UNKNOWN' and pn.person_id = p.person_id and (p.gender != 'F' or p.gender is null);
+            
+            
+            update person_name pn, person p
+            set pn.middle_name =
+                (CASE
+                    WHEN p.person_id % 19 = 0 THEN 'Charlotte'
+                    WHEN p.person_id % 19 = 1 THEN 'Sophia'
+                    WHEN p.person_id % 19 = 2 THEN 'Ava'
+                    WHEN p.person_id % 19 = 3 THEN 'Olivia'
+                    WHEN p.person_id % 19 = 4 THEN 'Emma'
+                    WHEN p.person_id % 19 = 5 THEN 'Roseline'
+                    WHEN p.person_id % 19 = 6 THEN 'Fabienne'
+                    WHEN p.person_id % 19 = 7 THEN 'Mirlande'
+                    WHEN p.person_id % 19 = 8 THEN 'Madeline'
+                    WHEN p.person_id % 19 = 9 THEN 'Islande'
+                    WHEN p.person_id % 19 = 10 THEN 'Mia'
+                    WHEN p.person_id % 19 = 11 THEN 'Louise'
+                    WHEN p.person_id % 19 = 12 THEN 'Noemi'
+                    WHEN p.person_id % 19 = 13 THEN 'Ella'
+                    WHEN p.person_id % 19 = 14 THEN 'Alba'
+                    WHEN p.person_id % 19 = 15 THEN 'Daniela'
+                    WHEN p.person_id % 19 = 16 THEN 'Martina'
+                    WHEN p.person_id % 19 = 17 THEN 'Maria'
+                    WHEN p.person_id % 19 = 18 THEN 'Lucia'
+                END)
+            where pn.middle_name is not null and pn.middle_name != 'UNKNOWN' 
+                and pn.person_id = p.person_id and p.gender = 'F' 
+                and (p.person_id in (select person_id from hivmigration_patients) 
+                    || p.person_id in (select person_id from hivmigration_infants));
+                    
+            update person_name pn, person p
+            set pn.middle_name =
+                (CASE
+                    WHEN p.person_id % 19 = 0 THEN 'Lucas'
+                    WHEN p.person_id % 19 = 1 THEN 'Alvaro'
+                    WHEN p.person_id % 19 = 2 THEN 'Innocent'
+                    WHEN p.person_id % 19 = 3 THEN 'Martin'
+                    WHEN p.person_id % 19 = 4 THEN 'Pablo'
+                    WHEN p.person_id % 19 = 5 THEN 'Hugo'
+                    WHEN p.person_id % 19 = 6 THEN 'Alejandro'
+                    WHEN p.person_id % 19 = 7 THEN 'Mark'
+                    WHEN p.person_id % 19 = 8 THEN 'Augustin'
+                    WHEN p.person_id % 19 = 9 THEN 'Louis'
+                    WHEN p.person_id % 19 = 10 THEN 'Mohamed'
+                    WHEN p.person_id % 19 = 11 THEN 'Alexandre'
+                    WHEN p.person_id % 19 = 12 THEN 'Paul'
+                    WHEN p.person_id % 19 = 13 THEN 'Peter'
+                    WHEN p.person_id % 19 = 14 THEN 'Octavian'
+                    WHEN p.person_id % 19 = 15 THEN 'Daniel'
+                    WHEN p.person_id % 19 = 16 THEN 'Marvin'
+                    WHEN p.person_id % 19 = 17 THEN 'Mario'
+                    WHEN p.person_id % 19 = 18 THEN 'Luciano'
+                END)
+            where pn.middle_name is not null and pn.middle_name != 'UNKNOWN' 
+                and pn.person_id = p.person_id and p.gender != 'F' 
+                and (p.person_id in (select person_id from hivmigration_patients) 
+                    || p.person_id in (select person_id from hivmigration_infants));        
+            
             '''
         )
 
