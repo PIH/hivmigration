@@ -28,6 +28,7 @@ class PatientMigrator extends SqlMigrator {
                 patient_created_date timestamp,
                 outcome varchar(255),
                 outcome_date date,
+                zone varchar(32),
                 KEY `source_patient_id_idx` (`source_patient_id`),
                 UNIQUE KEY `person_uuid_idx` (`person_uuid`)
             );
@@ -63,8 +64,8 @@ class PatientMigrator extends SqlMigrator {
         // load patients into staging table
         loadFromOracleToMySql('''
                     insert into hivmigration_patients(source_patient_id,pih_id, nif_id, national_id, first_name, first_name2, last_name, nickname, gender, birthdate,
-                        birthdate_estimated, phone_number, birth_place, accompagnateur_name, patient_created_by, patient_created_date, outcome, outcome_date)
-                    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        birthdate_estimated, phone_number, birth_place, accompagnateur_name, patient_created_by, patient_created_date, outcome, outcome_date, zone)
+                    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             ''',
             '''
                 select
@@ -85,7 +86,8 @@ class PatientMigrator extends SqlMigrator {
                     d.PATIENT_CREATED_BY,
                     d.PATIENT_CREATED_DATE,
                     d.TREATMENT_STATUS as outcome,
-                    d.TREATMENT_STATUS_DATE as outcome_date
+                    d.TREATMENT_STATUS_DATE as outcome_date,
+                    d.zone as zone
                 from HIV_DEMOGRAPHICS_REAL d
                 order by  d.PATIENT_ID
             ''');
