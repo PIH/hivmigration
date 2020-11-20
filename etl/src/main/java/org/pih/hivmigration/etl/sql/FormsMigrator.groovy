@@ -20,6 +20,6 @@ class FormsMigrator extends ObsMigrator {
 
     @Override
     def void revert() {
-
+        executeMysql("DELETE FROM obs WHERE concept_id = concept_from_mapping('CIEL', '162749')")
     }
 }
