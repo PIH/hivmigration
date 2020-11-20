@@ -37,7 +37,8 @@ class TableStager extends SqlMigrator {
                 .map(col -> col.getKey() + " " + col.getValue())
                 .collect(Collectors.joining((",\n")))
 
-        executeMysql("CREATE TABLE " + mysqlTableName + " ( " + mysqlSchema + " );")
+        executeMysql("Creating table " + mysqlTableName + " based on schema from " + oracleTableName,
+                "CREATE TABLE " + mysqlTableName + " ( " + mysqlSchema + " );")
 
         // Prepare the load statements
         String loadInsert = ("INSERT INTO " + mysqlTableName + " ( " + columnNames.join(", ") + " ) VALUES ( "
