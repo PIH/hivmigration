@@ -100,12 +100,14 @@ public class Migrator {
                 revert(new StagingDataMigrator());
                 revert(new InfantMigrator());
                 revert(new PatientMigrator());
+                revert(new StagingTablesMigrator());
                 revert(new UserMigrator());
                 revert(new Setup());
             }
             if (!shouldRevertOnly) {
                 migrate(new Setup(), -1);
                 migrate(new UserMigrator(), -1);
+                migrate(new StagingTablesMigrator(), -1);
                 migrate(new PatientMigrator(), limit);
                 migrate(new InfantMigrator(), limit);
                 migrate(new StagingDataMigrator(), -1);

@@ -114,6 +114,13 @@ abstract class SqlMigrator {
         log.debug("Took " + sw.toString());
     }
 
+    Object selectOracle(String select, ResultSetHandler resultSetHandler) throws SQLException {
+        QueryRunner qr = new QueryRunner();
+        try (Connection connection = getConnection(getOracleConnectionProperties())) {
+            return qr.query(connection, select, resultSetHandler);
+        }
+    }
+
     Object selectMysql(String select, ResultSetHandler resultSetHandler) throws SQLException {
         QueryRunner qr = new QueryRunner();
         try (Connection connection = getConnection(getMysqlConnectionProperties())) {
