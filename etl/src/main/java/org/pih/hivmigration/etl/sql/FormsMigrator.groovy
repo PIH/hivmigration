@@ -1,0 +1,25 @@
+package org.pih.hivmigration.etl.sql
+
+class FormsMigrator extends ObsMigrator {
+    @Override
+    def void migrate() {
+        // hivmigration_intake_forms gets created by StagingTablesMigrator
+
+        create_tmp_obs_table()
+
+        executeMysql("Migrate recommendation", '''
+            INSERT INTO tmp_obs (value_text, source_encounter_id, concept_uuid)
+            SELECT recommendation,
+                   encounter_id,
+                   concept_uuid_from_mapping('CIEL', '162749')
+            FROM hivmigration_intake_forms WHERE recommendation IS NOT NULL;
+        ''')
+
+        migrate_tmp_obs()
+    }
+
+    @Override
+    def void revert() {
+
+    }
+}
