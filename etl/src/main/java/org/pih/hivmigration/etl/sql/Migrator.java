@@ -98,6 +98,7 @@ public class Migrator {
                 revert(new ProviderMigrator());
                 revert(new ProgramMigrator());
                 revert(new StagingDataMigrator());
+                revert(new RegistrationMigrator());
                 revert(new InfantMigrator());
                 revert(new PatientMigrator());
                 revert(new UserMigrator());
@@ -108,6 +109,7 @@ public class Migrator {
                 migrate(new UserMigrator(), -1);
                 migrate(new PatientMigrator(), limit);
                 migrate(new InfantMigrator(), limit);
+                migrate(new RegistrationMigrator(), limit);
                 migrate(new StagingDataMigrator(), -1);
                 migrate(new ProgramMigrator(), limit);
                 migrate(new ProviderMigrator(), limit);
