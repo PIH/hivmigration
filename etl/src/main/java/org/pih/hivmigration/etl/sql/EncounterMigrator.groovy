@@ -35,6 +35,8 @@ class EncounterMigrator extends SqlMigrator {
             
         ''')
 
+        setAutoIncrement('hivmigration_encounters', '(select max(encounter_id)+1 from encounter)')
+
         loadFromOracleToMySql(
                 '''
                 insert into hivmigration_encounters(source_encounter_id,source_patient_id,source_encounter_type,source_creator_id,encounter_date,date_created,comments,performed_by,source_location_id,note_title,response_to)
