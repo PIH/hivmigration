@@ -1,6 +1,6 @@
 package org.pih.hivmigration.etl.sql
 
-class StagingDataMigrator extends SqlMigrator {
+class LocationMigrator extends SqlMigrator {
 
     void migrate() {
         executeMysql("Create hivmigration_health_center table", '''
