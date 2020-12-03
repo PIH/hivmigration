@@ -95,6 +95,7 @@ public class Migrator {
                 revert(new ExamExtraMigrator());
                 revert(new FormsMigrator());
                 revert(new LabResultMigrator());
+                revert(new AdverseEventMigrator());
                 revert(new EncounterMigrator());
                 revert(new ProviderMigrator());
                 revert(new ProgramMigrator());
@@ -117,6 +118,7 @@ public class Migrator {
                 migrate(new ProgramMigrator(), limit);
                 migrate(new ProviderMigrator(), limit);
                 migrate(new EncounterMigrator(), limit);
+                migrate(new AdverseEventMigrator(), limit);
                 migrate(new LabResultMigrator(), limit);
                 migrate(new FormsMigrator(), limit);
                 migrate(new VitalsMigrator(), limit);
