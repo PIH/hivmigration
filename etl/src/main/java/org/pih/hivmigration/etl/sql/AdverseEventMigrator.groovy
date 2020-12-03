@@ -4,7 +4,7 @@ class AdverseEventMigrator  extends ObsMigrator {
 
     @Override
     def void migrate() {
-        executeMysql("Create staging table", '''
+        executeMysql("Create staging table to migrate adverse events", '''
             create table hivmigration_adverse_event (
               obs_id int PRIMARY KEY AUTO_INCREMENT,
               source_patient_id int,
@@ -32,15 +32,34 @@ class AdverseEventMigrator  extends ObsMigrator {
                 to_char(a.ALLERGY_DATE, 'yyyy-mm-dd') as allergy_date  
             from HIV_ALLERGIES a, hiv_demographics_real p where a.patient_id = p.patient_id
         ''')
-
+        // Add Intake source_encounter_id
         executeMysql('''
             update hivmigration_adverse_event a, hivmigration_encounters e 
             set a.source_encounter_id = e.source_encounter_id 
             where a.source_patient_id = e.source_patient_id and e.source_encounter_type='intake' ;
         ''')
 
+        executeMysql("Create staging table to migrate adverse events Yes checkboxes", '''
+            create table hivmigration_adverse_event_yes (
+              obs_id int PRIMARY KEY AUTO_INCREMENT,
+              source_patient_id int,
+              source_encounter_id int
+            );
+        ''')
+        setAutoIncrement("hivmigration_adverse_event_yes", "(select max(obs_id)+1 from hivmigration_adverse_event)")
+        executeMysql("Load hivmigration_adverse_event_yes staging table",
+                '''
+                insert into hivmigration_adverse_event_yes(
+                    source_patient_id,
+                    source_encounter_id)
+                select 
+                    source_patient_id,
+                    source_encounter_id
+                from  hivmigration_adverse_event;       
+        ''')
+
         create_tmp_obs_table()
-        setAutoIncrement("tmp_obs", "(select max(obs_id)+1 from hivmigration_adverse_event)")
+        setAutoIncrement("tmp_obs", "(select max(obs_id)+1 from hivmigration_adverse_event_yes)")
 
         executeMysql("Load adverse events as observations",
                 '''
@@ -109,6 +128,31 @@ class AdverseEventMigrator  extends ObsMigrator {
             FROM hivmigration_adverse_event 
             WHERE allergy_date is not null; 
             
+            
+            -- Adverse effect construct for the "Adverse event Yes" checkbox
+            INSERT INTO tmp_obs (obs_id, source_patient_id, source_encounter_id, concept_uuid)
+            SELECT
+                obs_id,                     
+                source_patient_id,
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'ADVERSE EFFECT CONSTRUCT')
+            FROM hivmigration_adverse_event_yes; 
+            
+            -- Adverse effect Yes checkbox
+            INSERT INTO tmp_obs (
+                obs_group_id, 
+                value_coded_uuid, 
+                source_patient_id, 
+                source_encounter_id, 
+                concept_uuid)
+            SELECT  
+                obs_id,
+                concept_uuid_from_mapping('CIEL', '121764'),
+                source_patient_id,
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'ADVERSE EFFECT')
+            FROM hivmigration_adverse_event_yes; 
+            
         ''')
 
         migrate_tmp_obs()
@@ -117,6 +161,7 @@ class AdverseEventMigrator  extends ObsMigrator {
     @Override
     def void revert() {
         executeMysql("drop table if exists hivmigration_adverse_event")
+        executeMysql("drop table if exists hivmigration_adverse_event_yes")
         clearTable("obs")
     }
 }
