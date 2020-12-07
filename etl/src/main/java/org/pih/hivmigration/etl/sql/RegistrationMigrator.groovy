@@ -28,6 +28,16 @@ class RegistrationMigrator extends SqlMigrator {
             );
         ''')
 
+        executeMysql("Create Patient Socio-Economics Staging Table",
+                '''
+            create table hivmigration_socio_economics (    
+                obs_id int PRIMARY KEY AUTO_INCREMENT,                            
+                source_patient_id int,                                
+                civil_status NVARCHAR(16),
+                primary_activity NVARCHAR(96)
+            );
+        ''')
+
         setAutoIncrement('hivmigration_registration_encounters', '(select max(encounter_id)+1 from encounter)')
         // load registration encounters into staging table
         executeMysql("Load registration encounters into staging table",'''
@@ -68,6 +78,23 @@ class RegistrationMigrator extends SqlMigrator {
                     nvl(l.locality, d.BIRTH_PLACE) as locality
                 from HIV_DEMOGRAPHICS_REAL d left outer join hiv_locality l
                      on d.BIRTH_PLACE_LOCALITY = l.locality_id 
+            ''');
+
+        // load patients CIVIL_STATUS and OCCUPATION into the staging table
+        loadFromOracleToMySql('''
+                    insert into hivmigration_socio_economics(
+                        source_patient_id,                         
+                        civil_status, 
+                        primary_activity)
+                    values (?,?,?)
+            ''',
+                '''
+                    select 
+                        s.patient_id as source_patient_id, 
+                        UPPER(TRIM(s.civil_status)) as civil_status, 
+                        UPPER(TRIM(s.PRIMARY_ACTIVITY)) as primary_activity 
+                    from HIV_SOCIOECONOMICS s, hiv_demographics_real p 
+                    where (s.patient_id = p.patient_id) and ((s.civil_status is not null) or (s.PRIMARY_ACTIVITY is not null)) order by s.patient_id;
             ''');
 
         executeMysql("Create Registration encounters",'''
@@ -268,15 +295,51 @@ class RegistrationMigrator extends SqlMigrator {
                     uuid() as uuid
             from    hivmigration_patient_birthplace b,  hivmigration_registration_encounters r, hivmigration_patients p 
             where   b.source_patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id 
-                    and ( b.locality is not null or b.section is not null or b.commune is not null or b.department is not null);                                                                                                                                                                                                 
+                    and ( b.locality is not null or b.section is not null or b.commune is not null or b.department is not null);       
+                    
+                    
+            -- Add CIVIL STATUS
+            SET @civil_status_concept = (concept_from_mapping('PIH', 'CIVIL STATUS'));
+              
+            INSERT INTO obs (                    
+                    person_id, 
+                    encounter_id, 
+                    obs_datetime, 
+                    location_id, 
+                    concept_id,    
+                    value_coded,                
+                    creator, 
+                    date_created, 
+                    uuid)
+            select 
+                    p.person_id, 
+                    r.encounter_id, 
+                    r.encounter_date as obs_datetime, 
+                    1 as locationId, 
+                    @civil_status_concept as concept_id,  
+                    CASE s.civil_status 
+                        WHEN 'DIVORCED' THEN concept_from_mapping('PIH', 'DIVORCED') 
+                        WHEN 'MARRIED' THEN concept_from_mapping('PIH', 'MARRIED') 
+                        WHEN 'PARTNER' THEN concept_from_mapping('PIH', 'LIVING WITH PARTNER') 
+                        WHEN 'PLACE' THEN concept_from_mapping('PIH', 'LIVING WITH PARTNER') 
+                        WHEN 'SEPARATED' THEN concept_from_mapping('PIH', 'SEPARATED') 
+                        WHEN 'SINGLE' THEN concept_from_mapping('PIH', 'SINGLE OR A CHILD') 
+                        WHEN 'WIDOWED' THEN concept_from_mapping('PIH', 'WIDOWED') 
+                        ELSE concept_from_mapping('PIH', 'OTHER') 
+                    END as value_coded, 
+                    r.creator, r.encounter_date as dateCreated, uuid() as uuid
+            from hivmigration_socio_economics s, hivmigration_registration_encounters r, hivmigration_patients p 
+            where  s.civil_status is not null and s.source_patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id;                                                                                                                                                                                                     
         ''')
 
     }
 
     @Override
     def void revert() {
+        executeMysql("delete from obs where (encounter_id in (select encounter_id from hivmigration_registration_encounters)) and (obs_group_id is not null)")
         executeMysql("delete from obs where encounter_id in (select encounter_id from hivmigration_registration_encounters)")
         executeMysql("delete from encounter where encounter_id in (select encounter_id from hivmigration_registration_encounters)")
+        executeMysql("drop table if exists hivmigration_socio_economics")
         executeMysql("drop table if exists hivmigration_patient_birthplace")
         executeMysql("drop table if exists hivmigration_registration_encounters")
     }
