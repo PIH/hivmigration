@@ -53,7 +53,7 @@ class AdverseEventMigrator  extends ObsMigrator {
                     source_patient_id,
                     source_encounter_id)
                 select 
-                    source_patient_id,
+                    distinct source_patient_id,
                     source_encounter_id
                 from  hivmigration_adverse_event;       
         ''')
