@@ -96,7 +96,7 @@ class PreviousExposureMigrator extends ObsMigrator {
             ;
         ''')
 
-        executeMysql("Migrate previous exposures into row-per-group temporary table",'''
+        executeMysql("Create row-per-group temporary table",'''
             CREATE TABLE hivmigration_tmp_previous_exposures_groups (
                 obs_group_id INT PRIMARY KEY AUTO_INCREMENT,
                 source_patient_id INT,
@@ -105,7 +105,11 @@ class PreviousExposureMigrator extends ObsMigrator {
                 start_date DATE,
                 end_date DATE
             );
-        
+        ''')
+
+        setAutoIncrement("hivmigration_tmp_previous_exposures_groups", "(select max(obs_id)+1 from obs)")
+
+        executeMysql("Migrate previous exposures into row-per-group temporary table",'''
             INSERT INTO hivmigration_tmp_previous_exposures_groups
                 (source_patient_id, source_encounter_id, source_value, start_date, end_date)
             SELECT
