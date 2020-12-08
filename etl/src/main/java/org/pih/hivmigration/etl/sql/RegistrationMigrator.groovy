@@ -34,7 +34,20 @@ class RegistrationMigrator extends SqlMigrator {
                 obs_id int PRIMARY KEY AUTO_INCREMENT,                            
                 source_patient_id int,                                
                 civil_status NVARCHAR(16),
-                primary_activity NVARCHAR(96)
+                primary_activity NVARCHAR(96),
+                other_sexual_partners text,
+                partners_same_town_p char(1) DEFAULT NULL,
+                partners_other_town text,
+                residences text,                
+                nutritional_evaluation text,
+                num_people_in_house decimal(10,0) DEFAULT NULL,
+                num_rooms_in_house decimal(10,0) DEFAULT NULL,
+                type_of_roof text,
+                type_of_floor text,
+                latrine_p char(1) DEFAULT NULL,
+                radio_p char(1) DEFAULT NULL,
+                education text,
+                other_sexual_partners_p char(1) DEFAULT NULL
             );
         ''')
 
@@ -85,14 +98,40 @@ class RegistrationMigrator extends SqlMigrator {
                     insert into hivmigration_socio_economics(
                         source_patient_id,                         
                         civil_status, 
-                        primary_activity)
-                    values (?,?,?)
+                        primary_activity,
+                        other_sexual_partners,
+                        partners_same_town_p,
+                        partners_other_town,
+                        residences,                
+                        nutritional_evaluation,
+                        num_people_in_house,
+                        num_rooms_in_house,
+                        type_of_roof,
+                        type_of_floor,
+                        latrine_p,
+                        radio_p,
+                        education,
+                        other_sexual_partners_p)
+                    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             ''',
                 '''
                     select 
                         s.patient_id as source_patient_id, 
                         UPPER(TRIM(s.civil_status)) as civil_status, 
-                        UPPER(TRIM(s.PRIMARY_ACTIVITY)) as primary_activity 
+                        UPPER(TRIM(s.PRIMARY_ACTIVITY)) as primary_activity,
+                        s.other_sexual_partners,
+                        s.partners_same_town_p,
+                        s.partners_other_town,
+                        s.residences,                
+                        s.nutritional_evaluation,
+                        s.num_people_in_house,
+                        s.num_rooms_in_house,
+                        s.type_of_roof,
+                        s.type_of_floor,
+                        s.latrine_p,
+                        s.radio_p,
+                        s.education,
+                        s.other_sexual_partners_p 
                     from HIV_SOCIOECONOMICS s, hiv_demographics_real p 
                     where (s.patient_id = p.patient_id) and ((s.civil_status is not null) or (s.PRIMARY_ACTIVITY is not null)) order by s.patient_id;
             ''');
