@@ -142,8 +142,10 @@ class PcrTestsMigrator extends SqlMigrator {
 
     @Override
     def void revert() {
-        executeMysql("delete from obs where encounter_id in (select encounter_id from hivmigration_pcr_tests)")
-        executeMysql("delete from encounter where encounter_id in (select encounter_id from hivmigration_pcr_tests)")
-        executeMysql("drop table if exists hivmigration_pcr_tests")
+        if(tableExists("hivmigration_pcr_tests")) {
+            executeMysql("delete from obs where encounter_id in (select encounter_id from hivmigration_pcr_tests)")
+            executeMysql("delete from encounter where encounter_id in (select encounter_id from hivmigration_pcr_tests)")
+            executeMysql("drop table hivmigration_pcr_tests")
+        }
     }
 }

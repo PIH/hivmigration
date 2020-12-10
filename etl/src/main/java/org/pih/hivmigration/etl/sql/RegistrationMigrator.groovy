@@ -375,11 +375,13 @@ class RegistrationMigrator extends SqlMigrator {
 
     @Override
     def void revert() {
-        executeMysql("delete from obs where (encounter_id in (select encounter_id from hivmigration_registration_encounters)) and (obs_group_id is not null)")
-        executeMysql("delete from obs where encounter_id in (select encounter_id from hivmigration_registration_encounters)")
-        executeMysql("delete from encounter where encounter_id in (select encounter_id from hivmigration_registration_encounters)")
-        executeMysql("drop table if exists hivmigration_socio_economics")
-        executeMysql("drop table if exists hivmigration_patient_birthplace")
-        executeMysql("drop table if exists hivmigration_registration_encounters")
+        if(tableExists("hivmigration_registration_encounters")) {
+            executeMysql("delete from obs where (encounter_id in (select encounter_id from hivmigration_registration_encounters)) and (obs_group_id is not null)")
+            executeMysql("delete from obs where encounter_id in (select encounter_id from hivmigration_registration_encounters)")
+            executeMysql("delete from encounter where encounter_id in (select encounter_id from hivmigration_registration_encounters)")
+            executeMysql("drop table if exists hivmigration_socio_economics")
+            executeMysql("drop table if exists hivmigration_patient_birthplace")
+            executeMysql("drop table if exists hivmigration_registration_encounters")
+        }
     }
 }
