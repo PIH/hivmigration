@@ -41,6 +41,23 @@ class DataWarningsMigrator extends SqlMigrator {
                 pi.identifier_type = @hiv_dossier;        
         ''')
 
+        executeMysql("Insert HIV_EMR_V1_INFANT_ID identifier in Data Warning table", '''
+            UPDATE 
+                hivmigration_data_warnings dw, hivmigration_infants p
+            SET 
+                dw.hivemr_v1_infant_id = p.source_infant_id
+            WHERE
+                dw.openmrs_patient_id = p.person_id;        
+        ''')
+
+        executeMysql("Insert HIV_EMR_V1_INFANT_CODE identifier in Data Warning table", '''
+            UPDATE 
+                hivmigration_data_warnings dw, hivmigration_infants p
+            SET 
+                dw.hivemr_v1_infant_code = p.infant_code
+            WHERE
+                dw.openmrs_patient_id = p.person_id;        
+        ''')
 
         executeMysql("Insert HIV_EMR_encounter_id Data Warning table", '''
             UPDATE 
