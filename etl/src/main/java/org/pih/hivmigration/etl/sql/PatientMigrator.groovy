@@ -71,8 +71,8 @@ class PatientMigrator extends SqlMigrator {
                 select
                     d.PATIENT_ID as SOURCE_PATIENT_ID,
                     d.PIH_ID,
-                    d.NIF_ID,
-                    d.NATIONAL_ID,
+                    TRIM(d.NIF_ID),
+                    TRIM(d.NATIONAL_ID),
                     d.FIRST_NAME,
                     d.FIRST_NAME2,
                     d.LAST_NAME,
@@ -332,7 +332,7 @@ class PatientMigrator extends SqlMigrator {
                 hivmigration_users hu on p.patient_created_by = hu.source_user_id
             left join
                 users u on u.uuid = hu.user_uuid
-            where p.national_id is not null
+            where (p.national_id is not null) and (p.national_id != '')
             order by p.source_patient_id;
         ''')
 
@@ -343,7 +343,7 @@ class PatientMigrator extends SqlMigrator {
                 from hivmigration_patients where national_id in (      
                         select distinct(national_id)
                         from hivmigration_patients 
-                        where national_id is not null  
+                        where national_id is not null and national_id != '' 
                         group by national_id 
                         having count(*) > 1 );   
         ''')
@@ -366,7 +366,7 @@ class PatientMigrator extends SqlMigrator {
                 hivmigration_users hu on p.patient_created_by = hu.source_user_id
             left join
                 users u on u.uuid = hu.user_uuid
-                where p.nif_id is not null
+                where (p.nif_id is not null) and (p.nif_id != '')
                 order by p.source_patient_id;
         ''')
 
