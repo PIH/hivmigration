@@ -57,7 +57,7 @@ class TreatmentObsMigrator extends ObsMigrator {
         ''')
         setAutoIncrement('hivmigration_prophylaxis', '(select max(obs_id)+1 from obs)')
 
-        executeMysql("Load intermediate prophylaxis table from follow-up form", '''
+        executeMysql("Create procedure to load intermediate prophylaxis table from follow-up form", '''
             DROP PROCEDURE IF EXISTS load_follow_up_prophylaxis;
             DELIMITER $$ ;
             CREATE PROCEDURE load_follow_up_prophylaxis(_txName varchar(80))
@@ -83,17 +83,23 @@ class TreatmentObsMigrator extends ObsMigrator {
                 ON  pro.source_encounter_id = start.source_encounter_id
                     AND start.observation = CONCAT('current_tx.prophylaxis_', _txName, '_start_date')
                     AND start.value IS NOT NULL
+                    AND start.value != '0000-00-00 00:00:00'
                 SET start_date = IF(DAYNAME(start.value) IS NOT NULL,
                                     start.value,
                                     CONCAT(LEFT(start.value, 6), CAST(SUBSTR(start.value, 6, 2) AS UNSIGNED)+1, '-01'))
-                WHERE start_date != '0000-00-00 00:00:00';  -- Leave these as NULL
+                ;
             END $$
             DELIMITER ;
-            
-            CALL load_follow_up_prophylaxis('CTX');
-            CALL load_follow_up_prophylaxis('Fluconazole');
-            CALL load_follow_up_prophylaxis('Isoniazid');
+            ''')
+
+        executeMysql("Load CTX to intermediate prophylaxis table from follow-up form", "CALL load_follow_up_prophylaxis('CTX');")
+        executeMysql("Load Fluconazole to intermediate prophylaxis table from follow-up form", "CALL load_follow_up_prophylaxis('Fluconazole');")
+        executeMysql("Load Isoniazid to intermediate prophylaxis table from follow-up form", "CALL load_follow_up_prophylaxis('Isoniazid');")
+        executeMysql("Clean up after loading intermediate prophylaxis table from follow-up form", '''
             DROP PROCEDURE load_follow_up_prophylaxis;
+            UPDATE hivmigration_prophylaxis
+                SET start_date = NULL
+                WHERE start_date = '0000-00-00 000:00:00';
         ''')
 
         // Check that there are no invalid dates
