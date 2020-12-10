@@ -47,7 +47,7 @@ class InfantMigrator extends SqlMigrator {
                 select 
                     i.INFANT_ID,
                     i.MOTHER_PATIENT_ID,
-                    i.INFANT_CODE, 
+                    TRIM(i.INFANT_CODE), 
                     i.FIRST_NAME,
                     i.LAST_NAME, 
                     upper(i.GENDER) as gender, 
@@ -230,6 +230,55 @@ class InfantMigrator extends SqlMigrator {
             join hivmigration_patients p on i.father_patient_id = p.source_patient_id;
         ''')
 
+        executeMysql("Insert HIV EMR V1 Infant ID into Patient Identifier Table",
+                '''
+            insert into patient_identifier(
+                patient_id, 
+                uuid, 
+                identifier_type, 
+                location_id, 
+                identifier, 
+                preferred, 
+                creator, 
+                date_created)
+            select
+                i.person_id as patient_id,
+                uuid() as uuid,
+                (SELECT patient_identifier_type_id from patient_identifier_type where name = 'HIV EMR V1 Infant ID') as identifier_type,
+                (SELECT location_id from location where name = 'Unknown Location') as location_id,
+                i.source_infant_id as identifier,
+                0 as preferred,
+                1 as creator,
+                date_format(curdate(), '%Y-%m-%d %T') as date_created
+            from
+                hivmigration_infants i
+            where i.source_infant_id is not null;
+        ''')
+
+        executeMysql("Insert HIV EMR V1 Infant_Code into Patient Identifier Table",
+                '''
+            insert into patient_identifier(
+                patient_id, 
+                uuid, 
+                identifier_type, 
+                location_id, 
+                identifier, 
+                preferred, 
+                creator, 
+                date_created)
+            select
+                i.person_id as patient_id,
+                uuid() as uuid,
+                (SELECT patient_identifier_type_id from patient_identifier_type where name = 'HIV EMR V1 Infant Code') as identifier_type,
+                (SELECT location_id from location where name = 'Unknown Location') as location_id,
+                i.infant_code as identifier,
+                0 as preferred,
+                1 as creator,
+                date_format(curdate(), '%Y-%m-%d %T') as date_created
+            from
+                hivmigration_infants i
+            where i.infant_code is not null and i.infant_code != '';
+        ''')
     }
 
     @Override
@@ -239,8 +288,15 @@ class InfantMigrator extends SqlMigrator {
             executeMysql("Remove infants from Relationship, Patient, Person Name, Person tables", '''
             delete from relationship where person_b in (select person_id from hivmigration_infants);
             delete from patient_identifier where patient_id in (select person_id from hivmigration_infants);
+            delete from test_order where order_id in (select order_id from orders where patient_id in (select person_id from hivmigration_infants));
+            delete from orders where patient_id in (select person_id from hivmigration_infants);
+            delete from encounter_provider where encounter_id in (select encounter_id from encounter where patient_id in (select person_id from hivmigration_infants));
+            delete from encounter where patient_id in (select person_id from hivmigration_infants);  
+            delete from patient_program where patient_id in (select person_id from hivmigration_infants);
+            delete from visit where patient_id in (select person_id from hivmigration_infants);
             delete from patient where patient_id in (select person_id from hivmigration_infants);
             delete from person_name where person_id in (select person_id from hivmigration_infants);
+            delete from person_attribute where person_id in (select person_id from hivmigration_infants);
             delete from person where person_id in (select person_id from hivmigration_infants);
         ''');
         }

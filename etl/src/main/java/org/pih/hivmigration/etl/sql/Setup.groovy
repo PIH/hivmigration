@@ -71,6 +71,8 @@ class Setup extends SqlMigrator {
                 zl_emr_id VARCHAR(255),
                 hivemr_v1_id INT,
                 hiv_dossier_id VARCHAR(255),
+                hivemr_v1_infant_id int,
+                hivemr_v1_infant_code varchar(20),
                 encounter_date DATE,
                 field_name VARCHAR(100),
                 field_value VARCHAR(1000),
