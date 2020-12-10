@@ -11,15 +11,16 @@ class DiagnosisMigrator extends ObsMigrator {
                 obs_group_id INT PRIMARY KEY AUTO_INCREMENT,
                 source_encounter_id INT,
                 source_patient_id INT,
-                diagnosis_concept_uuid VARCHAR(38)
+                diagnosis_concept_uuid VARCHAR(38),
+                comments VARCHAR(256)
             );
         ''')
 
         setAutoIncrement("hivmigration_tmp_diagnosis_groups", "SELECT max(obs_id)+1 from obs")
 
-        executeMysql("Migrate patient diagnosis history into intake form", '''
+        executeMysql("Create obs groups for patient diagnosis history", '''
             INSERT INTO hivmigration_tmp_diagnosis_groups
-                (diagnosis_concept_uuid, source_encounter_id, source_patient_id)
+                (diagnosis_concept_uuid, source_encounter_id, source_patient_id, comments)
             SELECT
                 CASE dx.diagnosis_eng
                     WHEN 'Anemia' THEN concept_uuid_from_mapping('PIH', 'ANEMIA')
@@ -42,14 +43,29 @@ class DiagnosisMigrator extends ObsMigrator {
                     WHEN 'Tuberculosis' THEN concept_uuid_from_mapping('PIH', 'TUBERCULOSIS')
                     END,
                 e.source_encounter_id,
-                e.source_patient_id
+                e.source_patient_id,
+                pt_dx.diagnosis_comments
             FROM hivmigration_patient_diagnoses pt_dx
             JOIN hivmigration_diagnoses dx
                  ON pt_dx.diagnosis_id = dx.diagnosis_id
             JOIN hivmigration_encounters e
                  ON pt_dx.patient_id = e.source_patient_id
-                 AND e.source_encounter_type = 'intake\'
+                 AND e.source_encounter_type = 'intake'
             WHERE present_p = 't';
+            
+            -- 'other' diagnoses
+            INSERT INTO hivmigration_tmp_diagnosis_groups
+                (diagnosis_concept_uuid, source_encounter_id, source_patient_id, comments)
+            SELECT
+                concept_uuid_from_mapping('PIH', 'OTHER'),
+                e.source_encounter_id,
+                e.source_patient_id,
+                pt_dx.diagnosis_other
+            FROM hivmigration_patient_diagnoses pt_dx
+            JOIN hivmigration_encounters e
+                 ON pt_dx.patient_id = e.source_patient_id
+                 AND e.source_encounter_type = 'intake'
+            WHERE diagnosis_other IS NOT NULL;
         ''')
 
         create_tmp_obs_table()
@@ -76,7 +92,17 @@ class DiagnosisMigrator extends ObsMigrator {
                    source_encounter_id,
                    concept_uuid_from_mapping('CIEL', '1628'),
                    diagnosis_concept_uuid
-            FROM hivmigration_tmp_diagnosis_groups;
+            FROM hivmigration_tmp_diagnosis_groups
+            WHERE diagnosis_concept_uuid IS NOT NULL;
+            
+            INSERT INTO tmp_obs (obs_group_id, source_patient_id, source_encounter_id, concept_uuid, value_text)
+            SELECT obs_group_id,
+                   source_patient_id,
+                   source_encounter_id,
+                   concept_uuid_from_mapping('CIEL', '160221'),
+                   comments
+            FROM hivmigration_tmp_diagnosis_groups
+            WHERE comments IS NOT NULL;
         ''')
 
         migrate_tmp_obs()
