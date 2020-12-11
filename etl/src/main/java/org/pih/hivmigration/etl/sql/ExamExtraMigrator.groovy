@@ -279,7 +279,10 @@ class ExamExtraMigrator extends ObsMigrator {
                   , chestPain_comments
             FROM hivmigration_tb_screening
             WHERE chestPain = 1 or chestPain = 0;  
-            
+                                            
+        ''')
+
+        executeMysql("Load History of Tuberculosis observations", '''
             -- History of Tuberculosis                                            
             INSERT INTO tmp_obs (value_coded_uuid, source_encounter_id, concept_uuid)
             SELECT 
@@ -298,9 +301,8 @@ class ExamExtraMigrator extends ObsMigrator {
             FROM hivmigration_tb_status t, hivmigration_encounters e
             WHERE (t.tb_active_p ='t') and (t.status_date is not null) and (t.encounter_id is not null) and 
                     t.encounter_id = e.source_encounter_id and e.source_encounter_type='intake';  
-                     
-        ''')
 
+        ''')
         migrate_tmp_obs()
     }
 
