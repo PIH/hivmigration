@@ -12,7 +12,9 @@ class DiagnosisMigrator extends ObsMigrator {
                 source_encounter_id INT,
                 source_patient_id INT,
                 diagnosis_concept_uuid VARCHAR(38),
-                comments VARCHAR(256)
+                start_date DATE,
+                comments VARCHAR(256),
+                present BOOL
             );
         ''')
 
@@ -20,7 +22,7 @@ class DiagnosisMigrator extends ObsMigrator {
 
         executeMysql("Create obs groups for patient diagnosis history", '''
             INSERT INTO hivmigration_tmp_diagnosis_groups
-                (diagnosis_concept_uuid, source_encounter_id, source_patient_id, comments)
+            (diagnosis_concept_uuid, source_encounter_id, source_patient_id, comments, present, start_date)
             SELECT
                 CASE dx.diagnosis_eng
                     WHEN 'Anemia' THEN concept_uuid_from_mapping('PIH', 'ANEMIA')
@@ -44,14 +46,15 @@ class DiagnosisMigrator extends ObsMigrator {
                     END,
                 e.source_encounter_id,
                 e.source_patient_id,
-                pt_dx.diagnosis_comments
+                pt_dx.diagnosis_comments,
+                pt_dx.present_p = 't',
+                pt_dx.diagnosis_date
             FROM hivmigration_patient_diagnoses pt_dx
             JOIN hivmigration_diagnoses dx
-                 ON pt_dx.diagnosis_id = dx.diagnosis_id
+                ON pt_dx.diagnosis_id = dx.diagnosis_id
             JOIN hivmigration_encounters e
-                 ON pt_dx.patient_id = e.source_patient_id
-                 AND e.source_encounter_type = 'intake'
-            WHERE present_p = 't';
+                ON pt_dx.patient_id = e.source_patient_id
+                    AND e.source_encounter_type = 'intake';
             
             -- 'other' diagnoses
             INSERT INTO hivmigration_tmp_diagnosis_groups
@@ -83,7 +86,10 @@ class DiagnosisMigrator extends ObsMigrator {
                    source_patient_id,
                    source_encounter_id,
                    concept_uuid_from_mapping('CIEL', '1729'),
-                   concept_uuid_from_mapping('PIH', 'YES')
+                   IF(present,
+                      concept_uuid_from_mapping('PIH', 'YES'),
+                      concept_uuid_from_mapping('PIH', 'NO')
+                   )
             FROM hivmigration_tmp_diagnosis_groups;
             
             INSERT INTO tmp_obs (obs_group_id, source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
@@ -103,6 +109,15 @@ class DiagnosisMigrator extends ObsMigrator {
                    comments
             FROM hivmigration_tmp_diagnosis_groups
             WHERE comments IS NOT NULL;
+
+            INSERT INTO tmp_obs (obs_group_id, source_patient_id, source_encounter_id, concept_uuid, value_datetime)
+            SELECT obs_group_id,
+                   source_patient_id,
+                   source_encounter_id,
+                   concept_uuid_from_mapping('CIEL', '159948'),
+                   start_date
+            FROM hivmigration_tmp_diagnosis_groups
+            WHERE start_date IS NOT NULL;
         ''')
 
         migrate_tmp_obs()
