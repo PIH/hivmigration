@@ -3,6 +3,7 @@ package org.pih.hivmigration.etl.sql
 class StagingTablesMigrator extends SqlMigrator {
     @Override
     def void migrate() {
+        (new TableStager("HIV_TB_STATUS")).migrate()
         (new TableStager("HIV_INTAKE_FORMS")).migrate()
         (new TableStager("HIV_FOLLOWUP_FORMS")).migrate()
         (new TableStager("HIV_DIAGNOSES")).migrate()
@@ -29,5 +30,6 @@ class StagingTablesMigrator extends SqlMigrator {
         (new TableStager("HIV_DIAGNOSES")).revert()
         (new TableStager("HIV_FOLLOWUP_FORMS")).revert()
         (new TableStager("HIV_INTAKE_FORMS")).revert()
+        (new TableStager("HIV_TB_STATUS")).revert()
     }
 }

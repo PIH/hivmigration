@@ -13,20 +13,21 @@ class TableStager extends SqlMigrator {
         this.oracleTableName = oracleTableName
         this.mysqlTableName = "hivmigration_" + oracleTableName.replace("HIV_", "").toLowerCase()
     }
-
     @Override
     void migrate() {
         def datatypeMap = [VARCHAR2: "TEXT", NUMBER: "NUMERIC"]
 
         List<Map<String, Object>> oracleSchema = selectOracle(
-                "select COLUMN_NAME, DATA_TYPE from ALL_TAB_COLUMNS where TABLE_NAME='" + oracleTableName + "'",
+                "select COLUMN_NAME, DATA_TYPE, DATA_LENGTH from ALL_TAB_COLUMNS where TABLE_NAME='" + oracleTableName + "'",
                 new MapListHandler())
 
+
         List<Map.Entry<String, String>> mysqlTableInfo = oracleSchema.stream()
-            .map(row ->
-                    new AbstractMap.SimpleEntry<>(
-                            row.get("COLUMN_NAME").toString().toLowerCase(),
-                            datatypeMap[row.get("DATA_TYPE")] ?: row.get("DATA_TYPE")))
+            .map({ row ->             
+                new AbstractMap.SimpleEntry<>(
+                        row.get("COLUMN_NAME").toString().toLowerCase(),
+                        datatypeMap[row.get("DATA_TYPE")] ?: ((row.get("DATA_TYPE") == "CHAR") && row.get("DATA_LENGTH") ? (row.get("DATA_TYPE") + "(" + row.get("DATA_LENGTH") + ")") : (row.get("DATA_TYPE"))))
+            })
             .collect(Collectors.toList())
 
         List<String> columnNames = mysqlTableInfo.stream()
