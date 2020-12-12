@@ -7,7 +7,7 @@ class VisitMigrator extends SqlMigrator {
         executeMysql("Create visits from existing encounters", '''
             -- Get visit type "Clinic or Hospital Visit"
             SET @visit_type_id = (SELECT visit_type_id FROM visit_type WHERE uuid = 'f01c54cb-2225-471a-9cd5-d348552c337c');
-            SET @encounter_type_exclusions = '';  -- a comma-separated string like '1,2,3'
+            SET @registration_et = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Enregistrement de patient'); 
             SET @unknown_location_id = 1;
             
             INSERT INTO visit
@@ -21,7 +21,7 @@ class VisitMigrator extends SqlMigrator {
                            Max(location_id) as location_id,  /* Avoid using 'Unknown Location' if there is another location available */
                            creator
                     FROM   encounter
-                    WHERE  FIND_IN_SET(encounter_type, @encounter_type_exclusions) = 0
+                    WHERE  encounter_type != @registration_et
                     GROUP  BY patient_id,
                               Date(encounter_datetime)
                               -- TODO: Group by location as well? see: https://pihemr.atlassian.net/browse/UHM-4834
@@ -33,7 +33,7 @@ class VisitMigrator extends SqlMigrator {
                 ON e.patient_id = v.patient_id
                     AND Date(e.encounter_datetime) = Date(v.date_started)
             SET    e.visit_id = v.visit_id
-            WHERE FIND_IN_SET(e.encounter_type, @encounter_type_exclusions) = 0;
+            WHERE encounter_type != @registration_et;
             
             -- If a encounter location is "Unknown" and it's Visit Location is *not* "Unknown", update encounter with that location
             UPDATE encounter e
@@ -65,6 +65,10 @@ class VisitMigrator extends SqlMigrator {
     }
 
     void revert() {
+        executeMysql("Clear visit IDs from encounters", '''
+            UPDATE encounter
+            SET visit_id = NULL;
+        ''')
         clearTable("visit")
     }
 }
