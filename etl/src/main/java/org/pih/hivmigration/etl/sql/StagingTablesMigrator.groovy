@@ -15,10 +15,12 @@ class StagingTablesMigrator extends SqlMigrator {
         (new TableStager("HIV_DATA_AUDIT_TRACKING_FORMS")).migrate()
         (new TableStager("HIV_PATIENT_OBS")).migrate()
         (new TableStager("HIV_COURSE_OF_TX")).migrate()
+        (new TableStager("HIV_SOCIAL_SUPPORT")).migrate()
     }
 
     @Override
     def void revert() {
+        (new TableStager("HIV_SOCIAL_SUPPORT")).revert()
         (new TableStager("HIV_COURSE_OF_TX")).revert()
         (new TableStager("HIV_PATIENT_OBS")).revert()
         (new TableStager("HIV_DATA_AUDIT_TRACKING_FORMS")).revert()
