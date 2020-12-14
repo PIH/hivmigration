@@ -458,6 +458,16 @@ class TreatmentObsMigrator extends ObsMigrator {
 
         migrateArvsFromHivmigrationArvRegimenTableToTmpObs()
 
+        executeMysql("Migrate ART treatment status(Yes)", '''
+            INSERT IGNORE INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '160117'),
+                concept_uuid_from_mapping('CIEL', '1065')
+            FROM hivmigration_arv_regimen;
+        
+        ''')
+
         executeMysql("Migrate ART start date from follow-up form", '''
             INSERT IGNORE INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime)
             SELECT
