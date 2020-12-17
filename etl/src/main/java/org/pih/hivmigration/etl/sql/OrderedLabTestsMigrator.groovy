@@ -30,10 +30,10 @@ class OrderedLabTestsMigrator extends ObsMigrator{
             values
                 ('abdominal_ultrasound', 'CIEL', '845'),
                 ('biochemistry', 'CIEL', ''),
-                ('bun', 'CIEL', ''),
+                ('bun', 'PIH', '12655'),
                 ('cd4', 'CIEL', '5497'),
                 ('chest_xray', 'CIEL', '165152'),
-                ('culture', 'CIEL', ''),
+                ('culture', 'CIEL', '159982'),
                 ('cxr', 'CIEL', '165152'),
                 ('elisa', 'CIEL', '1041'),
                 ('esr', 'PIH', '1477'),
@@ -95,6 +95,26 @@ class OrderedLabTestsMigrator extends ObsMigrator{
                 and (m.openmrs_concept_code is not null) and (m.openmrs_concept_code !='');            
         ''')
 
+        executeMysql("Load Other Ordered Lab Tests as Other Non-coded obs comments", ''' 
+                                                                                                       
+            INSERT INTO tmp_obs (
+                source_patient_id, 
+                source_encounter_id, 
+                concept_uuid,                 
+                value_coded_uuid,
+                comments)
+            SELECT 
+                t.source_patient_id,
+                t.source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Lab test ordered coded') as concept_uuid,
+                concept_uuid_from_mapping('PIH', 'OTHER') as value_coded_uuid,
+                group_concat(test_other separator ', ') as comments
+            from hivmigration_ordered_lab_tests t
+            where t.test like 'other%' 
+            group by t.source_encounter_id 
+            order by t.source_patient_id;            
+        ''')
+
         executeMysql("Load Radiology Order obs construct", '''
         
             -- Create Radiology report construct obs_group                                                                                           
@@ -129,6 +149,29 @@ class OrderedLabTestsMigrator extends ObsMigrator{
                 and t.test=m.test 
                 and (m.openmrs_concept_code is not null) and (m.openmrs_concept_code !=''); 
             
+        ''')
+
+        executeMysql("Log warnings for the ordered lab that were not migrated because of missing mapping", ''' 
+                                                                                                       
+            INSERT INTO hivmigration_data_warnings (
+                openmrs_patient_id, 
+                openmrs_encounter_id, 
+                encounter_date, 
+                field_name, 
+                field_value, 
+                warning_type, 
+                flag_for_review)
+            SELECT 
+                p.person_id as patient_id,
+                e.encounter_id as encounter_id,
+                e.encounter_date as encounter_date,
+                'Ordered Lab Test' as field_name,
+                t.test as field_value,
+                'No OpenMRS mapping' as warning_type,
+                TRUE as flag_for_review
+            from hivmigration_ordered_lab_tests t, hivmigration_ordered_lab_tests_mapping m, hivmigration_encounters e, hivmigration_patients p
+            where t.test is not null and t.test=m.test and t.source_encounter_id=e.source_encounter_id and e.source_patient_id=p.source_patient_id 
+            and ((m.openmrs_concept_code is null) or (m.openmrs_concept_code =''));            
         ''')
 
         migrate_tmp_obs()
