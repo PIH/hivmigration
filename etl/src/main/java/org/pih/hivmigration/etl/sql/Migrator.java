@@ -94,6 +94,7 @@ public class Migrator {
                 revert(new PcrTestsMigrator());
                 revert(new ExamLabResultsMigrator());
                 revert(new ExamExtraMigrator());
+                revert(new OrderedLabTestsMigrator());
                 revert(new WhoStagingCriteriaMigrator());
                 revert(new HivExamsMigrator());
                 revert(new PreviousExposureMigrator());
@@ -130,6 +131,7 @@ public class Migrator {
                 migrate(new MedpickupsMigrator(), limit);
                 migrate(new HivExamsMigrator(), limit);
                 migrate(new WhoStagingCriteriaMigrator(), limit);
+                migrate(new OrderedLabTestsMigrator(), limit);
                 migrate(new ExamExtraMigrator(), limit);
                 migrate(new ExamLabResultsMigrator(), limit);
                 migrate(new PcrTestsMigrator(), limit);
