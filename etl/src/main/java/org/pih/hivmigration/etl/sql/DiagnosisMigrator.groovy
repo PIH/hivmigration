@@ -54,7 +54,8 @@ class DiagnosisMigrator extends ObsMigrator {
                 ON pt_dx.diagnosis_id = dx.diagnosis_id
             JOIN hivmigration_encounters e
                 ON pt_dx.patient_id = e.source_patient_id
-                    AND e.source_encounter_type = 'intake';
+                    AND e.source_encounter_type = 'intake'
+            GROUP BY e.source_encounter_id, dx.diagnosis_eng;  -- some results are duplicated or triplicated in the source data
             
             -- 'other' diagnoses
             INSERT INTO hivmigration_tmp_diagnosis_groups
@@ -68,7 +69,8 @@ class DiagnosisMigrator extends ObsMigrator {
             JOIN hivmigration_encounters e
                  ON pt_dx.patient_id = e.source_patient_id
                  AND e.source_encounter_type = 'intake'
-            WHERE diagnosis_other IS NOT NULL;
+            WHERE diagnosis_other IS NOT NULL
+            GROUP BY e.encounter_id, pt_dx.diagnosis_other;
         ''')
 
         create_tmp_obs_table()

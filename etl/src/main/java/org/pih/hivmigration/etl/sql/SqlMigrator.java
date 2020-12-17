@@ -32,7 +32,7 @@ abstract class SqlMigrator {
 
     public Properties properties;
 
-    private int rowLimit = -1;
+    protected int rowLimit = -1;
 
     public void setRowLimit(int rowLimit) {
         this.rowLimit = rowLimit;
