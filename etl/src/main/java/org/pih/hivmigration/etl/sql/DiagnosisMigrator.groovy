@@ -22,7 +22,7 @@ class DiagnosisMigrator extends ObsMigrator {
 
         executeMysql("Create obs groups for patient diagnosis history", '''
             INSERT INTO hivmigration_tmp_diagnosis_groups
-            (diagnosis_concept_uuid, source_encounter_id, source_patient_id, comments, present, start_date)
+                (diagnosis_concept_uuid, source_encounter_id, source_patient_id, comments, present, start_date)
             SELECT
                 CASE dx.diagnosis_eng
                     WHEN 'Anemia' THEN concept_uuid_from_mapping('PIH', 'ANEMIA')
@@ -59,12 +59,14 @@ class DiagnosisMigrator extends ObsMigrator {
             
             -- 'other' diagnoses
             INSERT INTO hivmigration_tmp_diagnosis_groups
-                (diagnosis_concept_uuid, source_encounter_id, source_patient_id, comments)
+                (diagnosis_concept_uuid, source_encounter_id, source_patient_id, comments, present, start_date)
             SELECT
                 concept_uuid_from_mapping('PIH', 'OTHER'),
                 e.source_encounter_id,
                 e.source_patient_id,
-                pt_dx.diagnosis_other
+                pt_dx.diagnosis_other,
+                pt_dx.present_p = 't',
+                pt_dx.diagnosis_date
             FROM hivmigration_patient_diagnoses pt_dx
             JOIN hivmigration_encounters e
                  ON pt_dx.patient_id = e.source_patient_id
