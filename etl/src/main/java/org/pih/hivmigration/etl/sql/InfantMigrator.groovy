@@ -180,6 +180,23 @@ class InfantMigrator extends SqlMigrator {
             order by i.source_infant_id;
         ''')
 
+        executeMysql("Create empty registration encounter for each infant", '''
+            INSERT INTO encounter
+                (encounter_type, patient_id, location_id, form_id, encounter_datetime, creator, date_created, voided, uuid)
+            SELECT
+                (SELECT encounter_type_id FROM encounter_type WHERE name = 'Enregistrement de patient'),
+                person_id,
+                hhc.openmrs_id,
+                (SELECT form_id FROM form WHERE uuid = '6F6E6FA0-1E99-41A3-9391-E5CB8A127C11'),
+                IFNULL(birthdate, '1900-01-01'),
+                1,
+                now(),
+                0,
+                uuid()
+            FROM hivmigration_infants i
+            LEFT JOIN hivmigration_health_center hhc ON i.health_center = hhc.hiv_emr_id;
+        ''')
+
         executeMysql("Load ZL IDs", '''
             insert into patient_identifier (
               patient_id, uuid, identifier_type, location_id, identifier, preferred, creator, date_created
