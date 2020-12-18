@@ -120,7 +120,7 @@ class InfantMigrator extends SqlMigrator {
               hivmigration_infants i
         ''')
 
-        // log birthdates that are null, in the future, or older than 30 years
+        // log birthdates in the future or birthdates older than 120 years
         executeMysql("Log abnormal birthdate values", '''
                 insert into hivmigration_data_warnings (                    
                     openmrs_patient_id,
@@ -131,12 +131,11 @@ class InfantMigrator extends SqlMigrator {
                 select
                 	p.person_id as openmrsPatientId,                     
                     'birthdate' as fieldName,
-                    p.birthdate as fieldValue,
-                    'Abnormal birthdate value' as warningType,
-                    1
+                    p.birthdate as fieldValue, 
+                    'Abnormal birthdate value' as warningType,                    
+                    1 			
                 from person p 
-                where (p.person_id in (select person_id from hivmigration_infants))
-                    and (birthdate is null OR birthdate > now() OR birthdate < (SELECT DATE_SUB(now(), INTERVAL 30 YEAR))); 
+                where (p.person_id in (select person_id from hivmigration_infants)) and (birthdate is not null  and (birthdate > now() || birthdate < (SELECT DATE_SUB(now(), INTERVAL 120 YEAR)))); 
         ''')
 
         // TODO: see https://pihemr.atlassian.net/browse/UHM-4817
@@ -179,23 +178,6 @@ class InfantMigrator extends SqlMigrator {
             from
               hivmigration_infants i
             order by i.source_infant_id;
-        ''')
-
-        executeMysql("Create empty registration encounter for each infant", '''
-            INSERT INTO encounter
-                (encounter_type, patient_id, location_id, form_id, encounter_datetime, creator, date_created, voided, uuid)
-            SELECT
-                (SELECT encounter_type_id FROM encounter_type WHERE name = 'Enregistrement de patient'),
-                person_id,
-                hhc.openmrs_id,
-                (SELECT form_id FROM form WHERE uuid = '6F6E6FA0-1E99-41A3-9391-E5CB8A127C11'),
-                IFNULL(birthdate, '1900-01-01'),
-                1,
-                now(),
-                0,
-                uuid()
-            FROM hivmigration_infants i
-            LEFT JOIN hivmigration_health_center hhc ON i.health_center = hhc.hiv_emr_id;
         ''')
 
         executeMysql("Load ZL IDs", '''
