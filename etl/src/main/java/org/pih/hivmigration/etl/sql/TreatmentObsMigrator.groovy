@@ -499,7 +499,7 @@ class TreatmentObsMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR
             FROM hivmigration_observations
             WHERE observation = 'current_tx.tb_other'
-                AND value IN ('Premier 2HZRE+4HR', '2HZRE+4HR', '4RH', '4HR', '4 hr', '+ 4HR', 'Retraitment 2RHEZ/4RH');
+                AND value IN ('Premier 2HZRE+4HR', '2HZRE+4HR', '4RH', '4HR', '4 hr', '+ 4HR', '2HZRE + 4 HR.', 'RHEZ', '2HRZE + 4HR');
         ''')
 
         executeMysql("Migrate other TB treatments into follow-up form", '''
@@ -510,7 +510,7 @@ class TreatmentObsMigrator extends ObsMigrator {
                 value
             FROM hivmigration_observations
             WHERE observation = 'current_tx.tb_other'
-                AND value IS NOT NULL AND value NOT IN ('Premier 2HZRE+4HR', '2HZRE+4HR', '4RH', '4HR', '4 hr', '+ 4HR', 'Retraitment 2RHEZ/4RH');
+                AND value IN ('Premier 2HZRE+4HR', '2HZRE+4HR', '4RH', '4HR', '4 hr', '+ 4HR', '2HZRE + 4 HR.', 'RHEZ', '2HRZE + 4HR');
         ''')
 
         migrate_tmp_obs()
