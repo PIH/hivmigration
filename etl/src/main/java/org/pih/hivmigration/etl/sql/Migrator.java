@@ -116,8 +116,8 @@ public class Migrator {
             if (!shouldRevertOnly) {
                 migrate(new Setup(), -1);
                 migrate(new UserMigrator(), -1);
-                migrate(new StagingTablesMigrator(), -1);
                 migrate(new LocationMigrator(), -1);
+                migrate(new StagingTablesMigrator(), limit);
                 migrate(new PatientMigrator(), limit);
                 migrate(new InfantMigrator(), limit);
                 migrate(new RegistrationMigrator(), limit);
