@@ -63,34 +63,24 @@ class TreatmentObsMigrator extends ObsMigrator {
             CREATE PROCEDURE load_follow_up_prophylaxis(_txName varchar(80))
             BEGIN
                 INSERT INTO hivmigration_prophylaxis
-                (name, source_encounter_id, encounter_date)
+                    (name, source_encounter_id, encounter_date, start_date)
                 SELECT
                     _txName,
                     base.source_encounter_id,
-                    he.encounter_date
+                    he.encounter_date,
+                    try_to_fix_date(start.value)
                 FROM hivmigration_observations base
-                JOIN hivmigration_encounters he ON base.source_encounter_id = he.source_encounter_id
-                WHERE base.observation = CONCAT('current_tx.prophylaxis_', _txName)
-                GROUP BY base.source_encounter_id;
-                
-                -- Insert start date. MySQL offers no way to validate dates without throwing an error, so we do
-                -- this in two steps. First, add the dates using IGNORE, while attempting to correct any invalid dates.
-                -- Then, validate that none of the dates that were added are invalid.
-                -- The only kind of invalid dates in the data (at time of writing) are ones for which day values
-                -- that exceed the month length. For these, we use the first day of the following month.
-                UPDATE IGNORE hivmigration_prophylaxis pro
-                JOIN hivmigration_observations start
-                ON  pro.source_encounter_id = start.source_encounter_id
+                LEFT JOIN hivmigration_observations start
+                    ON  base.source_encounter_id = start.source_encounter_id
                     AND start.observation = CONCAT('current_tx.prophylaxis_', _txName, '_start_date')
                     AND start.value IS NOT NULL
                     AND start.value != '0000-00-00 00:00:00'
-                SET start_date = IF(DAYNAME(start.value) IS NOT NULL,
-                                    start.value,
-                                    CONCAT(LEFT(start.value, 6), CAST(SUBSTR(start.value, 6, 2) AS UNSIGNED)+1, '-01'))
-                ;
+                JOIN hivmigration_encounters he ON base.source_encounter_id = he.source_encounter_id
+                WHERE base.observation = CONCAT('current_tx.prophylaxis_', _txName)
+                GROUP BY base.source_encounter_id;
             END $$
             DELIMITER ;
-            ''')
+        ''')
 
         executeMysql("Load CTX to intermediate prophylaxis table from follow-up form", "CALL load_follow_up_prophylaxis('CTX');")
         executeMysql("Load Fluconazole to intermediate prophylaxis table from follow-up form", "CALL load_follow_up_prophylaxis('Fluconazole');")
@@ -101,17 +91,6 @@ class TreatmentObsMigrator extends ObsMigrator {
                 SET start_date = NULL
                 WHERE start_date = '0000-00-00 000:00:00';
         ''')
-
-        // Check that there are no invalid dates
-        Long numInvalidDates = selectMysql('''
-            SELECT count(start_date)
-            FROM hivmigration_prophylaxis
-            WHERE start_date IS NOT NULL AND DAYNAME(start_date) IS NULL;''',
-                new ScalarHandler()
-        )
-        if (numInvalidDates > 0) {
-            throw new Error("Invalid dates were inserted into the hivmigration_prophylaxis table's `start_date` column. Please review the data in that column and fix the logic by which it is inserted.")
-        }
 
         executeMysql("Create obsgroups for prophylaxis state", '''
             INSERT INTO tmp_obs (obs_id, concept_uuid, source_encounter_id)
@@ -264,17 +243,6 @@ class TreatmentObsMigrator extends ObsMigrator {
             DROP PROCEDURE load_prophylaxis;
         ''')
 
-        // Check that there are no invalid dates
-        Long numInvalidDates = selectMysql('''
-            SELECT count(start_date)
-            FROM hivmigration_prophylaxis
-            WHERE start_date IS NOT NULL AND DAYNAME(start_date) IS NULL;''',
-                new ScalarHandler()
-        )
-        if (numInvalidDates > 0) {
-            throw new Error("Invalid dates were inserted into the hivmigration_prophylaxis table's `start_date` column. Please review the data in that column and fix the logic by which it is inserted.")
-        }
-
         executeMysql("Create obsgroups for prophylaxis prescriptions", '''
             INSERT INTO tmp_obs (obs_id, concept_uuid, source_encounter_id)
             SELECT obs_group_id, concept_uuid_from_mapping('PIH', '10742'), source_encounter_id
@@ -388,6 +356,28 @@ class TreatmentObsMigrator extends ObsMigrator {
 
         migrateArvsFromHivmigrationArvRegimenTableToTmpObs()
 
+        executeMysql("Migrate ART treatment status", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '160117'),
+                concept_uuid_from_mapping('CIEL', '1065')
+            FROM hivmigration_arv_regimen;
+        ''')
+
+        executeMysql("Migrate ART start date from follow-up form", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '159599'),
+                try_to_fix_date(value)
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.art_start_date';
+            
+            DELETE FROM tmp_obs
+            WHERE value_datetime = '0000-00-00';
+        ''')
+
         migrate_tmp_obs()
     }
 
@@ -458,41 +448,6 @@ class TreatmentObsMigrator extends ObsMigrator {
 
         migrateArvsFromHivmigrationArvRegimenTableToTmpObs()
 
-        executeMysql("Migrate ART treatment status(Yes)", '''
-            INSERT IGNORE INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT
-                source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '160117'),
-                concept_uuid_from_mapping('CIEL', '1065')
-            FROM hivmigration_arv_regimen;
-        
-        ''')
-
-        executeMysql("Migrate ART start date from follow-up form", '''
-            INSERT IGNORE INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime)
-            SELECT
-                source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '159599'),
-                IF(DAYNAME(value) IS NOT NULL,
-                   value,
-                   CONCAT(LEFT(value, 6), CAST(SUBSTR(value, 6, 2) AS UNSIGNED)+1, '-01'))
-            FROM hivmigration_observations
-            WHERE observation = 'current_tx.art_start_date';
-            
-            DELETE FROM tmp_obs
-            WHERE value_datetime = '0000-00-00';
-        ''')
-        // Check that there are no invalid dates
-        Long numInvalidDates = selectMysql('''
-                SELECT count(value_datetime)
-                FROM tmp_obs
-                WHERE value_datetime IS NOT NULL AND DAYNAME(value_datetime) IS NULL;''',
-                new ScalarHandler()
-        )
-        if (numInvalidDates > 0) {
-            throw new Error("Invalid dates were inserted into the hivmigration_prophylaxis table's `start_date` column. Please review the data in that column and fix the logic by which it is inserted.")
-        }
-
         migrate_tmp_obs()
     }
 
@@ -504,9 +459,11 @@ class TreatmentObsMigrator extends ObsMigrator {
             SELECT
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '159798'),
-                concept_uuid_from_mapping('CIEL', '1065')
+                IF(value != 'none',
+                    concept_uuid_from_mapping('CIEL', '1065'),
+                    concept_uuid_from_mapping('CIEL', '1066')) 
             FROM hivmigration_observations
-            WHERE observation = 'current_tx.tb' AND value IS NOT NULL AND value != 'none';
+            WHERE observation = 'current_tx.tb';
         ''')
 
         executeMysql("Migrate TB treatment start date", '''
@@ -514,9 +471,9 @@ class TreatmentObsMigrator extends ObsMigrator {
             SELECT
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '1113'),
-                value
+                try_to_fix_date(value)
             FROM hivmigration_observations
-            WHERE observation = 'current_tx.tb_start_date AND value IS NOT NULL';
+            WHERE observation = 'current_tx.tb_start_date' AND value IS NOT NULL;
         ''')
 
         executeMysql("Migrate TB treatment from follow-up form", '''

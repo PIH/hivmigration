@@ -62,6 +62,22 @@ class Setup extends SqlMigrator {
             DELIMITER ;
         ''')
 
+        executeMysql("Create function try_to_fix_date", '''
+            DROP FUNCTION IF EXISTS try_to_fix_date;
+            DELIMITER |
+            CREATE FUNCTION try_to_fix_date( date_string CHAR(12) ) RETURNS DATE DETERMINISTIC
+            BEGIN
+                RETURN IF(  -- fix day value if too large for month
+                       DAY(STR_TO_DATE(date_string, '%Y-%m-%d')) > DAY(LAST_DAY(STR_TO_DATE(date_string,'%Y-%m-%d'))),
+                       CONCAT(LEFT(date_string, 5), CAST(SUBSTR(date_string, 6, 2) AS UNSIGNED)+1, '-01'),
+                       IF(  -- fix month value > 12
+                                   MONTH(STR_TO_DATE(date_string, '%Y-%m-%d')) <= 12,
+                                   date_string,
+                                   CONCAT(LEFT(date_string, 5), '12-01')));
+            END |
+            DELIMITER ;
+        ''')
+
         executeMysql("Create table for logging data irregularities", '''
             CREATE TABLE IF NOT EXISTS hivmigration_data_warnings (
                 id INT PRIMARY KEY AUTO_INCREMENT,
