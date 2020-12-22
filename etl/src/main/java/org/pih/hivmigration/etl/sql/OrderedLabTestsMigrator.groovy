@@ -34,6 +34,7 @@ class OrderedLabTestsMigrator extends ObsMigrator{
                 ('cd4', 'CIEL', '5497'),
                 ('chest_xray', 'CIEL', '165152'),
                 ('culture', 'CIEL', '159982'),
+                ('creatinine', 'CIEL', '164364'),
                 ('cxr', 'CIEL', '165152'),
                 ('elisa', 'CIEL', '1041'),
                 ('esr', 'PIH', '1477'),
