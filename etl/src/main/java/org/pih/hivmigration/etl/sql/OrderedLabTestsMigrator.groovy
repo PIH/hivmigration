@@ -78,6 +78,22 @@ class OrderedLabTestsMigrator extends ObsMigrator{
         create_tmp_obs_table()
         setAutoIncrement("tmp_obs", "(select max(obs_id)+1 from hivmigration_ordered_lab_tests)")
 
+        executeMysql("Create Lab exam None checkboxes", ''' 
+                                                                                                       
+            INSERT INTO tmp_obs (
+                source_patient_id, 
+                source_encounter_id, 
+                concept_uuid,                 
+                value_coded_uuid)
+            SELECT 
+                t.source_patient_id,
+                t.source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Lab test ordered coded') as concept_uuid,
+                concept_uuid_from_mapping('CIEL', '1107') as value_coded_uuid
+            from hivmigration_ordered_lab_tests t 
+            where t.test = 'none';            
+        ''')
+
         executeMysql("Load Ordered Lab Tests observations", ''' 
                                                                                                        
             INSERT INTO tmp_obs (
