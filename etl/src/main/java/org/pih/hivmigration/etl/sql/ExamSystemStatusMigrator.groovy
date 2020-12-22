@@ -91,7 +91,24 @@ class ExamSystemStatusMigrator extends ObsMigrator{
                 concept_uuid_from_mapping( m.openmrs_concept_source, m.openmrs_concept_code) as concept_uuid,
                 concept_uuid_from_mapping( f.openmrs_concept_source, f.openmrs_concept_code) as value_coded_uuid
             from hivmigration_exam_system_status s join hivmigration_exam_status_mapping m on s.exam = m.system_condition 
-                join hivmigration_exam_status_mapping f on s.finding = f.system_condition;
+                join hivmigration_exam_status_mapping f on s.finding = f.system_condition 
+            where !(exam in ('conjunctiva', 'scleras', 'oropharynx')  and finding = 'normal' );
+            
+            -- Concatenate all HEENT normal obs into the HEENT comments sections
+            INSERT INTO tmp_obs (
+                source_patient_id,
+                source_encounter_id,
+                concept_uuid,
+                value_text)
+            SELECT
+                s.source_patient_id,
+                s.source_encounter_id,                
+                concept_uuid_from_mapping( 'CIEL', '163045') as concept_uuid,
+                concat(group_concat(s.exam separator ', '), ' : normal' )as value_text
+            from hivmigration_exam_system_status s 
+            where exam in ('conjunctiva', 'scleras', 'oropharynx')  and finding = 'normal' 
+            group by s.source_encounter_id 
+            order by s.source_patient_id;
         ''')
 
         migrate_tmp_obs()
