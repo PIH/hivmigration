@@ -198,7 +198,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 x.comments
             from hivmigration_hiv_exam_ois x, hivmigration_hiv_ois_mapping m  
             where x.oi is not null and x.oi != 'none' and x.oi != 'other' and x.oi = m.oi 
-                and concept_uuid_from_mapping(m.openmrs_concept_source, m.openmrs_concept_code) is not null;  
+                and m.openmrs_concept_source != '' and m.openmrs_concept_code != '';  
             
             -- Create non-coded Diagnosis for other diagnoses
             INSERT INTO tmp_obs (
@@ -233,7 +233,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 x.comments
             from hivmigration_hiv_exam_ois x, hivmigration_hiv_ois_mapping m  
             where x.oi is not null and x.oi != 'none' and x.oi != 'other' and x.oi = m.oi 
-                and concept_uuid_from_mapping(m.openmrs_concept_source, m.openmrs_concept_code) is null; 
+                and (m.openmrs_concept_source = '' or m.openmrs_concept_code = ''); 
                                              
         ''')
 
