@@ -197,7 +197,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 concept_uuid_from_mapping(m.openmrs_concept_source, m.openmrs_concept_code) as value_coded_uuid,
                 x.comments
             from hivmigration_hiv_exam_ois x, hivmigration_hiv_ois_mapping m  
-            where x.oi is not null and x.oi != 'none' and x.oi != 'other' and x.oi = m.oi 
+            where x.oi is not null and x.oi != 'none' and x.oi != 'other' and x.oi != 'candidiaris_other' and x.oi = m.oi 
                 and m.openmrs_concept_source != '' and m.openmrs_concept_code != '';  
             
             -- Create non-coded Diagnosis for other diagnoses
@@ -216,6 +216,22 @@ class HivExamOisMigrator extends ObsMigrator {
             from hivmigration_hiv_exam_ois x 
             where x.oi = 'other'; 
             
+             -- Create non-coded Diagnosis for candidiaris_other
+            INSERT INTO tmp_obs (
+                obs_group_id,
+                source_patient_id, 
+                source_encounter_id, 
+                concept_uuid,
+                value_text)
+            SELECT 
+                x.obs_id,
+                x.source_patient_id,
+                x.source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Diagnosis or problem, non-coded') as concept_uuid,                
+                CONCAT('Candidiasis (' , IFNULL(x.comments, ''), ')') as value_text
+            from hivmigration_hiv_exam_ois x 
+            where x.oi = 'candidiaris_other'; 
+            
             -- Create non-coded Diagnoses for OI that do not have a mapping yet            
             INSERT INTO tmp_obs (
                 obs_group_id,
@@ -232,7 +248,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 x.oi,
                 x.comments
             from hivmigration_hiv_exam_ois x, hivmigration_hiv_ois_mapping m  
-            where x.oi is not null and x.oi != 'none' and x.oi != 'other' and x.oi = m.oi 
+            where x.oi is not null and x.oi != 'none' and x.oi != 'other' and x.oi != 'candidiaris_other' and x.oi = m.oi 
                 and (m.openmrs_concept_source = '' or m.openmrs_concept_code = ''); 
                                              
         ''')
