@@ -460,10 +460,10 @@ class TreatmentObsMigrator extends ObsMigrator {
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '159798'),
                 IF(value != 'none',
-                    concept_uuid_from_mapping('CIEL', '1065'),
-                    concept_uuid_from_mapping('CIEL', '1066')) 
+                    concept_uuid_from_mapping('PIH', 'YES'),
+                    concept_uuid_from_mapping('PIH', 'NO')) 
             FROM hivmigration_observations
-            WHERE observation = 'current_tx.tb';
+            WHERE observation IN ('current_tx.tb', 'current_tx.tb_other');
         ''')
 
         executeMysql("Migrate TB treatment start date", '''
@@ -496,10 +496,15 @@ class TreatmentObsMigrator extends ObsMigrator {
             SELECT
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '1111'),
-                concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR
+                CASE value
+                    WHEN 'Retraitement 2RHEZ/4RH' THEN concept_uuid_from_mapping('PIH', '2408')  -- TB retreatment with 2 RHZE / 4 RH 
+                    ELSE concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR
+                    END
             FROM hivmigration_observations
             WHERE observation = 'current_tx.tb_other'
-                AND value IN ('Premier 2HZRE+4HR', '2HZRE+4HR', '4RH', '4HR', '4 hr', '+ 4HR', '2HZRE + 4 HR.', 'RHEZ', '2HRZE + 4HR');
+                AND value IN ('Premier 2HZRE+4HR', '2HZRE+4HR', '4RH', '4HR', '4 hr', '+ 4HR',
+                              '2HZRE + 4 HR.', 'RHEZ', '2HRZE + 4HR', '2HZRE + 4 HR', ' 2 HZRE + 4 HR',
+                              'Retraitement 2RHEZ/4RH');
         ''')
 
         migrate_tmp_obs()
