@@ -240,6 +240,9 @@ class SocioEconomicsMigrator extends ObsMigrator {
 
     @Override
     def void revert() {
-
+        executeMysql("ALTER TABLE hivmigration_socioeconomics DROP COLUMN socioecon_encounter_id;");
+        executeMysql("ALTER TABLE hivmigration_socioeconomics_extra DROP COLUMN intake_encounter_id;")
+        clearTable("obs")
+        executeMysql("DELETE FROM encounter WHERE encounter_type = (select encounter_type_id from encounter_type where name = 'Socio-economics');")
     }
 }
