@@ -104,10 +104,10 @@ public class Migrator {
                 revert(new FormsMigrator());
                 revert(new LabResultMigrator());
                 revert(new AdverseEventMigrator());
-                revert(new EncounterMigrator());
                 revert(new ProviderMigrator());
                 revert(new ProgramMigrator());
                 revert(new RegistrationMigrator());
+                revert(new EncounterMigrator());
                 revert(new InfantMigrator());
                 revert(new PatientMigrator());
                 revert(new LocationMigrator());
@@ -122,10 +122,10 @@ public class Migrator {
                 migrate(new StagingTablesMigrator(), limit);
                 migrate(new PatientMigrator(), limit);
                 migrate(new InfantMigrator(), limit);
+                migrate(new EncounterMigrator(), limit);
                 migrate(new RegistrationMigrator(), limit);
                 migrate(new ProgramMigrator(), limit);
                 migrate(new ProviderMigrator(), limit);
-                migrate(new EncounterMigrator(), limit);
                 migrate(new AdverseEventMigrator(), limit);
                 migrate(new LabResultMigrator(), limit);
                 migrate(new FormsMigrator(), limit);
