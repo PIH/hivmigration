@@ -463,7 +463,22 @@ class TreatmentObsMigrator extends ObsMigrator {
                     concept_uuid_from_mapping('PIH', 'YES'),
                     concept_uuid_from_mapping('PIH', 'NO')) 
             FROM hivmigration_observations
-            WHERE observation IN ('current_tx.tb', 'current_tx.tb_other');
+            WHERE observation = 'current_tx.tb';
+        ''')
+
+        executeMysql("Fill 'anti-TB treatment' yes-no question for tx_other values", '''
+            -- unless there is also a value for current_tx.tb in this encounter
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
+            SELECT
+                o.source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '159798'),
+                concept_uuid_from_mapping('PIH', 'YES')
+            FROM hivmigration_observations o
+                LEFT JOIN hivmigration_observations o2
+                    ON o.source_encounter_id = o2.source_encounter_id
+                    AND o.source_observation_id != o2.source_observation_id
+                    AND o2.observation = 'current_tx.tb'
+            WHERE o.observation = 'current_tx.tb_other' AND o2.source_observation_id IS NULL;
         ''')
 
         executeMysql("Migrate TB treatment start date", '''
@@ -609,5 +624,6 @@ class TreatmentObsMigrator extends ObsMigrator {
         executeMysql("DROP TABLE IF EXISTS hivmigration_ordered_other")
         executeMysql("DROP TABLE IF EXISTS hivmigration_prophylaxis")
         executeMysql("DROP TABLE IF EXISTS hivmigration_arv_regimen")
+        clearTable("obs")
     }
 }
