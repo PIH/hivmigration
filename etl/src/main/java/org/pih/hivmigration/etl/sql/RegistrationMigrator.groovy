@@ -45,7 +45,7 @@ class RegistrationMigrator extends ObsMigrator {
                         hivmigration_users hu on p.patient_created_by = hu.source_user_id
                     left join
                         users u on u.uuid = hu.user_uuid;
-            ''');
+            ''')
 
         setAutoIncrement("hivmigration_patient_birthplace", "(select max(obs_id)+1 from obs)")
 
