@@ -1,6 +1,6 @@
 package org.pih.hivmigration.etl.sql
 
-class RegistrationMigrator extends ObsMigrator {
+class RegistrationMigrator extends SqlMigrator {
 
     @Override
     def void migrate() {
@@ -25,6 +25,29 @@ class RegistrationMigrator extends ObsMigrator {
                 commune NVARCHAR(100),
                 section NVARCHAR(100),
                 locality NVARCHAR(100)
+            );
+        ''')
+
+        executeMysql("Create Patient Socio-Economics Staging Table",
+                '''
+            create table hivmigration_socio_economics (    
+                obs_id int PRIMARY KEY AUTO_INCREMENT,                            
+                source_patient_id int,                                
+                civil_status NVARCHAR(16),
+                primary_activity NVARCHAR(96),
+                other_sexual_partners text,
+                partners_same_town_p char(1) DEFAULT NULL,
+                partners_other_town text,
+                residences text,                
+                nutritional_evaluation text,
+                num_people_in_house decimal(10,0) DEFAULT NULL,
+                num_rooms_in_house decimal(10,0) DEFAULT NULL,
+                type_of_roof text,
+                type_of_floor text,
+                latrine_p char(1) DEFAULT NULL,
+                radio_p char(1) DEFAULT NULL,
+                education text,
+                other_sexual_partners_p char(1) DEFAULT NULL
             );
         ''')
 
@@ -67,13 +90,51 @@ class RegistrationMigrator extends ObsMigrator {
                     l.section_communale as section,
                     nvl(l.locality, d.BIRTH_PLACE) as locality
                 from HIV_DEMOGRAPHICS_REAL d left outer join hiv_locality l
-                     on d.BIRTH_PLACE_LOCALITY = l.locality_id
-                where l.department is not null
-                    or l.commune is not null 
-                    or l.section_communale is not null 
-                    or l.locality is not null 
-                    or d.BIRTH_PLACE is not null;
-        ''')
+                     on d.BIRTH_PLACE_LOCALITY = l.locality_id 
+            ''');
+
+        // load patients CIVIL_STATUS and OCCUPATION into the staging table
+        loadFromOracleToMySql('''
+                    insert into hivmigration_socio_economics(
+                        source_patient_id,                         
+                        civil_status, 
+                        primary_activity,
+                        other_sexual_partners,
+                        partners_same_town_p,
+                        partners_other_town,
+                        residences,                
+                        nutritional_evaluation,
+                        num_people_in_house,
+                        num_rooms_in_house,
+                        type_of_roof,
+                        type_of_floor,
+                        latrine_p,
+                        radio_p,
+                        education,
+                        other_sexual_partners_p)
+                    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            ''',
+                '''
+                    select 
+                        s.patient_id as source_patient_id, 
+                        UPPER(TRIM(s.civil_status)) as civil_status, 
+                        UPPER(TRIM(s.PRIMARY_ACTIVITY)) as primary_activity,
+                        s.other_sexual_partners,
+                        s.partners_same_town_p,
+                        s.partners_other_town,
+                        s.residences,                
+                        s.nutritional_evaluation,
+                        s.num_people_in_house,
+                        s.num_rooms_in_house,
+                        s.type_of_roof,
+                        s.type_of_floor,
+                        s.latrine_p,
+                        s.radio_p,
+                        s.education,
+                        s.other_sexual_partners_p 
+                    from HIV_SOCIOECONOMICS s, hiv_demographics_real p 
+                    where (s.patient_id = p.patient_id) and ((s.civil_status is not null) or (s.PRIMARY_ACTIVITY is not null)) order by s.patient_id;
+            ''');
 
         executeMysql("Create Registration encounters",'''
 
@@ -101,122 +162,181 @@ class RegistrationMigrator extends ObsMigrator {
                     r.creator,
                     1    
             from hivmigration_registration_encounters r, hivmigration_patients p
-            where r.source_patient_id = p.source_patient_id;
-            
-            update hivmigration_patient_birthplace b
-            join hivmigration_patients hp on b.source_patient_id = hp.source_patient_id
-            join encounter e on hp.person_id = e.patient_id and e.encounter_type = @encounter_type_registration
-            set b.encounter_id = e.encounter_id;
+            where r.source_patient_id = p.source_patient_id;                                                                                      
         ''')
 
-        create_tmp_obs_table()
 
         executeMysql("Load birthplaces as obs",'''
 
-            ALTER TABLE hivmigration_patient_birthplace ADD COLUMN encounter_date DATETIME;
-            
-            UPDATE hivmigration_patient_birthplace b
-            JOIN hivmigration_registration_encounters e ON b.encounter_id = e.encounter_id
-            SET b.encounter_date = e.encounter_date;
-            
             -- Create Birthplace address construct
-            INSERT INTO tmp_obs (
-                obs_id,
-                encounter_id,
-                obs_datetime,
-                concept_uuid)
-            select
-                obs_id,
-                encounter_id,
-                encounter_date,
-                concept_uuid_from_mapping('PIH', 'Birthplace address construct')
-            from    hivmigration_patient_birthplace b
-            where locality is not null or section is not null or commune is not null or department is not null;
+            SET @birthplace_construct = (concept_from_mapping('PIH', 'Birthplace address construct'));
             
+            INSERT INTO obs (
+                    obs_id,
+                    person_id, 
+                    encounter_id, 
+                    obs_datetime, 
+                    location_id, 
+                    concept_id,                    
+                    creator, 
+                    date_created, 
+                    uuid)
+            select   
+                    b.obs_id, 
+                    p.person_id,
+                    r.encounter_id,
+                    r.encounter_date,
+                    1 as locationId,
+                    @birthplace_construct,
+                    r.creator,
+                    r.encounter_date as dateCreated,
+                    uuid() as uuid
+            from    hivmigration_patient_birthplace b,  hivmigration_registration_encounters r, hivmigration_patients p 
+            where   b.source_patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id 
+                    and ( b.locality is not null or b.section is not null or b.commune is not null or b.department is not null); 
+                    
             -- Add Locality
-            INSERT INTO tmp_obs (
-                obs_group_id,
-                encounter_id,
-                obs_datetime,
-                concept_uuid,
-                value_text)
-            select
-                obs_id,
-                encounter_id,
-                encounter_date,
-                concept_uuid_from_mapping('PIH', 'Address1'),
-                locality
-            from    hivmigration_patient_birthplace
-            where   locality is not null;
-            
+            SET @locality_concept = (concept_from_mapping('PIH', 'Address1'));  
+            INSERT INTO obs (
+                    obs_group_id,
+                    person_id, 
+                    encounter_id, 
+                    obs_datetime, 
+                    location_id, 
+                    concept_id,    
+                    value_text,                
+                    creator, 
+                    date_created, 
+                    uuid)
+            select   
+                    b.obs_id, 
+                    p.person_id,
+                    r.encounter_id,
+                    r.encounter_date,
+                    1 as locationId,
+                    @locality_concept,
+                    b.locality,
+                    r.creator,
+                    r.encounter_date as dateCreated,
+                    uuid() as uuid
+            from    hivmigration_patient_birthplace b,  hivmigration_registration_encounters r, hivmigration_patients p 
+            where   b.source_patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id 
+                    and b.locality is not null;     
+                    
             -- Add Section Communale
-            INSERT INTO tmp_obs (
-                obs_group_id,
-                encounter_id,
-                obs_datetime,
-                concept_uuid,
-                value_text)
-            select
-                obs_id,
-                encounter_id,
-                encounter_date,
-                concept_uuid_from_mapping('PIH', 'Address3'),
-                section
-            from    hivmigration_patient_birthplace
-            where   section is not null;
-            
-            
+            SET @section_communale_concept = (concept_from_mapping('PIH', 'Address3'));  
+            INSERT INTO obs (
+                    obs_group_id,
+                    person_id, 
+                    encounter_id, 
+                    obs_datetime, 
+                    location_id, 
+                    concept_id,    
+                    value_text,                
+                    creator, 
+                    date_created, 
+                    uuid)
+            select   
+                    b.obs_id, 
+                    p.person_id,
+                    r.encounter_id,
+                    r.encounter_date,
+                    1 as locationId,
+                    @section_communale_concept,
+                    b.section,
+                    r.creator,
+                    r.encounter_date as dateCreated,
+                    uuid() as uuid
+            from    hivmigration_patient_birthplace b,  hivmigration_registration_encounters r, hivmigration_patients p 
+            where   b.source_patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id 
+                    and b.section is not null; 
+                    
+                    
             -- Add Commune
-            INSERT INTO tmp_obs (
-                obs_group_id,
-                encounter_id,
-                obs_datetime,
-                concept_uuid,
-                value_text)
-            select
-                obs_id,
-                encounter_id,
-                encounter_date,
-                concept_uuid_from_mapping('PIH', 'City Village'),
-                commune
-            from    hivmigration_patient_birthplace
-            where   commune is not null;
-            
+            SET @commune_concept = (concept_from_mapping('PIH', 'City Village'));  
+            INSERT INTO obs (
+                    obs_group_id,
+                    person_id, 
+                    encounter_id, 
+                    obs_datetime, 
+                    location_id, 
+                    concept_id,    
+                    value_text,                
+                    creator, 
+                    date_created, 
+                    uuid)
+            select   
+                    b.obs_id, 
+                    p.person_id,
+                    r.encounter_id,
+                    r.encounter_date,
+                    1 as locationId,
+                    @commune_concept,
+                    b.commune,
+                    r.creator,
+                    r.encounter_date as dateCreated,
+                    uuid() as uuid
+            from    hivmigration_patient_birthplace b,  hivmigration_registration_encounters r, hivmigration_patients p 
+            where   b.source_patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id 
+                    and b.commune is not null;   
+                    
             -- Add Department
-            INSERT INTO tmp_obs (
-                obs_group_id,
-                encounter_id,
-                obs_datetime,
-                concept_uuid,
-                value_text)
-            select
-                obs_id,
-                encounter_id,
-                encounter_date,
-                concept_uuid_from_mapping('PIH', 'State Province'),
-                department
-            from    hivmigration_patient_birthplace
-            where   department is not null;
-            
+            SET @department_concept = (concept_from_mapping('PIH', 'State Province'));  
+            INSERT INTO obs (
+                    obs_group_id,
+                    person_id, 
+                    encounter_id, 
+                    obs_datetime, 
+                    location_id, 
+                    concept_id,    
+                    value_text,                
+                    creator, 
+                    date_created, 
+                    uuid)
+            select   
+                    b.obs_id, 
+                    p.person_id,
+                    r.encounter_id,
+                    r.encounter_date,
+                    1 as locationId,
+                    @department_concept,
+                    b.department,
+                    r.creator,
+                    r.encounter_date as dateCreated,
+                    uuid() as uuid
+            from    hivmigration_patient_birthplace b,  hivmigration_registration_encounters r, hivmigration_patients p 
+            where   b.source_patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id 
+                    and b.department is not null;  
+                    
             -- Add Country
-            INSERT INTO tmp_obs (
-                obs_group_id,
-                encounter_id,
-                obs_datetime,
-                concept_uuid,
-                value_text)
-            select
-                obs_id,
-                encounter_id,
-                encounter_date,
-                concept_uuid_from_mapping('PIH', 'Country'),
-                'Haiti'
-            from    hivmigration_patient_birthplace;
-        ''')
-
-        migrate_tmp_obs()
-
-        executeMysql("Add civil status obs", '''
+            SET @country_concept = (concept_from_mapping('PIH', 'Country'));  
+            INSERT INTO obs (
+                    obs_group_id,
+                    person_id, 
+                    encounter_id, 
+                    obs_datetime, 
+                    location_id, 
+                    concept_id,    
+                    value_text,                
+                    creator, 
+                    date_created, 
+                    uuid)
+            select   
+                    b.obs_id, 
+                    p.person_id,
+                    r.encounter_id,
+                    r.encounter_date,
+                    1 as locationId,
+                    @country_concept,
+                    'Haiti',
+                    r.creator,
+                    r.encounter_date as dateCreated,
+                    uuid() as uuid
+            from    hivmigration_patient_birthplace b,  hivmigration_registration_encounters r, hivmigration_patients p 
+            where   b.source_patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id 
+                    and ( b.locality is not null or b.section is not null or b.commune is not null or b.department is not null);       
+                    
+                    
             -- Add CIVIL STATUS
             SET @civil_status_concept = (concept_from_mapping('PIH', 'CIVIL STATUS'));
               
@@ -236,7 +356,7 @@ class RegistrationMigrator extends ObsMigrator {
                     r.encounter_date as obs_datetime, 
                     1 as locationId, 
                     @civil_status_concept as concept_id,  
-                    CASE UPPER(TRIM(s.civil_status)) 
+                    CASE s.civil_status 
                         WHEN 'DIVORCED' THEN concept_from_mapping('PIH', 'DIVORCED') 
                         WHEN 'MARRIED' THEN concept_from_mapping('PIH', 'MARRIED') 
                         WHEN 'PARTNER' THEN concept_from_mapping('PIH', 'LIVING WITH PARTNER') 
@@ -247,8 +367,8 @@ class RegistrationMigrator extends ObsMigrator {
                         ELSE concept_from_mapping('PIH', 'OTHER') 
                     END as value_coded, 
                     r.creator, r.encounter_date as dateCreated, uuid() as uuid
-            from hivmigration_socioeconomics s, hivmigration_registration_encounters r, hivmigration_patients p 
-            where  s.civil_status is not null and s.patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id;                                                                                                                                                                                                     
+            from hivmigration_socio_economics s, hivmigration_registration_encounters r, hivmigration_patients p 
+            where  s.civil_status is not null and s.source_patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id;                                                                                                                                                                                                     
         ''')
 
     }
@@ -259,6 +379,7 @@ class RegistrationMigrator extends ObsMigrator {
             executeMysql("delete from obs where (encounter_id in (select encounter_id from hivmigration_registration_encounters)) and (obs_group_id is not null)")
             executeMysql("delete from obs where encounter_id in (select encounter_id from hivmigration_registration_encounters)")
             executeMysql("delete from encounter where encounter_id in (select encounter_id from hivmigration_registration_encounters)")
+            executeMysql("drop table if exists hivmigration_socio_economics")
             executeMysql("drop table if exists hivmigration_patient_birthplace")
             executeMysql("drop table if exists hivmigration_registration_encounters")
         }

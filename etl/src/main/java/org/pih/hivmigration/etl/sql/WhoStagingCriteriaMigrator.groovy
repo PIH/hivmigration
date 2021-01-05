@@ -7,6 +7,7 @@ class WhoStagingCriteriaMigrator extends ObsMigrator {
         executeMysql("Create staging table for HIV_EXAM_WHO_STAGING_CRITERIA", '''
             create table hivmigration_hiv_who_staging (                                          
               source_encounter_id int,
+              source_patient_id int,
               criterium VARCHAR(72)    
             );
         ''')
@@ -14,12 +15,14 @@ class WhoStagingCriteriaMigrator extends ObsMigrator {
         loadFromOracleToMySql('''
             insert into hivmigration_hiv_who_staging (
               source_encounter_id,
+              source_patient_id,
               criterium
             )
-            values(?,?) 
+            values(?,?,?) 
             ''', '''
             SELECT 
                 w.ENCOUNTER_ID as source_encounter_id, 
+                e.patient_id as source_patient_id, 
                 w.CRITERIUM 
             from HIV_EXAM_WHO_STAGING_CRITERIA w, hiv_encounters e, hiv_demographics_real d 
             where w.CRITERIUM is not null and w.ENCOUNTER_ID = e.ENCOUNTER_ID and e.patient_id = d.patient_id;
@@ -85,10 +88,12 @@ class WhoStagingCriteriaMigrator extends ObsMigrator {
         executeMysql("Load WHO Clinical Staging observations", '''
 
             INSERT INTO tmp_obs (
+                source_patient_id,
                 source_encounter_id,
                 concept_uuid,
                 value_coded_uuid)
             select 
+                s.source_patient_id, 
                 s.source_encounter_id,  
                 concept_uuid_from_mapping('CIEL', '6042') as concept_uuid,
                 concept_uuid_from_mapping(m.openmrs_concept_source, m.openmrs_concept_code) as value_coded_uuid
