@@ -25,7 +25,7 @@ class PatientMigrator extends SqlMigrator {
                 birth_place varchar(255),
                 accompagnateur_name varchar(255),
                 patient_created_by int,
-                patient_created_date timestamp,
+                patient_created_date datetime,
                 outcome varchar(255),
                 outcome_date date,
                 zone varchar(32),
