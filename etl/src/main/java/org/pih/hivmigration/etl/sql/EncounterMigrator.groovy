@@ -48,7 +48,7 @@ class EncounterMigrator extends SqlMigrator {
                     e.patient_id as source_patient_id,
                     e.type,
                     e.entered_by,
-                    e.encounter_date,
+                    nvl(e.encounter_date, e.entry_date),
                     e.entry_date,
                     e.comments,
                     e.performed_by,

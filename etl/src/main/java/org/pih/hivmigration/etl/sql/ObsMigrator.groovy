@@ -6,7 +6,7 @@ import org.apache.commons.logging.LogFactory
 
 abstract class ObsMigrator extends SqlMigrator {
 
-    private static final Log log = LogFactory.getLog(ObsMigrator.class);
+    protected static final Log log = LogFactory.getLog(ObsMigrator.class);
 
     void create_tmp_obs_table() {
         executeMysql("Create tmp_obs table", '''

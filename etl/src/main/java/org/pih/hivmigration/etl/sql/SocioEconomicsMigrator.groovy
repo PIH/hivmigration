@@ -1,5 +1,7 @@
 package org.pih.hivmigration.etl.sql
 
+import java.sql.SQLException
+
 class SocioEconomicsMigrator extends ObsMigrator {
     @Override
     def void migrate() {
@@ -240,8 +242,12 @@ class SocioEconomicsMigrator extends ObsMigrator {
 
     @Override
     def void revert() {
-        executeMysql("ALTER TABLE hivmigration_socioeconomics DROP COLUMN socioecon_encounter_id;");
-        executeMysql("ALTER TABLE hivmigration_socioeconomics_extra DROP COLUMN intake_encounter_id;")
+        try {
+            executeMysql("ALTER TABLE hivmigration_socioeconomics DROP COLUMN socioecon_encounter_id;");
+            executeMysql("ALTER TABLE hivmigration_socioeconomics_extra DROP COLUMN intake_encounter_id;")
+        } catch (SQLException ignored) {
+            log.info("Couldn't drop column socioecon_encounter_id or intake_encounter_id, probably it didn't get added.")
+        }
         clearTable("obs")
         executeMysql("DELETE FROM encounter WHERE encounter_type = (select encounter_type_id from encounter_type where name = 'Socio-economics');")
     }
