@@ -7,7 +7,6 @@ class LabResultMigrator extends ObsMigrator {
         executeMysql("Create staging table", '''
             create table hivmigration_lab_results (
               obs_id int PRIMARY KEY AUTO_INCREMENT,
-              source_patient_id int,
               source_encounter_id int,
               source_result_id int,
               sample_id VARCHAR(20),
@@ -26,8 +25,7 @@ class LabResultMigrator extends ObsMigrator {
 
         loadFromOracleToMySql('''
             insert into hivmigration_lab_results
-               (source_patient_id,
-                source_encounter_id,
+               (source_encounter_id,
                 source_result_id,
                 sample_id,
                 test_type,
@@ -37,10 +35,9 @@ class LabResultMigrator extends ObsMigrator {
                 value_boolean,
                 vl_beyond_detectable_limit,
                 vl_detectable_lower_limit)
-            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', '''
-            select   e.patient_id as source_patient_id,
-                     e.ENCOUNTER_ID as source_encounter_id, 
+            select   e.ENCOUNTER_ID as source_encounter_id, 
                      r.RESULT_ID as source_result_id,
                      r.sample_id, 
                      lower(t.name) as test_type,
@@ -63,15 +60,13 @@ class LabResultMigrator extends ObsMigrator {
 
         loadFromOracleToMySql('''
             insert into hivmigration_lab_results
-               (source_patient_id,
-                source_encounter_id,                                
+               (source_encounter_id,                                
                 test_type,
                 value_boolean,
                 obs_datetime)
-            values (?, ?, ?, ?, ?)
+            values (?, ?, ?, ?)
         ''', '''
-            select e.PATIENT_ID as source_patient_id,  
-                    e.ENCOUNTER_ID as source_encounter_id, 
+            select e.ENCOUNTER_ID as source_encounter_id, 
                     r.LAB_TEST,
                     case when ( r.RESULT='t' ) then 1 else 0 end as value_boolean,
                     case when (r.test_date is null) then to_char(e.encounter_date, 'yyyy-mm-dd') 
@@ -90,85 +85,83 @@ class LabResultMigrator extends ObsMigrator {
             --
             
             -- Create construct
-            INSERT INTO tmp_obs (obs_id, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT obs_id, source_patient_id, source_encounter_id, '11765b8c-a338-48a4-9480-df898c903723'
+            INSERT INTO tmp_obs (obs_id, source_encounter_id, concept_uuid)
+            SELECT obs_id, source_encounter_id, '11765b8c-a338-48a4-9480-df898c903723'
             FROM hivmigration_lab_results
             WHERE test_type = 'viral_load';
             
             -- Specimen number
             INSERT INTO tmp_obs
-                (obs_group_id, value_text, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT obs_id, sample_id, source_patient_id, source_encounter_id, '162086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+                (obs_group_id, value_text, source_encounter_id, concept_uuid)
+            SELECT obs_id, sample_id, source_encounter_id, '162086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
             FROM hivmigration_lab_results
             WHERE test_type = 'viral_load' AND sample_id IS NOT NULL;
 
             -- HVL Value
             INSERT INTO tmp_obs
-                (obs_group_id, value_numeric, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT obs_id, value_numeric, source_patient_id, source_encounter_id, '3cd4a882-26fe-102b-80cb-0017a47871b2'
+                (obs_group_id, value_numeric, source_encounter_id, concept_uuid)
+            SELECT obs_id, value_numeric, source_encounter_id, '3cd4a882-26fe-102b-80cb-0017a47871b2'
             FROM hivmigration_lab_results
             WHERE test_type = 'viral_load' AND value_numeric IS NOT NULL;
             
             -- Below detectable limit
             INSERT INTO tmp_obs
-                (obs_group_id, value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT obs_id, '1306AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', source_patient_id, source_encounter_id, '1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+                (obs_group_id, value_coded_uuid, source_encounter_id, concept_uuid)
+            SELECT obs_id, '1306AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', source_encounter_id, '1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
             FROM hivmigration_lab_results
             WHERE test_type = 'viral_load' AND vl_beyond_detectable_limit = 1; 
             
             -- Detected
             INSERT INTO tmp_obs
-                (obs_group_id, value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT obs_id, '1301AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', source_patient_id, source_encounter_id, '1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+                (obs_group_id, value_coded_uuid, source_encounter_id, concept_uuid)
+            SELECT obs_id, '1301AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', source_encounter_id, '1305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
             FROM hivmigration_lab_results
             WHERE test_type = 'viral_load' AND vl_beyond_detectable_limit = 0; 
             
             -- Detectable lower limit
             INSERT INTO tmp_obs
-                (obs_group_id, value_numeric, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT obs_id, vl_detectable_lower_limit, source_patient_id, source_encounter_id, '53cb83ed-5d55-4b63-922f-d6b8fc67a5f8'
+                (obs_group_id, value_numeric, source_encounter_id, concept_uuid)
+            SELECT obs_id, vl_detectable_lower_limit, source_encounter_id, '53cb83ed-5d55-4b63-922f-d6b8fc67a5f8'
             FROM hivmigration_lab_results
             WHERE test_type = 'viral_load' AND vl_detectable_lower_limit IS NOT NULL;
             
                        
             -- CD4
             --
-            INSERT INTO tmp_obs (value_numeric, source_patient_id, source_encounter_id, concept_uuid, accession_number)
-            SELECT value_numeric, source_patient_id, source_encounter_id, '3ceda710-26fe-102b-80cb-0017a47871b2', sample_id 
+            INSERT INTO tmp_obs (value_numeric, source_encounter_id, concept_uuid, accession_number)
+            SELECT value_numeric, source_encounter_id, '3ceda710-26fe-102b-80cb-0017a47871b2', sample_id 
             FROM hivmigration_lab_results
             WHERE test_type = 'cd4';
             
             -- Hematocrit
             --
-            INSERT INTO tmp_obs (value_numeric, source_patient_id, source_encounter_id, concept_uuid, accession_number)
-            SELECT value_numeric, source_patient_id, source_encounter_id, '3cd69a98-26fe-102b-80cb-0017a47871b2', sample_id 
+            INSERT INTO tmp_obs (value_numeric, source_encounter_id, concept_uuid, accession_number)
+            SELECT value_numeric, source_encounter_id, '3cd69a98-26fe-102b-80cb-0017a47871b2', sample_id 
             FROM hivmigration_lab_results
             WHERE test_type = 'hematocrit';
                         
             -- PPD
             --
-            INSERT INTO tmp_obs (value_numeric, source_patient_id, source_encounter_id, concept_uuid, accession_number)
-            SELECT value_numeric, source_patient_id, source_encounter_id, '3cecf388-26fe-102b-80cb-0017a47871b2', sample_id 
+            INSERT INTO tmp_obs (value_numeric, source_encounter_id, concept_uuid, accession_number)
+            SELECT value_numeric, source_encounter_id, '3cecf388-26fe-102b-80cb-0017a47871b2', sample_id 
             FROM hivmigration_lab_results
             WHERE test_type = 'ppd';
 
             -- Rapid Test
             -- 
             -- HIV rapid test set construct
-            INSERT INTO tmp_obs (obs_id, source_patient_id, source_encounter_id, concept_uuid)
+            INSERT INTO tmp_obs (obs_id, source_encounter_id, concept_uuid)
             SELECT
                 obs_id,                     
-                source_patient_id,
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', '13135')
             FROM hivmigration_lab_results
             WHERE test_type = 'tr'; 
             
-            INSERT INTO tmp_obs (obs_group_id, value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid, accession_number)
+            INSERT INTO tmp_obs (obs_group_id, value_coded_uuid, source_encounter_id, concept_uuid, accession_number)
             SELECT  
                 obs_id,
                 IF(value_boolean=1, concept_uuid_from_mapping('CIEL', '703'), concept_uuid_from_mapping('CIEL', '664')),
-                source_patient_id,
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '163722'), 
                 sample_id
