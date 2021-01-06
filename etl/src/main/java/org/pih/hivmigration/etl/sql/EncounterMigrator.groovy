@@ -48,7 +48,7 @@ class EncounterMigrator extends SqlMigrator {
                     e.patient_id as source_patient_id,
                     e.type,
                     e.entered_by,
-                    nvl(e.encounter_date, e.entry_date),
+                    e.encounter_date,
                     e.entry_date,
                     e.comments,
                     e.performed_by,
@@ -58,11 +58,10 @@ class EncounterMigrator extends SqlMigrator {
                 from
                     hiv_encounters e, hiv_demographics_real p 
                     where e.patient_id = p.patient_id 
-
             '''
         )
-        executeMysql('''
-            update hivmigration_encounters SET encounter_uuid = uuid();
+        executeMysql("Add UUIDs", '''
+            UPDATE hivmigration_encounters SET encounter_uuid = uuid();
         ''')
 
         executeMysql("Fill encounter types column", '''
@@ -195,6 +194,12 @@ class EncounterMigrator extends SqlMigrator {
                    TRUE as flag_for_review
             FROM hivmigration_encounters e
             JOIN hivmigration_patients p ON p.source_patient_id = e.source_patient_id
+            WHERE encounter_date IS NULL;
+        ''')
+
+        executeMysql("Default null encounter dates to the entry date",'''
+            UPDATE hivmigration_encounters
+            SET encounter_date = date_created
             WHERE encounter_date IS NULL;
         ''')
     }
