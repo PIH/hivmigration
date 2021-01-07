@@ -535,14 +535,16 @@ class TreatmentObsMigrator extends ObsMigrator {
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', '1559'),
                 CASE value
-                    WHEN 'prior_not_indicated' THEN concept_uuid_from_mapping('CIEL', '1066')  -- no
-                    WHEN 'no' THEN concept_uuid_from_mapping('CIEL', '1066')
-                    WHEN 'exam_in_progress' THEN concept_uuid_from_mapping('PIH', '2224')
-                    WHEN 'stop_tx' THEN concept_uuid_from_mapping('CIEL', '1066')  -- no
-                    WHEN 'start_tx' THEN concept_uuid_from_mapping('CIEL', '1065')  -- yes
+                    -- https://pihemr.atlassian.net/browse/UHM-5103
+                    WHEN 'prior_not_indicated' THEN concept_uuid_from_mapping('CIEL', '1066')  -- No
+                    WHEN 'start_tx' THEN concept_uuid_from_mapping('CIEL', '160017')  -- Anti-TB treatment started 
+                    WHEN 'stop_tx' THEN concept_uuid_from_mapping('CIEL', '1267')  -- Completed
+                    WHEN 'change_tx' THEN concept_uuid_from_mapping('CIEL', '981')  -- Change formulation 
+                    WHEN 'continue_no_change' THEN concept_uuid_from_mapping('CIEL', '163057')  -- Continue previous treatment
                     WHEN 'yes' THEN concept_uuid_from_mapping('CIEL', '1065')
-                    WHEN 'already_in_treatment' THEN concept_uuid_from_mapping('PIH', '1432')
-                    WHEN 'change_tx' THEN concept_uuid_from_mapping('CIEL', '1065')  -- yes
+                    WHEN 'no' THEN concept_uuid_from_mapping('CIEL', '1066')
+                    WHEN 'exam_in_progress' THEN concept_uuid_from_mapping('PIH', 'WAITING FOR TEST RESULTS')
+                    WHEN 'already_in_treatment' THEN concept_uuid_from_mapping('PIH', 'CURRENTLY IN TREATMENT')
                 END
             FROM hivmigration_observations
             WHERE observation = 'tb_treatment_needed' AND value IS NOT NULL;
