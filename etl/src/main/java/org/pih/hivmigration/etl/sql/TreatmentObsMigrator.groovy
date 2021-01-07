@@ -575,6 +575,26 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE ordered = 'tb_treatment';
         ''')
 
+        executeMysql("Migrate TB reason changed or stopped", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '1269'),
+                CASE value
+                    WHEN 'continuation_phase' THEN concept_uuid_from_mapping('CIEL', '159794')
+                    WHEN 'cured' THEN concept_uuid_from_mapping('CIEL', '159791')
+                    WHEN 'dose_change' THEN concept_uuid_from_mapping('CIEL', '981')
+                    WHEN 'extended_treatment' THEN concept_uuid_from_mapping('CIEL', '160041')
+                    WHEN 'finished_treatment' THEN concept_uuid_from_mapping('CIEL', '1267')
+                    WHEN 'ineffective' THEN concept_uuid_from_mapping('CIEL', '843')
+                    WHEN 'other' THEN concept_uuid_from_mapping('CIEL', '5622')
+                    WHEN 'side_effect' THEN concept_uuid_from_mapping('CIEL', '102')
+                    WHEN 'stock_out' THEN concept_uuid_from_mapping('CIEL', '1754')
+                    END
+            FROM hivmigration_observations
+            WHERE observation = 'tb_treatment_reason';
+        ''')
+
         // TODO: migrate 'other' TB treatments
         migrate_tmp_obs()
     }
