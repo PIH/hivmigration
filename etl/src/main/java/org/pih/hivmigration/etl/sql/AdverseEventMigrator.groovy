@@ -4,17 +4,28 @@ class AdverseEventMigrator  extends ObsMigrator {
 
     @Override
     def void migrate() {
+        migrateAllergiesTableIntoAssessment()  // loads from HIV_ALLERGY
+        migrateSideEffectObservationsIntoState()  // uses hivmigration_observations loaded by ObsLoadingMigrator
+    }
+
+    def void createStagingTable() {
+        executeMysql("DROP TABLE IF EXISTS hivmigration_tmp_adverse_event")
         executeMysql("Create staging table to migrate adverse events", '''
             create table hivmigration_tmp_adverse_event (
               obs_group_id int PRIMARY KEY AUTO_INCREMENT,
               source_encounter_id int,
               reason VARCHAR(64),
               adverse_effect VARCHAR(16),
+              adverse_effect_other VARCHAR(128),  -- only used by migrateSideEffectObservationsIntoState()
               adverse_effect_date date
             );
         ''')
 
         setAutoIncrement("hivmigration_tmp_adverse_event", "(select max(obs_id)+1 from obs)")
+    }
+
+    def void migrateAllergiesTableIntoAssessment() {
+        createStagingTable()
 
         loadFromOracleToMySql('''
             insert into hivmigration_tmp_adverse_event
@@ -113,8 +124,7 @@ class AdverseEventMigrator  extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', 'ADVERSE EFFECT DATE')
             FROM hivmigration_tmp_adverse_event 
             WHERE adverse_effect_date is not null; 
-            
-            
+
             -- Adverse effect construct for the "Adverse event Yes" checkbox
             INSERT INTO tmp_obs (obs_id, source_encounter_id, concept_uuid)
             SELECT
@@ -135,6 +145,54 @@ class AdverseEventMigrator  extends ObsMigrator {
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'ADVERSE EFFECT')
             FROM hivmigration_tmp_adverse_event_yes;
+        ''')
+
+        migrate_tmp_obs()
+    }
+
+    def void migrateSideEffectObservationsIntoState() {
+        createStagingTable()
+
+        executeMysql("Load tmp_adverse_effect table from side_effect observations", '''
+            INSERT INTO hivmigration_tmp_adverse_event
+                (source_encounter_id, adverse_effect, adverse_effect_other)
+            SELECT source_encounter_id,
+                   TRIM(LEADING 'side_effect.' FROM observation),
+                   IF(observation = 'side_effect.other', value, NULL)
+            FROM hivmigration_observations
+            WHERE observation LIKE 'side_effect\\.%' AND (value = 't' OR observation = 'side_effect.other');
+        ''')
+
+        create_tmp_obs_table()
+
+        executeMysql("Load adverse events as observations",
+        '''
+            -- Adverse effect construct
+            INSERT INTO tmp_obs (source_encounter_id, obs_id, concept_uuid)
+            SELECT source_encounter_id, obs_group_id, concept_uuid_from_mapping('PIH', 'ADVERSE EFFECT CONSTRUCT')
+            FROM hivmigration_tmp_adverse_event;
+
+            -- Adverse effect
+            INSERT INTO tmp_obs (obs_group_id, source_encounter_id, concept_uuid, value_coded_uuid, comments)
+            SELECT
+                obs_group_id,
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'ADVERSE EFFECT'),
+                CASE adverse_effect
+                    WHEN 'anemia' THEN concept_uuid_from_mapping('CIEL', '121629')
+                    WHEN 'hepatitis' THEN concept_uuid_from_mapping('CIEL', '')
+                    WHEN 'icterus' THEN concept_uuid_from_mapping('CIEL', '136443')
+                    WHEN 'lactic_acidosis' THEN concept_uuid_from_mapping('CIEL', '136162')
+                    WHEN 'mild_rash' THEN concept_uuid_from_mapping('CIEL', '512')
+                    WHEN 'moderate_rash' THEN concept_uuid_from_mapping('CIEL', '512')
+                    WHEN 'severe_rash' THEN concept_uuid_from_mapping('CIEL', '512')
+                    WHEN 'nausea_vomiting' THEN concept_uuid_from_mapping('CIEL', '133473')
+                    WHEN 'neuropathy' THEN concept_uuid_from_mapping('CIEL', '118983')
+                    WHEN 'none' THEN concept_uuid_from_mapping('CIEL', '1107')
+                    WHEN 'other' THEN concept_uuid_from_mapping('CIEL', '5622')
+                END,
+                adverse_effect_other
+            FROM hivmigration_tmp_adverse_event;
         ''')
 
         migrate_tmp_obs()
