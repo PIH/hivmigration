@@ -128,7 +128,6 @@ public class Migrator {
                 migrate(new RegistrationMigrator(), limit);
                 migrate(new ProgramMigrator(), limit);
                 migrate(new ProviderMigrator(), limit);
-                migrate(new AdverseEventMigrator(), limit);
                 migrate(new LabResultMigrator(), limit);
                 migrate(new SocioEconomicsMigrator(), limit);
                 migrate(new FormsMigrator(), limit);
@@ -144,6 +143,7 @@ public class Migrator {
                 migrate(new ExamLabResultsMigrator(), limit);
                 migrate(new PcrTestsMigrator(), limit);
                 migrate(new ObsLoadingMigrator(), limit);
+                migrate(new AdverseEventMigrator(), limit);
                 migrate(new AdherenceMigrator(), -1);
                 migrate(new NutritionMigrator(), -1);
                 migrate(new TreatmentObsMigrator(), limit);
