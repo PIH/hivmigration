@@ -287,20 +287,20 @@ class ExamExtraMigrator extends ObsMigrator {
             INSERT INTO tmp_obs (value_coded_uuid, source_encounter_id, concept_uuid)
             SELECT 
                   concept_uuid_from_mapping('CIEL', '1065') as value_coded_uuid,
-                  t.encounter_id as source_encounter_id, 
+                  t.source_encounter_id as source_encounter_id, 
                   concept_uuid_from_mapping('CIEL', '1389') as concept_uuid                                      
             FROM hivmigration_tb_status t, hivmigration_encounters e
-            WHERE t.tb_active_p ='t' and t.encounter_id is not null and t.encounter_id = e.source_encounter_id and e.source_encounter_type='intake'; 
+            WHERE t.tb_active_p ='t' and t.source_encounter_id is not null and t.source_encounter_id = e.source_encounter_id and e.source_encounter_type='intake'; 
             
             -- Date of tuberculosis test                                            
             INSERT INTO tmp_obs (value_datetime, source_encounter_id, concept_uuid)
             SELECT 
                   STR_TO_DATE(t.status_date, '%Y-%m-%d') as value_datetime,
-                  t.encounter_id as source_encounter_id, 
+                  t.source_encounter_id as source_encounter_id, 
                   concept_uuid_from_mapping('PIH', '11526') as concept_uuid                                      
             FROM hivmigration_tb_status t, hivmigration_encounters e
-            WHERE (t.tb_active_p ='t') and (t.status_date is not null) and (t.encounter_id is not null) and 
-                    t.encounter_id = e.source_encounter_id and e.source_encounter_type='intake';  
+            WHERE (t.tb_active_p ='t') and (t.status_date is not null) and (t.source_encounter_id is not null) and 
+                    t.source_encounter_id = e.source_encounter_id and e.source_encounter_type='intake';  
 
         ''')
         migrate_tmp_obs()

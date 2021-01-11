@@ -53,7 +53,7 @@ class DiagnosisMigrator extends ObsMigrator {
             JOIN hivmigration_diagnoses dx
                 ON pt_dx.diagnosis_id = dx.diagnosis_id
             JOIN hivmigration_encounters e
-                ON pt_dx.patient_id = e.source_patient_id
+                ON pt_dx.source_patient_id = e.source_patient_id
                     AND e.source_encounter_type = 'intake'
             GROUP BY e.source_encounter_id, dx.diagnosis_eng;  -- some results are duplicated or triplicated in the source data
             
@@ -69,7 +69,7 @@ class DiagnosisMigrator extends ObsMigrator {
                 pt_dx.diagnosis_date
             FROM hivmigration_patient_diagnoses pt_dx
             JOIN hivmigration_encounters e
-                 ON pt_dx.patient_id = e.source_patient_id
+                 ON pt_dx.source_patient_id = e.source_patient_id
                  AND e.source_encounter_type = 'intake'
             WHERE diagnosis_other IS NOT NULL
             GROUP BY e.encounter_id, pt_dx.diagnosis_other;

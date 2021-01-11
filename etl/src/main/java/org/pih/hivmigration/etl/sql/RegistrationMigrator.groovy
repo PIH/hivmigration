@@ -248,7 +248,7 @@ class RegistrationMigrator extends ObsMigrator {
                     END as value_coded, 
                     r.creator, r.encounter_date as dateCreated, uuid() as uuid
             from hivmigration_socioeconomics s, hivmigration_registration_encounters r, hivmigration_patients p 
-            where  s.civil_status is not null and s.patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id;                                                                                                                                                                                                     
+            where  s.civil_status is not null and s.source_patient_id = r.source_patient_id and r.source_patient_id = p.source_patient_id;                                                                                                                                                                                                     
         ''')
 
     }
