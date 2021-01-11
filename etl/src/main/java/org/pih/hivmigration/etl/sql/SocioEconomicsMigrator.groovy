@@ -105,7 +105,7 @@ class SocioEconomicsMigrator extends ObsMigrator {
             INSERT INTO tmp_obs
                 (encounter_id, concept_uuid, value_coded_uuid)
             SELECT socioecon_encounter_id,
-                   concept_uuid_from_mapping('PIH', 'ROOF MATERIAL'),
+                   concept_uuid_from_mapping('CIEL', '159387'),
                    CASE type_of_floor
                        WHEN 'beaten ground' THEN concept_uuid_from_mapping('PIH', 'BEATEN EARTH')
                        WHEN 'cement' THEN concept_uuid_from_mapping('PIH', 'CEMENT')
@@ -246,6 +246,7 @@ class SocioEconomicsMigrator extends ObsMigrator {
             log.info("Couldn't drop column socioecon_encounter_id or intake_encounter_id, probably it didn't get added.")
         }
         clearTable("obs")
+        clearTable("encounter_provider")
         executeMysql("DELETE FROM encounter WHERE encounter_type = (select encounter_type_id from encounter_type where name = 'Socio-economics');")
     }
 }
