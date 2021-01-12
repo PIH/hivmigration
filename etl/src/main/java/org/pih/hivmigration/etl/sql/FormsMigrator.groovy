@@ -10,7 +10,7 @@ class FormsMigrator extends ObsMigrator {
         executeMysql("Migrate recommendation", '''
             INSERT INTO tmp_obs (value_text, source_encounter_id, concept_uuid)
             SELECT recommendation,
-                   encounter_id,
+                   source_encounter_id,
                    concept_uuid_from_mapping('CIEL', '162749')
             FROM hivmigration_intake_forms WHERE recommendation IS NOT NULL;
         ''')
@@ -25,7 +25,7 @@ class FormsMigrator extends ObsMigrator {
                         WHEN 'no_progress' THEN concept_uuid_from_mapping('CIEL', '162679')
                         WHEN 'satisfactory' THEN concept_uuid_from_mapping('PIH', 'SATISFACTORY')
                         END,
-                   encounter_id,
+                   source_encounter_id,
                    concept_uuid_from_mapping('CIEL', '160116')
             FROM hivmigration_followup_forms WHERE progress IS NOT NULL;
         ''')

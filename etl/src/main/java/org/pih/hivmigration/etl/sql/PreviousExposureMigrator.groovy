@@ -113,14 +113,14 @@ class PreviousExposureMigrator extends ObsMigrator {
             INSERT INTO hivmigration_tmp_previous_exposures_groups
                 (source_patient_id, source_encounter_id, source_value, start_date, end_date)
             SELECT
-                hpp.patient_id,
+                hpp.source_patient_id,
                 he.source_encounter_id,
                 inn,
                 start_date,
                 end_date
             FROM hivmigration_previous_exposures hpp
             JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
-                ON hpp.patient_id = he.source_patient_id
+                ON hpp.source_patient_id = he.source_patient_id
             WHERE inn IS NOT NULL;
         ''')
 

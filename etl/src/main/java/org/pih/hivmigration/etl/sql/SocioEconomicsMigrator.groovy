@@ -2,6 +2,14 @@ package org.pih.hivmigration.etl.sql
 
 import java.sql.SQLException
 
+/**
+ * Migrates data from the HIV_SOCIOECONOMICS and HIV_SOCIOECONOMICS_EXTRA tables.
+ * Data from the HIV_SOCIOECONOMICS table ends up in the Socio-economics form.
+ * Some data from the HIV_SOCIOECONOMICS_EXTRA table goes into the Socio-economics form,
+ * while some goes into the History section of the Intake form.
+ *
+ * Creates Socio-economics encounters as part of the same visit as the Intake form.
+ */
 class SocioEconomicsMigrator extends ObsMigrator {
     @Override
     def void migrate() {
@@ -14,59 +22,53 @@ class SocioEconomicsMigrator extends ObsMigrator {
                 (encounter_datetime, date_created, encounter_type, form_id, patient_id, creator, location_id, uuid)
             select intake.encounter_date,
                    intake.date_created,
-                   (select encounter_type_id from encounter_type where name = 'Socio-economics'),
+                   encounter_type('Socio-economics'),
                    (select form_id from form where name = 'Socioeconomics Note'),
                    p.person_id,
                    1,
                    ifnull(intake.location_id, 1),
                    uuid()
-            from hivmigration_socioeconomics s
-            join hivmigration_patients p on s.patient_id = p.source_patient_id
-            join hivmigration_encounters intake on p.source_patient_id = intake.source_patient_id and intake.source_encounter_type = 'intake\'
+            from hivmigration_patients p
+                     left join hivmigration_socioeconomics s on s.source_patient_id = p.source_patient_id
+                     left join hivmigration_socioeconomics_extra se on se.source_patient_id = p.source_patient_id
+                     join hivmigration_encounters intake on p.source_patient_id = intake.source_patient_id and intake.source_encounter_type = 'intake\'
             where s.num_rooms_in_house is not null
                or s.num_people_in_house is not null
                or s.latrine_p is not null
                or s.radio_p is not null
                or s.education is not null
                or s.type_of_floor is not null
-               or s.type_of_roof is not null;
-               
-            insert into encounter
-                (encounter_datetime, date_created, encounter_type, form_id, patient_id, creator, location_id, uuid)
-            select intake.encounter_date,
-                   intake.date_created,
-                   (select encounter_type_id from encounter_type where name = 'Socio-economics'),
-                   (select form_id from form where name = 'Socioeconomics Note'),
-                   p.person_id,
-                   1,
-                   ifnull(intake.location_id, 1),
-                   uuid()
-            from hivmigration_socioeconomics_extra s
-            join hivmigration_patients p on s.patient_id = p.source_patient_id
-            join hivmigration_encounters intake on p.source_patient_id = intake.source_patient_id and intake.source_encounter_type = 'intake\'
-            where s.method_of_transport is not null
-               or s.walking_time_to_clinic is not null
-               or s.time_of_transport is not null
-               or s.arrival_method_other is not null;
+               or s.type_of_roof is not null
+               or se.method_of_transport is not null
+               or se.walking_time_to_clinic is not null
+               or se.arrival_method_other is not null;
         ''')
 
         executeMysql("Add encounter IDs to socioeconomics and socioeconomics_extra tables", '''
             ALTER TABLE hivmigration_socioeconomics ADD COLUMN socioecon_encounter_id INT;            
             ALTER TABLE hivmigration_socioeconomics_extra ADD COLUMN intake_encounter_id INT;
+            ALTER TABLE hivmigration_socioeconomics_extra ADD COLUMN socioecon_encounter_id INT;            
             
             -- Add socioeconomics encounter ids to socioeconomics
             UPDATE hivmigration_socioeconomics hs
-            JOIN encounter e
-                ON hs.patient_id = e.patient_id
-                AND e.encounter_type = (select encounter_type_id from encounter_type where name = 'Socio-economics')
+                JOIN hivmigration_patients p ON hs.source_patient_id = p.source_patient_id
+                JOIN encounter e ON e.patient_id = p.person_id
+                    AND e.encounter_type = encounter_type('Socio-economics')
             SET hs.socioecon_encounter_id = e.encounter_id;
-
+            
             -- Add intake encounter ids to socioeconomics_extra
             UPDATE hivmigration_socioeconomics_extra hse
-            JOIN hivmigration_encounters he
-                ON hse.patient_id = he.patient_id
-                AND he.source_encounter_type = 'intake'
+                JOIN hivmigration_encounters he
+                ON hse.source_patient_id = he.source_patient_id
+                    AND he.source_encounter_type = 'intake'
             SET hse.intake_encounter_id = he.encounter_id;
+            
+            -- Add socioeconomics encounter ids to socioeconomics_extra
+            UPDATE hivmigration_socioeconomics_extra hse
+                JOIN hivmigration_patients p ON hse.source_patient_id = p.source_patient_id
+                JOIN encounter e ON e.patient_id = p.person_id
+                    AND e.encounter_type = encounter_type('Socio-economics')
+            SET hse.socioecon_encounter_id = e.encounter_id;
         ''')
 
         executeMysql("Migrate fields from socioeconomics table into socioeconomics form", '''
@@ -103,7 +105,7 @@ class SocioEconomicsMigrator extends ObsMigrator {
             INSERT INTO tmp_obs
                 (encounter_id, concept_uuid, value_coded_uuid)
             SELECT socioecon_encounter_id,
-                   concept_uuid_from_mapping('PIH', 'ROOF MATERIAL'),
+                   concept_uuid_from_mapping('CIEL', '159387'),
                    CASE type_of_floor
                        WHEN 'beaten ground' THEN concept_uuid_from_mapping('PIH', 'BEATEN EARTH')
                        WHEN 'cement' THEN concept_uuid_from_mapping('PIH', 'CEMENT')
@@ -186,12 +188,10 @@ class SocioEconomicsMigrator extends ObsMigrator {
             WHERE wine_per_day IS NOT NULL OR beer_per_day IS NOT NULL OR drinks_per_day IS NOT NULL;
         ''')
 
-        executeMysql("Migrate fields from socioeconomics_extra table into socioeconomics form", '''
-            SET @socioecon_encounter_type = (select encounter_type_id from encounter_type where name = 'Socio-economics');
-            
+        executeMysql("Migrate fields from socioeconomics_extra table into socioeconomics form", '''            
             INSERT INTO tmp_obs
                 (encounter_id, concept_uuid, value_coded_uuid)
-            SELECT e.encounter_id,
+            SELECT socioecon_encounter_id,
                    concept_uuid_from_mapping('PIH', '975'),
                    CASE method_of_transport
                        WHEN ' bus' THEN concept_uuid_from_mapping('PIH', 'MINI BUS')
@@ -205,13 +205,12 @@ class SocioEconomicsMigrator extends ObsMigrator {
                        WHEN 'stretcher' THEN concept_uuid_from_mapping('PIH', 'STRETCHER')
                        WHEN 'walk' THEN concept_uuid_from_mapping('PIH', 'WALKING')
                        END
-            FROM hivmigration_socioeconomics_extra hse
-            JOIN encounter e ON hse.patient_id = e.patient_id AND e.encounter_type = @socioecon_encounter_type
+            FROM hivmigration_socioeconomics_extra
             WHERE method_of_transport IS NOT NULL;
             
             INSERT INTO tmp_obs
                 (encounter_id, concept_uuid, value_coded_uuid)
-            SELECT e.encounter_id,
+            SELECT socioecon_encounter_id,
                    concept_uuid_from_mapping('PIH', 'CLINIC TRAVEL TIME'),
                    CASE IFNULL(time_of_transport, walking_time_to_clinic)
                         WHEN 'under_30_min' THEN concept_uuid_from_mapping('PIH', 'LESS THAN 30 MINUTES')
@@ -222,17 +221,15 @@ class SocioEconomicsMigrator extends ObsMigrator {
                         WHEN 'over_6_hours' THEN concept_uuid_from_mapping('PIH', '3669')  -- >3 hours
                         WHEN 'unknown' THEN concept_uuid_from_mapping('PIH', 'UNKNOWN')
                         END
-            FROM hivmigration_socioeconomics_extra hse
-            JOIN encounter e ON hse.patient_id = e.patient_id AND e.encounter_type = @socioecon_encounter_type
+            FROM hivmigration_socioeconomics_extra
             WHERE walking_time_to_clinic IS NOT NULL OR time_of_transport IS NOT NULL;
             
             INSERT INTO tmp_obs
                 (encounter_id, concept_uuid, value_text)
-            SELECT e.encounter_id,
+            SELECT socioecon_encounter_id,
                    concept_uuid_from_mapping('PIH', '1301'),  -- comment
                    arrival_method_other
-            FROM hivmigration_socioeconomics_extra hse
-            JOIN encounter e ON hse.patient_id = e.patient_id AND e.encounter_type = @socioecon_encounter_type
+            FROM hivmigration_socioeconomics_extra
             WHERE arrival_method_other IS NOT NULL;
         ''')
 
@@ -249,6 +246,7 @@ class SocioEconomicsMigrator extends ObsMigrator {
             log.info("Couldn't drop column socioecon_encounter_id or intake_encounter_id, probably it didn't get added.")
         }
         clearTable("obs")
+        clearTable("encounter_provider")
         executeMysql("DELETE FROM encounter WHERE encounter_type = (select encounter_type_id from encounter_type where name = 'Socio-economics');")
     }
 }
