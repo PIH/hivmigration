@@ -180,7 +180,7 @@ class AdverseEventMigrator  extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', 'ADVERSE EFFECT'),
                 CASE adverse_effect
                     WHEN 'anemia' THEN concept_uuid_from_mapping('CIEL', '121629')
-                    WHEN 'hepatitis' THEN concept_uuid_from_mapping('CIEL', '')
+                    WHEN 'hepatitis' THEN concept_uuid_from_mapping('CIEL', '116986')
                     WHEN 'icterus' THEN concept_uuid_from_mapping('CIEL', '136443')
                     WHEN 'lactic_acidosis' THEN concept_uuid_from_mapping('CIEL', '136162')
                     WHEN 'mild_rash' THEN concept_uuid_from_mapping('CIEL', '512')
