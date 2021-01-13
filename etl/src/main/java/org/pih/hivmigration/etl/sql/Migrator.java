@@ -89,6 +89,7 @@ public class Migrator {
                 revert(new DiagnosisMigrator());
                 revert(new TreatmentObsMigrator());
                 revert(new NutritionMigrator());
+                revert(new FamilyPlanningMigrator());
                 revert(new AdherenceMigrator());
                 revert(new ObsLoadingMigrator());
                 revert(new MedpickupsMigrator());
@@ -145,6 +146,7 @@ public class Migrator {
                 migrate(new ObsLoadingMigrator(), limit);
                 migrate(new AdverseEventMigrator(), limit);
                 migrate(new AdherenceMigrator(), -1);
+                migrate(new FamilyPlanningMigrator(), -1);
                 migrate(new NutritionMigrator(), -1);
                 migrate(new TreatmentObsMigrator(), limit);
                 migrate(new DiagnosisMigrator(), limit);
