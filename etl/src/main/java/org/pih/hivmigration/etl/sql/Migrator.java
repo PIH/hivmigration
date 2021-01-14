@@ -86,6 +86,7 @@ public class Migrator {
         } else {
             if (shouldRevert || shouldRevertOnly) {
                 revert(new VisitMigrator());
+                revert(new AccompagnateurMigrator());
                 revert(new DiagnosisMigrator());
                 revert(new TreatmentObsMigrator());
                 revert(new NutritionMigrator());
@@ -150,6 +151,7 @@ public class Migrator {
                 migrate(new NutritionMigrator(), -1);
                 migrate(new TreatmentObsMigrator(), limit);
                 migrate(new DiagnosisMigrator(), limit);
+                migrate(new AccompagnateurMigrator(), limit);
                 migrate(new VisitMigrator(), limit);
                 migrate(new DataWarningsMigrator(), limit);
                 if (deIdentify) {
