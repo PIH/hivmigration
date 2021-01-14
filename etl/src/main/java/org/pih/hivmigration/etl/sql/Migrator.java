@@ -151,7 +151,7 @@ public class Migrator {
                 migrate(new NutritionMigrator(), -1);
                 migrate(new TreatmentObsMigrator(), limit);
                 migrate(new DiagnosisMigrator(), limit);
-                migrate(new AccompagnateurMigrator(), limit);
+                migrate(new AccompagnateurMigrator(), -1);
                 migrate(new VisitMigrator(), limit);
                 migrate(new DataWarningsMigrator(), limit);
                 if (deIdentify) {

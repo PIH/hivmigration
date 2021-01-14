@@ -10,13 +10,11 @@ class AccompagnateurMigrator extends ObsMigrator {
         executeMysql("Load Accompagnateur names as observations on the most recent followup or intake form", ''' 
                 
         INSERT INTO tmp_obs (
-            value_text, 
-            source_patient_id, 
+            value_text,              
             source_encounter_id, 
             concept_uuid)                
         SELECT 
-            p.accompagnateur_name, 
-            e.source_patient_id, 
+            p.accompagnateur_name,             
             e.source_encounter_id, 
             concept_uuid_from_mapping('CIEL', '164141') as concept_uuid
         FROM hivmigration_patients p 
