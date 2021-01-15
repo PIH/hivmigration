@@ -33,11 +33,11 @@ class ContactsMigrator extends ObsMigrator {
                    relationship,
                    CASE
                         WHEN cleaned_relationship IN ('fille', 'fils', 'enfant', 'enf', 'enfants', 'fiile', 'garcon', 'child', 'bellefille')
-                            THEN concept_uuid_from_mapping('PIH', 'CHILD')
+                            THEN concept_uuid_from_mapping('CIEL', '1528')  -- Child
                         WHEN trim(lower(relationship)) = 'ex' OR cleaned_relationship IN ('partenaire', 'mari', 'concubin', 'part', 'concubine', 'femme', 'conjoint', 'epouse', 'partenairesexuel', 'epoux', 'conjointe', 'partsex', 'copine', 'fiance', 'petitami', 'copain', 'petiteamie', 'pat', 'partenairesexuelle')
                             THEN concept_uuid_from_mapping('PIH', 'PARTNER OR SPOUSE')
                         WHEN cleaned_relationship IN ('mere', 'pere', 'mére', 'pére')
-                            THEN concept_uuid_from_mapping('PIH', 'GUARDIAN')
+                            THEN concept_uuid_from_mapping('CIEL', '1527')  -- Parent
                         WHEN cleaned_relationship IN ('soeur', 'frere', 'frére')
                             THEN concept_uuid_from_mapping('PIH', 'SIBLING')
                         ELSE concept_uuid_from_mapping('PIH', 'OTHER RELATIVE')
@@ -93,7 +93,7 @@ class ContactsMigrator extends ObsMigrator {
             (obs_group_id, source_encounter_id, concept_uuid, value_coded_uuid)
             SELECT obs_group_id,
                    source_encounter_id,
-                   concept_uuid_from_mapping('PIH', 'RELATIONSHIP OF RELATIVE TO PATIENT'),
+                   concept_uuid_from_mapping('CIEL', '164352'),  -- Relationship to patient
                    relationship_uuid
             FROM hivmigration_tmp_contacts;
             
@@ -101,7 +101,7 @@ class ContactsMigrator extends ObsMigrator {
                 (obs_group_id, source_encounter_id, concept_uuid, value_coded_uuid)
             SELECT obs_group_id,
                    source_encounter_id,
-                   concept_uuid_from_mapping('CIEL', '163533'),
+                   concept_uuid_from_mapping('CIEL', '163533'),  -- Health status of contact
                    dead_uuid
             FROM hivmigration_tmp_contacts;
             
@@ -117,6 +117,7 @@ class ContactsMigrator extends ObsMigrator {
 
     @Override
     def void revert() {
-
+        clearTable("obs")
+        executeMysql("DROP TABLE IF EXISTS hivmigration_tmp_contacts;")
     }
 }
