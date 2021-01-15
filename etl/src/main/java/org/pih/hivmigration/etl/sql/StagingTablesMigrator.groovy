@@ -19,6 +19,7 @@ class StagingTablesMigrator extends SqlMigrator {
         migrateTable("HIV_SOCIOECONOMICS")
         migrateTable("HIV_SOCIOECONOMICS_EXTRA")
         migrateTable("HIV_DEMOGRAPHICS_AUD")
+        migrateTable("HIV_CONTACTS")
     }
     
     def void migrateTable(String tableName) {
@@ -29,6 +30,7 @@ class StagingTablesMigrator extends SqlMigrator {
 
     @Override
     def void revert() {
+        revertTable("HIV_CONTACTS")
         revertTable("HIV_DEMOGRAPHICS_AUD")
         revertTable("HIV_SOCIOECONOMICS_EXTRA")
         revertTable("HIV_SOCIOECONOMICS")
