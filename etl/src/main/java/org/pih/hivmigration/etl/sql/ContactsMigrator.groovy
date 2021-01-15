@@ -14,11 +14,11 @@ class ContactsMigrator extends ObsMigrator {
                 source_encounter_id INT,
                 first_name VARCHAR(64),
                 last_name VARCHAR(64),
-                old_relationship VARCHAR(16),
-                relationship_uuid VARCHAR(28),
+                old_relationship VARCHAR(76),
+                relationship_uuid VARCHAR(38),
                 age INT,
-                dead_uuid VARCHAR(28),
-                hiv_status_uuid VARCHAR(28)
+                death_uuid VARCHAR(38),
+                hiv_status_uuid VARCHAR(38)
             );
         ''')
 
@@ -26,24 +26,25 @@ class ContactsMigrator extends ObsMigrator {
 
         executeMysql("Populate temp table of patient contacts", '''
             INSERT INTO hivmigration_tmp_contacts
-                (source_encounter_id, first_name, last_name, old_relationship, relationship_uuid, age, dead_uuid, hiv_status_uuid)
+                (source_encounter_id, first_name, last_name, old_relationship, relationship_uuid, age, death_uuid, hiv_status_uuid)
             SELECT he.source_encounter_id,
-                   substring(contact_name, 0, position(' ' IN contact_name)),
-                   substring(contact_name, position(' ' IN contact_name)),
+                   left(trim(contact_name), char_length(trim(contact_name)) - LOCATE(' ', REVERSE(trim(contact_name)))+1) as first,
+                   substring_index(trim(contact_name), ' ', -1) as last,
                    relationship,
                    CASE
-                        WHEN cleaned_relationship IN ('fille', 'fils', 'enfant', 'enf', 'enfants', 'fiile', 'garcon', 'child', 'bellefille')
-                            THEN concept_uuid_from_mapping('CIEL', '1528')  -- Child
-                        WHEN trim(lower(relationship)) = 'ex' OR cleaned_relationship IN ('partenaire', 'mari', 'concubin', 'part', 'concubine', 'femme', 'conjoint', 'epouse', 'partenairesexuel', 'epoux', 'conjointe', 'partsex', 'copine', 'fiance', 'petitami', 'copain', 'petiteamie', 'pat', 'partenairesexuelle')
+                        WHEN relationship REGEXP 'fil|enf|fiil|garcon|child\'
+                            THEN concept_uuid_from_mapping('PIH', 'GUARDIAN RELATIONSHIP TO CHILD')  -- replace with PIH:CHILD once the latter is available
+                        WHEN relationship REGEXP 'ex|part|mari|conc|femme|conjoint|epou|cop|fiance|petit|pat|husband\'
                             THEN concept_uuid_from_mapping('PIH', 'PARTNER OR SPOUSE')
-                        WHEN cleaned_relationship IN ('mere', 'pere', 'mére', 'pére')
-                            THEN concept_uuid_from_mapping('CIEL', '1527')  -- Parent
-                        WHEN cleaned_relationship IN ('soeur', 'frere', 'frére')
+                        WHEN relationship REGEXP 'mere|pere|mére|pére\'
+                            THEN concept_uuid_from_mapping('PIH', 'GUARDIAN')
+                        WHEN relationship REGEXP 'soeur|frere|frére\'
                             THEN concept_uuid_from_mapping('PIH', 'SIBLING')
+                        WHEN relationship IS NULL THEN NULL
                         ELSE concept_uuid_from_mapping('PIH', 'OTHER RELATIVE')
-                        END,
-                    IFNULL(age, TIMESTAMPDIFF(YEAR, hc.birth_date, he.encounter_date)),
-                   IF(deceased_p = 't', concept_uuid_from_mapping('PIH', 'DEATH'), NULL),
+                        END as relationship_uuid,
+                   TIMESTAMPDIFF(YEAR, hc.birth_date, he.encounter_date) as age,
+                   IF(deceased_p = 't', concept_uuid_from_mapping('PIH', 'DEATH'), NULL) as death_uuid,
                    CASE hiv_status
                         WHEN 'not_tested' THEN concept_uuid_from_mapping('PIH', 'NO TEST')
                         WHEN 'unknown' THEN concept_uuid_from_mapping('PIH', 'unknown')
@@ -51,13 +52,14 @@ class ContactsMigrator extends ObsMigrator {
                         WHEN 'negative' THEN concept_uuid_from_mapping('PIH', 'NEGATIVE')
                         WHEN 'pos' THEN concept_uuid_from_mapping('PIH', 'POSITIVE')
                         WHEN 'neg' THEN concept_uuid_from_mapping('PIH', 'NEGATIVE')
-                        END
-            FROM (SELECT TRIM(LEADING 'ex' FROM replace(replace(replace(replace(replace(replace(trim(lower(relationship)), ' ', ''), '-', ''), '.', ''), 'son', ''), 'sa', ''), 'ses', '')) as cleaned_relationship, *
-                  FROM hivmigration_contacts) hc
+                        END as hiv_status_uuid
+            FROM hivmigration_contacts hc
             JOIN hivmigration_encounters he
                 ON hc.source_patient_id = he.source_patient_id
                 AND he.source_encounter_type = 'intake';
         ''')
+
+        create_tmp_obs_table()
 
         executeMysql("Create tmp_obs from contacts table", '''
             INSERT INTO tmp_obs
@@ -102,7 +104,7 @@ class ContactsMigrator extends ObsMigrator {
             SELECT obs_group_id,
                    source_encounter_id,
                    concept_uuid_from_mapping('CIEL', '163533'),  -- Health status of contact
-                   dead_uuid
+                   death_uuid
             FROM hivmigration_tmp_contacts;
             
             INSERT INTO tmp_obs
@@ -113,6 +115,8 @@ class ContactsMigrator extends ObsMigrator {
                    hiv_status_uuid
             FROM hivmigration_tmp_contacts;
         ''')
+
+        migrate_tmp_obs()
     }
 
     @Override
