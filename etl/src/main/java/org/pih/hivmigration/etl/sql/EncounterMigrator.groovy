@@ -197,6 +197,20 @@ class EncounterMigrator extends SqlMigrator {
             WHERE encounter_date IS NULL;
         ''')
 
+        executeMysql("Log warnings for patients with multiple intake encounters", '''
+            INSERT INTO hivmigration_data_warnings
+                (openmrs_patient_id, warning_type, warning_details, flag_for_review)
+            SELECT p.person_id,
+                   'Patient has multiple intake encounters',
+                   CONCAT('Encounter IDs: ', GROUP_CONCAT(e.encounter_id)),
+                   TRUE as flag_for_review
+            FROM hivmigration_encounters e
+            JOIN hivmigration_patients p ON p.source_patient_id = e.source_patient_id
+            WHERE e.source_encounter_type = 'intake'
+            GROUP BY p.person_id
+            HAVING count(distinct e.encounter_id) > 1;
+        ''')
+
         executeMysql("Default null encounter dates to the entry date",'''
             UPDATE hivmigration_encounters
             SET encounter_date = date_created
