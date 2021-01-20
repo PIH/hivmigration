@@ -202,7 +202,7 @@ class EncounterMigrator extends SqlMigrator {
                 (openmrs_patient_id, warning_type, warning_details, flag_for_review)
             SELECT p.person_id,
                    'Patient has multiple intake encounters',
-                   CONCAT('Encounter IDs: ', GROUP_CONCAT(e.encounter_id)),
+                   CONCAT('Encounter IDs: ', GROUP_CONCAT(e.encounter_id), '. Dates: ', GROUP_CONCAT(e.encounter_date)),
                    TRUE as flag_for_review
             FROM hivmigration_encounters e
             JOIN hivmigration_patients p ON p.source_patient_id = e.source_patient_id
