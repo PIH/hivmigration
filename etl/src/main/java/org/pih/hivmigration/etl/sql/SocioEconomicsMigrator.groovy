@@ -134,6 +134,19 @@ class SocioEconomicsMigrator extends ObsMigrator {
                        concept_uuid_from_mapping('PIH', 'NO'))
             FROM hivmigration_socioeconomics
             WHERE radio_p IN ('t', 'f');
+            
+            INSERT INTO tmp_obs
+                (encounter_id, concept_uuid, value_coded_uuid)
+            SELECT socioecon_encounter_id,
+                   concept_uuid_from_mapping('CIEL', '1712'),
+                   CASE education
+                       WHEN 'none' THEN concept_uuid_from_mapping('PIH', 'NONE')
+                       WHEN 'primary' THEN concept_uuid_from_mapping('PIH', 'PRIMARY EDUCATION COMPLETE')
+                       WHEN 'secondary' THEN concept_uuid_from_mapping('PIH', 'SOME SECONDARY EDUCATION')
+                       WHEN 'university' THEN concept_uuid_from_mapping('CIEL', '159785')  -- University
+                       END
+            FROM hivmigration_socioeconomics
+            WHERE education IS NOT NULL;
         ''')
 
         executeMysql("Migrate fields from socioeconomics_extra table into intake form", '''
@@ -242,6 +255,7 @@ class SocioEconomicsMigrator extends ObsMigrator {
         try {
             executeMysql("ALTER TABLE hivmigration_socioeconomics DROP COLUMN socioecon_encounter_id;");
             executeMysql("ALTER TABLE hivmigration_socioeconomics_extra DROP COLUMN intake_encounter_id;")
+            executeMysql("ALTER TABLE hivmigration_socioeconomics_extra DROP COLUMN socioecon_encounter_id;")
         } catch (SQLException ignored) {
             log.info("Couldn't drop column socioecon_encounter_id or intake_encounter_id, probably it didn't get added.")
         }
