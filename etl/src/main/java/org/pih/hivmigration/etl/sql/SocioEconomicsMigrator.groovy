@@ -109,7 +109,7 @@ class SocioEconomicsMigrator extends ObsMigrator {
                    CASE type_of_floor
                        WHEN 'beaten ground' THEN concept_uuid_from_mapping('PIH', 'BEATEN EARTH')
                        WHEN 'cement' THEN concept_uuid_from_mapping('PIH', 'CEMENT')
-                       WHEN 'dirt' THEN concept_uuid_from_mapping('PIH', 'OTHER')
+                       WHEN 'dirt' THEN concept_uuid_from_mapping('PIH', 'BEATEN EARTH')
                        WHEN 'mud' THEN concept_uuid_from_mapping('PIH', 'OTHER')
                        END
             FROM hivmigration_socioeconomics
