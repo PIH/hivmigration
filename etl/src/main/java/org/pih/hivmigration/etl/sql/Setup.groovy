@@ -16,6 +16,18 @@ class Setup extends SqlMigrator {
             DELIMITER ;
         ''')
 
+        executeMysql("Create function concept_name_from_uuid", '''
+            DROP FUNCTION IF EXISTS concept_name_from_uuid;
+            DELIMITER //
+            CREATE FUNCTION concept_name_from_uuid ( _uuid varchar(38))
+                RETURNS varchar(128) DETERMINISTIC
+            BEGIN
+                RETURN (SELECT name FROM concept_name cn JOIN concept c on cn.concept_id = c.concept_id
+                        WHERE c.uuid = _uuid AND cn.locale = 'en' AND cn.locale_preferred = 1 AND cn.voided = 0);
+            END;
+            DELIMITER ;
+        ''')
+
         executeMysql("Create function is_number", '''
             -- Checks whether a string value represents a number. Allows surrounding whitespace.
             -- Allows an arbitrary number of decimal points or commas.
