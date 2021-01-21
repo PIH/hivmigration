@@ -151,8 +151,8 @@ class MedpickupsMigrator extends ObsMigrator {
              FROM hivmigration_dispensing
              WHERE dispensed_to is not null;
              
-             -- Accompagnateur name: Name of CHW
-             SET @name_of_chw_concept_uuid = '164141AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+             -- Accompagnateur name: Name of CHW picking up the medication
+             SET @name_of_chw_concept_uuid = 'c29f0c91-0128-445d-a64b-1f85498c5752';
              INSERT INTO tmp_obs (value_text, source_patient_id, source_encounter_id, concept_uuid)
              SELECT accompagnateur_name, source_patient_id, source_encounter_id, @name_of_chw_concept_uuid
              FROM hivmigration_dispensing
