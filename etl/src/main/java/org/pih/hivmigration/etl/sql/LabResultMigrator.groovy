@@ -81,6 +81,19 @@ class LabResultMigrator extends ObsMigrator {
 
         executeMysql("Load lab results as observations",
         '''
+
+            -- Specimen number: top level obs for all lab tests
+            INSERT INTO tmp_obs(
+                value_text, 
+                source_encounter_id, 
+                concept_uuid)
+            SELECT 
+                sample_id, 
+                source_encounter_id, 
+                '162086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+            FROM hivmigration_lab_results
+            WHERE sample_id IS NOT NULL;
+
             -- Viral load
             --
             
@@ -89,14 +102,7 @@ class LabResultMigrator extends ObsMigrator {
             SELECT obs_id, source_encounter_id, '11765b8c-a338-48a4-9480-df898c903723'
             FROM hivmigration_lab_results
             WHERE test_type = 'viral_load';
-            
-            -- Specimen number
-            INSERT INTO tmp_obs
-                (obs_group_id, value_text, source_encounter_id, concept_uuid)
-            SELECT obs_id, sample_id, source_encounter_id, '162086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
-            FROM hivmigration_lab_results
-            WHERE test_type = 'viral_load' AND sample_id IS NOT NULL;
-
+                        
             -- HVL Value
             INSERT INTO tmp_obs
                 (obs_group_id, value_numeric, source_encounter_id, concept_uuid)
