@@ -142,7 +142,7 @@ class SocioEconomicsMigrator extends ObsMigrator {
                    CASE education
                        WHEN 'none' THEN concept_uuid_from_mapping('PIH', 'NONE')
                        WHEN 'primary' THEN concept_uuid_from_mapping('PIH', 'PRIMARY EDUCATION COMPLETE')
-                       WHEN 'secondary' THEN concept_uuid_from_mapping('PIH', 'SOME SECONDARY EDUCATION')
+                       WHEN 'secondary' THEN concept_uuid_from_mapping('PIH', 'SECONDARY EDUCATION COMPLETE')
                        WHEN 'university' THEN concept_uuid_from_mapping('CIEL', '159785')  -- University
                        END
             FROM hivmigration_socioeconomics
