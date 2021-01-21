@@ -1,17 +1,5 @@
 package org.pih.hivmigration.etl.sql;
 
-import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.dbutils.QueryRunner;
-import org.apache.commons.dbutils.ResultSetHandler;
-import org.apache.commons.dbutils.handlers.ArrayHandler;
-import org.apache.commons.dbutils.handlers.ScalarHandler;
-import org.apache.commons.lang.time.StopWatch;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.pih.hivmigration.etl.sql.util.FileParser;
-import org.pih.hivmigration.etl.sql.util.SqlStatementParser;
-import org.springframework.util.StringUtils;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.sql.Connection;
@@ -24,9 +12,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.dbutils.DbUtils;
+import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.ResultSetHandler;
+import org.apache.commons.dbutils.handlers.ScalarHandler;
+import org.apache.commons.lang.time.StopWatch;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.pih.hivmigration.etl.sql.util.FileParser;
+import org.pih.hivmigration.etl.sql.util.SqlStatementParser;
+import org.springframework.util.StringUtils;
+
 abstract class SqlMigrator {
 
-    private static final Log log = LogFactory.getLog(SqlMigrator.class);
+    private final Log log = LogFactory.getLog(getClass());
 
     public static final String MIGRATION_PROPERTIES_FILE = "MIGRATION_PROPERTIES_FILE";
 

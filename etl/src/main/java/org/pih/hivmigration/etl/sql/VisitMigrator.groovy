@@ -8,6 +8,7 @@ class VisitMigrator extends SqlMigrator {
             -- Get visit type "Clinic or Hospital Visit"
             SET @visit_type_id = (SELECT visit_type_id FROM visit_type WHERE uuid = 'f01c54cb-2225-471a-9cd5-d348552c337c');
             SET @registration_et = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Enregistrement de patient'); 
+            SET @drug_order_et = (SELECT encounter_type_id FROM encounter_type WHERE uuid = '0b242b71-5b60-11eb-8f5a-0242ac110002'); 
             SET @unknown_location_id = 1;
             
             INSERT INTO visit
@@ -21,7 +22,7 @@ class VisitMigrator extends SqlMigrator {
                            Max(location_id) as location_id,  /* Avoid using 'Unknown Location' if there is another location available */
                            creator
                     FROM   encounter
-                    WHERE  encounter_type != @registration_et
+                    WHERE  encounter_type not in (@registration_et, @drug_order_et)
                     GROUP  BY patient_id,
                               Date(encounter_datetime)
                               -- TODO: Group by location as well? see: https://pihemr.atlassian.net/browse/UHM-4834
@@ -33,7 +34,7 @@ class VisitMigrator extends SqlMigrator {
                 ON e.patient_id = v.patient_id
                     AND Date(e.encounter_datetime) = Date(v.date_started)
             SET    e.visit_id = v.visit_id
-            WHERE encounter_type != @registration_et;
+            WHERE encounter_type  not in (@registration_et, @drug_order_et);
             
             -- If a encounter location is "Unknown" and it's Visit Location is *not* "Unknown", update encounter with that location
             UPDATE encounter e
