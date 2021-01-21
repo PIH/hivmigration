@@ -31,8 +31,12 @@ Instructions for executing commands from this java project
     - IntelliJ: Run `org.pih.hivmigration.etl.sql.Migrator.java` with a config like this one
       ![Image of IntelliJ config](intellij-config.png) 
       Run with the program argument `--help` to see the available options.
-    - Command-line (may or may not still work): Use
-      [ansible deployment playbook](https://bitbucket.org/partnersinhealth/deployment/src/master/playbooks/roles/hiv-migration/)
+    - Command-line.  Something like:
+      ```shell
+      export MIGRATION_PROPERTIES_FILE=/home/mseaton/environments/hivmigration/migration.properties
+      export MIGRATION_JAR_PATH=/home/mseaton/code/github/pih/hivmigration/etl/target/hivmigration-etl-1.0-SNAPSHOT-jar-with-dependencies.jar
+      java -cp $MIGRATION_JAR_PATH org.pih.hivmigration.etl.sql.Migrator -r -d
+      ```
  
 ## Pentaho
 
@@ -43,3 +47,4 @@ view the existing Pentaho code:
 Get Pentaho Data Integration installed locally (mainly so that you can use Spoon - now called "PDI client" to author jobs).  There should no difficulty with any version (Versions 6, 7, or 8 appear to work).  Download from SourceForge:
 https://sourceforge.net/projects/pentaho/
 
+The [ansible deployment playbook](https://bitbucket.org/partnersinhealth/deployment/src/master/playbooks/roles/hiv-migration/) may also be a useful reference.
