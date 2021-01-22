@@ -8,13 +8,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
+import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.commons.logging.Log;
@@ -317,4 +321,68 @@ abstract class SqlMigrator {
         }
     }
 
+    // Methods that allow for creating tests that should pass
+
+    protected void assertAllRows(String description, String mysqlQuery) throws Exception {
+        log.info("Testing: " + description);
+        Number allRows = (Number) selectMysql("select count(*) from drug_order", new ScalarHandler<Number>());
+        Number result = (Number) selectMysql(mysqlQuery, new ScalarHandler<Number>());
+        if (!allRows.equals(result)) {
+            fail(allRows + " expected but " + result + " returned");
+        }
+        log.info("Test successful");
+    }
+
+    protected void assertNoRows(String description, String mysqlQuery) throws Exception {
+        log.info("Testing: " + description);
+        Number result = (Number) selectMysql(mysqlQuery, new ScalarHandler<Number>());
+        if (result.intValue() != 0) {
+            fail("Now rows expected but " + result + " returned");
+        }
+        log.info("Test successful");
+    }
+
+    protected void assertMatch(String description, String oracleQuery, String mysqlQuery) throws Exception {
+        log.info("Testing: " + description);
+        List<Map<String, Object>> oracleResults = (List<Map<String, Object>>) selectOracle(oracleQuery, new MapListHandler());
+        List<Map<String, Object>> mysqlResults = (List<Map<String, Object>>) selectMysql(mysqlQuery, new MapListHandler());
+        if (oracleResults.size() != mysqlResults.size()) {
+            fail("Oracle has " + oracleResults.size() + " rows, MySQL has: " + mysqlResults.size());
+        }
+        for (int i=0; i<oracleResults.size(); i++) {
+            Map<String, Object> oracleRow = oracleResults.get(i);
+            Map<String, Object> mysqlRow = mysqlResults.get(i);
+            if (oracleRow.size() != mysqlRow.size()) {
+                fail("Oracle has " + oracleRow.size() + " columns, MySQL has: " + mysqlRow.size());
+            }
+            Set<String> allKeys = new HashSet<>();
+            for (String key : oracleRow.keySet()) {
+                allKeys.add(key.toLowerCase());
+            }
+            for (String key : mysqlRow.keySet()) {
+                allKeys.add(key.toLowerCase());
+            }
+            for (String key : allKeys) {
+                Object oracleValue = oracleRow.get(key.toUpperCase());
+                Object mysqlValue = mysqlRow.get(key);
+                if (oracleValue != null || mysqlValue != null) {
+                    if (oracleValue == null && mysqlValue != null) {
+                        fail("Oracle does not have a value for " + key + " but MySQL has " + mysqlValue);
+                    } else if (mysqlValue == null && oracleValue != null) {
+                        fail("MySQL does not have a value for " + key + " but Oracle has " + oracleValue);
+                    } else {
+                        if (!oracleValue.toString().equals(mysqlValue.toString())) {
+                            fail("Oracle and MySQL have different values for " + key + "; Oracle = " + oracleValue + ", MySQL = " + mysqlValue);
+                        }
+                    }
+                    log.info("Test passes for " + key + ": " + oracleValue + " = " + mysqlValue);
+                }
+            }
+        }
+        log.info("Test successful.");
+    }
+
+    protected void fail(String message) {
+        throw new IllegalArgumentException(message);
+    }
 }

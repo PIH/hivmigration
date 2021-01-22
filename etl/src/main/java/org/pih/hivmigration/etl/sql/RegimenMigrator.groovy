@@ -21,6 +21,8 @@ class RegimenMigrator extends SqlMigrator {
 
         createOrders()
         createDrugOrders()
+
+        validateResults()
     }
 
     void createStagingTable() {
@@ -264,6 +266,7 @@ class RegimenMigrator extends SqlMigrator {
             inner join  encounter e on o.patient_id = e.patient_id and o.date_activated = e.encounter_datetime
             inner join  encounter_type t on e.encounter_type = t.encounter_type_id and t.uuid = '0b242b71-5b60-11eb-8f5a-0242ac110002'
             set         o.encounter_id = e.encounter_id
+            where       o.encounter_id is null
         ''')
     }
 
@@ -614,5 +617,51 @@ class RegimenMigrator extends SqlMigrator {
             ''')
             executeMysql("drop table hivmigration_drug_orders")
         }
+    }
+
+    void validateResults() {
+
+        assertMatch(
+                "There should be 1 order for all regimes, 2 orders if discontinued",
+                "select sum(decode(r.close_date, null, 1, 2)) as num from hiv_regimes_real r, hiv_demographics_real d where r.patient_id = d.patient_id",
+                "select count(*) as num from drug_order"
+        )
+
+        assertMatch(
+                "There should be a new order for all orders",
+                "select count(*) as num from hiv_regimes_real r, hiv_demographics_real d where r.patient_id = d.patient_id",
+                "select count(*) as num from orders where order_action = 'NEW'"
+        )
+
+        assertMatch(
+                "There should be a discontinue order for all closed orders",
+                "select count(*) as num from hiv_regimes_real r, hiv_demographics_real d where r.patient_id = d.patient_id and close_date is not null",
+                "select count(*) as num from orders where order_action = 'DISCONTINUE'"
+        )
+
+        assertNoRows(
+                "All discontinue orders must have a previous order id",
+                "select count(*) from orders where order_action = 'DISCONTINUE' and previous_order_id is null",
+        )
+
+        assertAllRows(
+                "All drug orders must have a coded or non-coded drug",
+                "select count(*) as num from drug_order where drug_inventory_id is not null or drug_non_coded is not null"
+        )
+
+        assertAllRows(
+                "All orders must have date activated on or after encounter date",
+                "select count(*) as num from orders o inner join encounter e on o.encounter_id = e.encounter_id where o.date_activated >= e.encounter_datetime"
+        )
+
+        assertAllRows(
+                "All orders must be routine or scheduled",
+                "select count(*) as num from orders o where (urgency = 'ROUTINE' and scheduled_date is null) or (urgency = 'ON_SCHEDULED_DATE' and scheduled_date > date_activated)"
+        )
+
+        assertNoRows(
+                "All discontinue orders should have an order reason (coded or non-coded)",
+                "select count(*) as num from orders o where order_action = 'DISCONTINUE' and order_reason is null and order_reason_non_coded is null"
+        )
     }
 }
