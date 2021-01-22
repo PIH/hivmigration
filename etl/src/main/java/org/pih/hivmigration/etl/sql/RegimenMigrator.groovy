@@ -462,6 +462,7 @@ class RegimenMigrator extends SqlMigrator {
             DELIMITER ;
 
             CALL populate_new_order_reason('HIV', null, '138405AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Human immunodeficiency virus (HIV) disease
+            CALL populate_new_order_reason('HIV', 'accident', '1691AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Post-exposure prophylaxis
             CALL populate_new_order_reason('HIV', 'prophylaxis', '1691AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Post-exposure prophylaxis
             CALL populate_new_order_reason('HIV', 'prophylaxis_rape', '1691AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Post-exposure prophylaxis
             CALL populate_new_order_reason('HIV', 'prophylaxis_sexual_exposure', '1691AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Post-exposure prophylaxis
