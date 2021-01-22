@@ -22,6 +22,9 @@ class RegimenMigrator extends SqlMigrator {
         createOrders()
         createDrugOrders()
 
+        // TODO: Consider deleting "regime" encounters that have no orders associated with them?
+        // TODO: Add more drugs to map into and / or map into specific concepts with non-coded drugs if possible
+
         validateResults()
     }
 
