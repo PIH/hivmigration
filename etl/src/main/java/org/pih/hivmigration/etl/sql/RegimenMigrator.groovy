@@ -570,7 +570,7 @@ class RegimenMigrator extends SqlMigrator {
                 orderer, creator, date_created, voided
             )
             select
-                d.order_id, d.order_uuid, @drug_order_type, d.patient_id, d.encounter_id, '???', d.previous_order_id,
+                d.order_id, d.order_uuid, @drug_order_type, d.patient_id, d.encounter_id, concat('HIVEMR-', d.source_regime_id), d.previous_order_id,
                 d.order_action, d.date_activated, d.urgency, d.scheduled_date, d.auto_expire_date, d.date_stopped,
                 @outpatient_care_setting, d.concept_id, d.order_reason, d.order_reason_non_coded,
                 @unknown_provider, 1, date_format(curdate(), '%Y-%m-%d %T'), 0
