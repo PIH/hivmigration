@@ -337,7 +337,7 @@ abstract class SqlMigrator {
         log.info("Testing: " + description);
         Number result = (Number) selectMysql(mysqlQuery, new ScalarHandler<Number>());
         if (result.intValue() != 0) {
-            fail("Now rows expected but " + result + " returned");
+            fail("0 rows expected but " + result + " returned");
         }
         log.info("Test successful");
     }

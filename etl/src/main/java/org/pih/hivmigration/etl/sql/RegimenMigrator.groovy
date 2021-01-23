@@ -4,7 +4,7 @@ class RegimenMigrator extends SqlMigrator {
 
     @Override
     void migrate() {
-
+/*
         createStagingTable()
         setAutoIncrements()
         loadStagingTableWithNewOrders()
@@ -24,7 +24,7 @@ class RegimenMigrator extends SqlMigrator {
 
         // TODO: Consider deleting "regime" encounters that have no orders associated with them?
         // TODO: Add more drugs to map into and / or map into specific concepts with non-coded drugs if possible
-
+*/
         validateResults()
     }
 
@@ -653,11 +653,6 @@ class RegimenMigrator extends SqlMigrator {
         )
 
         assertAllRows(
-                "All orders must have date activated on or after encounter date",
-                "select count(*) as num from orders o inner join encounter e on o.encounter_id = e.encounter_id where o.date_activated >= e.encounter_datetime"
-        )
-
-        assertAllRows(
                 "All orders must be routine or scheduled",
                 "select count(*) as num from orders o where (urgency = 'ROUTINE' and scheduled_date is null) or (urgency = 'ON_SCHEDULED_DATE' and scheduled_date > date_activated)"
         )
@@ -665,6 +660,123 @@ class RegimenMigrator extends SqlMigrator {
         assertNoRows(
                 "All discontinue orders should have an order reason (coded or non-coded)",
                 "select count(*) as num from orders o where order_action = 'DISCONTINUE' and order_reason is null and order_reason_non_coded is null"
+        )
+
+        // From OrderValidator.java
+
+        assertNoRows(
+                "All orders must have non-null voided",
+                "select count(*) as num from orders where voided is null"
+        )
+
+        assertNoRows(
+                "All orders must have non-null concept",
+                "select count(*) as num from orders where concept_id is null"
+        )
+
+        assertNoRows(
+                "All orders must have non-null patient",
+                "select count(*) as num from orders where patient_id is null"
+        )
+
+        assertNoRows(
+                "All orders must have non-null encounter",
+                "select count(*) as num from orders where encounter_id is null"
+        )
+
+        assertNoRows(
+                "All orders must have non-null orderer",
+                "select count(*) as num from orders where orderer is null"
+        )
+
+        assertNoRows(
+                "All orders must have non-null urgency",
+                "select count(*) as num from orders where urgency is null"
+        )
+
+        assertNoRows(
+                "All orders must have non-null action",
+                "select count(*) as num from orders where order_action is null"
+        )
+
+        assertAllRows(
+                "All orders must have the same patient in the order and the encounter",
+                "select count(*) as num from orders o inner join encounter e on e.encounter_id = o.encounter_id where o.patient_id = e.patient_id"
+        )
+
+        assertAllRows(
+                "All orders must have date activated on or after encounter date",
+                "select count(*) as num from orders o inner join encounter e on o.encounter_id = e.encounter_id where o.date_activated >= e.encounter_datetime"
+        )
+
+        assertNoRows(
+                "No orders can have date activated in the future",
+                "select count(*) from orders where date_activated > now()"
+        )
+
+        assertNoRows(
+                "No orders can have date activated after date stopped",
+                "select count(*) from orders where date_stopped is not null and date_activated > date_stopped"
+        )
+
+        assertNoRows(
+                "No orders can have date activated after auto expire date",
+                "select count(*) from orders where auto_expire_date is not null and date_activated > auto_expire_date"
+        )
+
+        assertNoRows(
+                "No orders can have a scheduled date unless urgency is on scheduled date",
+                "select count(*) from orders where scheduled_date is not null and urgency != 'ON_SCHEDULED_DATE'"
+        )
+
+        assertNoRows(
+                "No orders can have an urgency of on scheduled date if scheduled date is null",
+                "select count(*) from orders where scheduled_date is null and urgency = 'ON_SCHEDULED_DATE'"
+        )
+
+        // From DrugOrderValidator.java
+
+        assertNoRows(
+                "All rows must have a non-null as_needed",
+                "select count(*) from orders where as_needed is null"
+        )
+
+        assertNoRows(
+                "Dosing type is required if action != DISCONTINUE",
+                "select count(*) from orders o inner join drug_order d on o.order_id = d.order_id where dosing_type is null and order_action != 'DISCONTINUE"
+        )
+
+        // TODO: Raise in OpenMRS - this would imply that the drug_non_coded won't work
+        assertAllRows(
+                "Drug is required and drug must be associated with a concept",
+                "select count(*) from drug_order o inner join drug d on o.drug_id = d.drug_id where d.concept_id is not null"
+        )
+
+        assertAllRows(
+                "Concept associated with drug must match concept associated with order",
+                "select count(*) from drug_order dro inner join order o on dro.order_id = o.order_id inner join drug d on dro.drug_id = d.drug_id where d.concept_id = o.concept_id"
+        )
+
+        assertAllRows(
+                "All rows are outpatient",
+                "select count(*) from orders o inner join care_setting c on o.care_setting_id = c.care_setting_id where c.care_setting_type = 'OUTPATIENT'"
+        )
+
+        assertNoRows(
+                "Since all are outpatient, all non-discontinue orders need non-null quantity, quantity units, and num refills",
+                "select count(*) from drug_order dro inner join order o on dro.order_id = o.order_id where d.concept_id = o.concept_id and o.order_action != 'DISCONTINUE' and (quantity is null or quantity_units is null or num_refills is null)"
+        )
+
+        assertNoRows(
+                "All drug orders must have either a coded or non-coded drug",
+                "select count(*) as num from drug_order where drug_inventory_id is not null and drug_non_coded is not null"
+        )
+
+        // From FreeTextDosingInstructions validator
+
+        assertNoRows(
+                "Non-discontinue orders with free text dosing instructions must have non-null dosing instructions",
+                "select count(*) from drug_order d inner join orders o on d.order_id = o.order_id where order_action != 'DISCONTINUE' and dosing_instructions is null"
         )
     }
 }
