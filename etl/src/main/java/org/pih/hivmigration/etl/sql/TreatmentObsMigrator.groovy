@@ -12,25 +12,7 @@ class TreatmentObsMigrator extends ObsMigrator {
     @Override
     def void migrate() {
         // the hivmigration_observations table gets created by ObsLoadingMigrator
-
-        executeMysql("Create staging table for ordered_other", '''
-            CREATE TABLE hivmigration_ordered_other (
-              ordered_other_id int primary key auto_increment,
-              source_encounter_id int,
-              ordered varchar(100),
-              comments varchar(4000),
-              KEY `source_encounter_idx` (`source_encounter_id`)
-            );
-        ''')
-
-        loadFromOracleToMySql('''
-            INSERT INTO hivmigration_ordered_other (source_encounter_id, ordered, comments)
-            VALUES (?, ?, ?)
-        ''', '''
-            SELECT o.encounter_id, o.ordered, o.comments
-            FROM hiv_ordered_other o, hiv_encounters e, hiv_demographics_real d 
-            WHERE o.encounter_id = e.encounter_id and e.patient_id = d.patient_id
-        ''')
+        // the hivmigration_ordered_other table gets created by StagingTablesMigrator
 
         migrateProphylaxesState()
         migrateProphylaxesPlan()
@@ -643,7 +625,6 @@ class TreatmentObsMigrator extends ObsMigrator {
 
     @Override
     def void revert() {
-        executeMysql("DROP TABLE IF EXISTS hivmigration_ordered_other")
         executeMysql("DROP TABLE IF EXISTS hivmigration_prophylaxis")
         executeMysql("DROP TABLE IF EXISTS hivmigration_arv_regimen")
         clearTable("obs")
