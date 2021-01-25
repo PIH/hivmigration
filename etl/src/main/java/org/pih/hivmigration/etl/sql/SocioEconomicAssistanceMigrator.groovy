@@ -42,11 +42,11 @@ class SocioEconomicAssistanceMigrator extends ObsMigrator {
             SELECT source_encounter_id,
                    concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE NON-CODED'),
                    CASE ordered
-                    WHEN 'financial_aid' THEN 'Aide financière\'
-                    WHEN 'funeral_aid' THEN \'\'
-                    WHEN 'house_assistance' THEN 'Aide au logement\'
-                    WHEN 'professional_training' THEN \'\'
-                    WHEN 'school_aid' THEN 'Aide scolaire\'
+                    WHEN 'financial_aid' THEN 'Aide financière'
+                    WHEN 'funeral_aid' THEN 'Aide pour funérailles'
+                    WHEN 'house_assistance' THEN 'Aide au logement'
+                    WHEN 'professional_training' THEN 'Formation professionnelle'
+                    WHEN 'school_aid' THEN 'Aide scolaire'
                     WHEN 'social_assistance_other' THEN comments
                     END
             FROM hivmigration_ordered_other
