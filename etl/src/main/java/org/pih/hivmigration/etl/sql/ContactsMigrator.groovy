@@ -35,7 +35,7 @@ class ContactsMigrator extends ObsMigrator {
                    relationship,
                    CASE
                        WHEN relationship REGEXP 'fil|enf|fiil|garcon|child'
-                           THEN concept_uuid_from_mapping('PIH', 'CHILD')
+                           THEN concept_uuid_from_mapping('CIEL', '1528')  -- Child
                        WHEN relationship REGEXP 'ex|part|mari|conc|femme|conjoint|epou|cop|fiance|petit|pat|husband'
                            THEN concept_uuid_from_mapping('PIH', 'PARTNER OR SPOUSE')
                        WHEN relationship REGEXP 'mere|pere|mére|pére'
