@@ -338,8 +338,6 @@ class RegimenMigrator extends SqlMigrator {
         ''')
     }
 
-    // TODO: This should not use other non-coded as concept, should use actual generic for given drug
-    // TODO: Add more drugs to map into and / or map into specific concepts with non-coded drugs if possible
     void populateDrugAndConceptIdsForEachProductId() {
         executeMysql("Populate drug ids that map to each product id", '''
 
