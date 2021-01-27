@@ -7,6 +7,9 @@ class RegimenMigrator extends SqlMigrator {
 
         createStagingTable()
         setAutoIncrements()
+        loadStagingTableWithRawDataFromHivEmr()
+        cleanInputDataAndRaiseDataWarnings()
+
         loadStagingTableWithNewOrders()
         loadStagingTableWithDiscontinueOrders()
 
@@ -22,63 +25,81 @@ class RegimenMigrator extends SqlMigrator {
         createOrders()
         createDrugOrders()
 
-        // TODO: Consider deleting "regime" encounters that have no orders associated with them?
-        // TODO: Add more drugs to map into and / or map into specific concepts with non-coded drugs if possible
+        removeRegimenEncountersThatHaveNoAssociatedDrugOrders()
 
         validateResults()
     }
 
     void createStagingTable() {
-        executeMysql("Create staging table", '''
-            create table hivmigration_drug_orders (
+        executeMysql("Create staging tables", '''
+
+            create table hivmigration_regimes (
             
               -- Source data
-              order_id int PRIMARY KEY AUTO_INCREMENT,
-              source_regime_id int, -- This will mostly be used to populate previous order id on the discontinue order
-              order_action varchar(15), -- For a given source_regime_id, there will be one row with NEW, and 0-1 with DISCONTINUE
-              source_encounter_id int,
+              source_regime_id int primary key,
+              source_encounter_opened_by int,
+              source_encounter_closed_by int,
               source_patient_id int,
               source_product_id int,
               source_product_name varchar(100), -- this is the drug/dose/unit associated with the product_id in the source table
-              effective_start_date date, -- this should be close_date when adding DISCONTINUE, start_date when adding NEW
-              effective_start_date_estimated boolean, -- there is nothing to import this into, but import this in from close_date_estimated_p
-              date_stopped date, -- This comes from close_date
-              auto_expire_date date, -- this comes from end_date
+              source_start_date date,
+              source_end_date date,
+              source_close_date date,
+              source_close_date_estimated boolean,
+              source_reason_for_closure varchar(20),
               source_product_type varchar(20), -- this comes from the hiv_products table joined on hiv_regimes
-              source_discontinue_reason varchar(20), -- from reason_for_closure
               source_regime_type varchar(50), -- from regime_type
-              ddd double, -- daily dose
-              dwd double, -- weekly dose
-              morning_dose double,
-              noon_dose double,
-              evening_dose double,
-              night_dose double,
+              source_ddd double, -- daily dose
+              source_dwd double, -- weekly dose
+              source_prn boolean, -- as needed
+              source_morning_dose double,
+              source_noon_dose double,
+              source_evening_dose double,
+              source_night_dose double,
+              
+              -- Cleaned source data leading to data warnings
+              cleaned_end_date date,
+              cleaned_close_date date,
+              
+              KEY `source_regime_id_idx` (`source_regime_id`),
+              KEY `source_patient_id_idx` (`source_patient_id`),
+              KEY `source_encounter_opened_by_idx` (`source_encounter_opened_by`),
+              KEY `source_encounter_closed_by_idx` (`source_encounter_closed_by`),
+              KEY `source_product_id_idx` (`source_product_id`),
+              KEY `source_product_name_idx` (`source_product_name`)
+            );
+
+            create table hivmigration_drug_orders (
+            
+              order_id int PRIMARY KEY AUTO_INCREMENT,
+              source_regime_id int,
               
               -- Derived data
-              order_uuid char(38), -- This needs to get populated with the uuid() function
+              order_uuid char(38),
+              order_action varchar(15), -- For a given source_regime_id, there will be one row with NEW, and 0-1 with DISCONTINUE
               encounter_id int,
               patient_id int,
               previous_order_id int,
               drug_id int, -- This should be mapped in based on the source_product_id
               drug_non_coded varchar(100),
-              concept_id int, -- This can be auto-populated from the drug_id 
+              concept_id int, -- This can be auto-populated from the drug_id or mapped in based on source_product_id
               date_activated date, -- This ultimately needs to be populated to match the encounter_date that gets created
-              scheduled_date date, -- This should match the effective_start_date if effective_start_date != date_activated
               urgency varchar(20),
+              start_date date,
+              date_stopped date, -- This comes from close_date as long as it is not in the future
+              auto_expire_date date, -- this comes from end_date or from close date if close date is in the future
               order_reason int, -- This should be mapped based on what is in the source_reason_for_closure, source regime_type, and source_product_type
               order_reason_non_coded varchar(100),
+              as_needed boolean,
               dosing_instructions varchar(100),
               
               KEY `source_regime_id_idx` (`source_regime_id`),
-              KEY `source_patient_id_idx` (`source_patient_id`),
-              KEY `source_encounter_id_idx` (`source_encounter_id`),
-              KEY `source_product_id_idx` (`source_product_id`),
-              KEY `source_product_name_idx` (`source_product_name`),
               KEY `order_action_idx` (`order_action`),
               KEY `patient_id_idx` (`patient_id`),
               KEY `encounter_id_idx` (`encounter_id`),
               KEY `date_activated_idx` (`date_activated`)
             );
+            
         ''')
     }
 
@@ -86,141 +107,185 @@ class RegimenMigrator extends SqlMigrator {
         setAutoIncrement("hivmigration_drug_orders", "(select max(order_id)+1 from orders)")
     }
 
-    void loadStagingTableWithNewOrders() {
+    void loadStagingTableWithRawDataFromHivEmr() {
         loadFromOracleToMySql('''
-            insert into hivmigration_drug_orders (
+            insert into hivmigration_regimes (
               source_regime_id,
-              order_action,
-              source_encounter_id,
+              source_encounter_opened_by,
+              source_encounter_closed_by,
               source_patient_id,
               source_product_id,
               source_product_name,
-              effective_start_date,
-              date_stopped,
-              auto_expire_date,
+              source_start_date,
+              source_end_date,
+              source_close_date,
+              source_close_date_estimated,
+              source_reason_for_closure,
               source_product_type,
               source_regime_type,
-              ddd,
-              dwd,
-              morning_dose,
-              noon_dose,
-              evening_dose,
-              night_dose
+              source_ddd,
+              source_dwd,
+              source_prn,
+              source_morning_dose,
+              source_noon_dose,
+              source_evening_dose,
+              source_night_dose
             )
-            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', '''
             select
                    r.regime_id as source_regime_id,
-                   'NEW' as order_action,
-                   e.encounter_id as source_encounter_id,
+                   r.encounter_opened_by as source_encounter_opened_by,
+                   r.encounter_closed_by as source_encounter_closed_by,
                    r.patient_id as source_patient_id,
                    r.product_id as source_product_id,
                    (trim(p.generic_fr) || ' - ' || p.strength_dose || ' ' || p.strength_unit || ' ' || p.dosage_form) as source_product_name,
-                   r.start_date as effective_start_date,
-                   r.close_date as date_stopped,
-                   r.end_date as auto_expire_date,
+                   r.start_date as source_start_date,
+                   r.end_date as source_end_date,
+                   r.close_date as source_close_date,
+                   decode(r.close_date_estimated_p, 't', 1, 0) as source_close_date_estimated,
+                   r.reason_for_closure as source_reason_for_closure,
                    p.prod_type_flag as source_product_type,
                    r.regime_type as source_regime_type,
-                   r.ddd,
-                   r.dwd,
-                   r.morning_dose,
-                   r.noon_dose,
-                   r.evening_dose,
-                   r.night_dose
+                   r.ddd as source_ddd,
+                   r.dwd as source_dwd,
+                   decode(r.prn, 't', 1, 0) as source_prn,
+                   r.morning_dose as source_morning_dose,
+                   r.noon_dose as source_noon_dose,
+                   r.evening_dose as source_evening_dose,
+                   r.night_dose as source_night_dose
             from
-                 hiv_regimes_real r, hiv_products p, hiv_encounters e, hiv_demographics_real d
+                   hiv_regimes_real r, hiv_products p, hiv_demographics_real d
             where
-                  r.product_id = p.product_id
-            and   r.patient_id = d.patient_id
-            and   r.encounter_opened_by = e.encounter_id(+)
+                   r.product_id = p.product_id
+            and    r.patient_id = d.patient_id
+            ;
+        ''')
+    }
+
+    void cleanInputDataAndRaiseDataWarnings() {
+        executeMysql("Clean regimens that have close date prior to start date", '''           
+            insert  into hivmigration_data_warnings (
+                        openmrs_patient_id, hiv_emr_encounter_id, field_name, field_value, warning_type, warning_details)
+            select      p.person_id, o.source_encounter_opened_by, 'close_date', date_format(o.source_close_date, '%Y-%m-%d'),
+                        'Drug Order Close Date is before Start Date.  Setting to equal Start Date.',
+                        concat(
+                            'Drug: ', o.source_product_name, 
+                            '; Start Date: ', date_format(o.source_start_date, '%Y-%m-%d'), 
+                            '; Close Date: ', date_format(o.source_close_date, '%Y-%m-%d')
+                        )
+            from        hivmigration_regimes o
+            inner join  hivmigration_patients p on p.source_patient_id = o.source_patient_id
+            where       o.source_close_date < o.source_start_date
+            ;
+            
+            update  hivmigration_regimes set cleaned_close_date = source_close_date;
+            update  hivmigration_regimes set cleaned_close_date = source_start_date where source_close_date < source_start_date;
+        ''')
+
+        executeMysql("Clean regimens that close in the future", '''
+            insert  into hivmigration_data_warnings (
+                        openmrs_patient_id, hiv_emr_encounter_id, field_name, field_value, warning_type, warning_details)
+            select      p.person_id, o.source_encounter_opened_by, 'close_date', date_format(source_close_date, '%Y-%m-%d'),
+                        'Drug Order Close Date is in the future.  Reclassifying this as Auto-Expire Date.',
+                        concat(
+                            'Drug: ', source_product_name, 
+                            '; Start Date: ', date_format(o.source_start_date, '%Y-%m-%d'), 
+                            '; Close Date: ', date_format(o.source_close_date, '%Y-%m-%d')
+                        )
+            from        hivmigration_regimes o
+            inner join  hivmigration_patients p on p.source_patient_id = o.source_patient_id
+            where       o.source_close_date > now()
+            ;
+            
+            update hivmigration_regimes set cleaned_end_date = source_end_date;
+            update hivmigration_regimes set cleaned_end_date = source_close_date, cleaned_close_date = null where source_close_date > now();
+        ''')
+    }
+
+    void loadStagingTableWithNewOrders() {
+        executeMysql('''
+            insert into hivmigration_drug_orders (
+                source_regime_id,
+                order_uuid,
+                order_action,
+                encounter_id,
+                patient_id,
+                start_date,
+                auto_expire_date,
+                date_stopped
+            )
+            select
+                r.source_regime_id,
+                uuid() as order_uuid,
+                'NEW' as order_action,
+                e.encounter_id,
+                p.person_id,
+                r.source_start_date,
+                r.cleaned_end_date,
+                r.cleaned_close_date
+            from
+                hivmigration_regimes r
+            left join
+                hivmigration_encounters e on e.source_encounter_id = r.source_encounter_opened_by
+            inner join
+                hivmigration_patients p on p.source_patient_id = r.source_patient_id
             ;
         ''')
     }
 
     void loadStagingTableWithDiscontinueOrders() {
-        loadFromOracleToMySql('''
+        executeMysql('''
             insert into hivmigration_drug_orders (
-              source_regime_id,
-              order_action,
-              source_encounter_id,
-              source_patient_id,
-              source_product_id,
-              source_product_name,
-              effective_start_date,
-              effective_start_date_estimated,
-              auto_expire_date,
-              source_discontinue_reason
+                source_regime_id,
+                order_uuid,
+                order_action,
+                previous_order_id,
+                encounter_id,
+                patient_id,
+                start_date,
+                auto_expire_date
             )
-            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', '''
             select
-                   r.regime_id as source_regime_id,
-                   'DISCONTINUE' as order_action,
-                   e.encounter_id as source_encounter_id,
-                   r.patient_id as source_patient_id,
-                   r.product_id as source_product_id,
-                   (trim(p.generic_fr) || ' - ' || p.strength_dose || ' ' || p.strength_unit || ' ' || p.dosage_form) as source_product_name,
-                   r.close_date as effective_start_date,
-                   decode(r.close_date_estimated_p, 't', 1, 0) as effective_start_date_estimated,
-                   r.close_date as auto_expire_date,
-                   r.reason_for_closure as source_discontinue_reason
+                d.source_regime_id,
+                uuid() as order_uuid,
+                'DISCONTINUE' as order_action,
+                d.order_id as previous_order_id,
+                e.encounter_id,
+                d.patient_id,
+                d.date_stopped,
+                d.date_stopped
             from
-                 hiv_regimes_real r, hiv_products p, hiv_encounters e, hiv_demographics_real d
+                hivmigration_drug_orders d
+            inner join
+                hivmigration_regimes r on r.source_regime_id = d.source_regime_id
+            left join
+                hivmigration_encounters e on e.source_encounter_id = r.source_encounter_closed_by
             where
-                  r.product_id = p.product_id
-            and   r.patient_id = d.patient_id
-            and   r.close_date is not null
-            and   r.encounter_closed_by = e.encounter_id(+)
+                d.date_stopped is not null
             ;
         ''')
     }
 
     void populateStagingTableWithDerivedValues() {
-        executeMysql("Populate uuids", '''
-            update hivmigration_drug_orders set order_uuid = uuid()
-        ''')
-
-        executeMysql("Populate patient ids", '''
-            update  hivmigration_drug_orders d, hivmigration_patients p 
-            set     d.patient_id = p.person_id where d.source_patient_id = p.source_patient_id
-        ''')
-
-        executeMysql("Populate encounter ids migrated by encounter migrator", '''
-            update  hivmigration_drug_orders d, hivmigration_encounters e 
-            set     d.encounter_id = e.encounter_id where d.source_encounter_id = e.source_encounter_id
-        ''')
-
-        executeMysql("Populate previous order ids", '''
-            update  hivmigration_drug_orders d, hivmigration_drug_orders n
-            set     d.previous_order_id = n.order_id
-            where   d.order_action = 'DISCONTINUE' and n.order_action = 'NEW'
-            and     d.source_regime_id = n.source_regime_id
-        ''')
 
         executeMysql("Populate date activated on orders associated with encounters", '''
             update  hivmigration_drug_orders o, 
-                    (select source_encounter_id, min(effective_start_date) as first_start_date from hivmigration_drug_orders group by source_encounter_id) a
+                    (select encounter_id, min(start_date) as first_start_date from hivmigration_drug_orders group by encounter_id) a
             set     o.date_activated = a.first_start_date
-            where   o.source_encounter_id is not null 
-            and     o.source_encounter_id = a.source_encounter_id
+            where   o.encounter_id is not null 
+            and     o.encounter_id = a.encounter_id
         ''')
 
         executeMysql("Populate date activated on orders not associated with encounters", '''
             update  hivmigration_drug_orders o
-            set     o.date_activated = o.effective_start_date
-            where   o.source_encounter_id is null 
+            set     o.date_activated = o.start_date
+            where   o.encounter_id is null 
         ''')
 
-        executeMysql("Set urgency to ROUTINE if date activated matches effective start date", '''
+        executeMysql("Set urgency to ROUTINE or ON_SCHEDULED_DATE as appropriate", '''
             update  hivmigration_drug_orders o
-            set     o.urgency = 'ROUTINE'
-            where   o.date_activated = o.effective_start_date
-        ''')
-
-        executeMysql("Populate scheduled_date and urgency if date activated < effective start date", '''
-            update  hivmigration_drug_orders o
-            set     o.urgency = 'ON_SCHEDULED_DATE', o.scheduled_date = o.effective_start_date
-            where   o.date_activated < o.effective_start_date
+            set     o.urgency = if(o.date_activated = o.start_date, 'ROUTINE', 'ON_SCHEDULED_DATE')
         ''')
 
         executeMysql("Match encounterless orders with existing encounters where possible", '''
@@ -273,21 +338,32 @@ class RegimenMigrator extends SqlMigrator {
         ''')
     }
 
+    // TODO: This should not use other non-coded as concept, should use actual generic for given drug
+    // TODO: Add more drugs to map into and / or map into specific concepts with non-coded drugs if possible
     void populateDrugAndConceptIdsForEachProductId() {
         executeMysql("Populate drug ids that map to each product id", '''
 
             DROP PROCEDURE IF EXISTS populate_drug_and_concept;
             DELIMITER $$ ;
-            CREATE PROCEDURE populate_drug_and_concept ( _product_name varchar(100), _drug_uuid char(36))
+            CREATE PROCEDURE populate_drug_and_concept( _product_name varchar(100), _drug_uuid char(36))
             BEGIN
+                SET @drug_id = null;
+                SET @concept_id = null;
+                SET @drug_non_coded = null;
                 IF (_drug_uuid is null or _drug_uuid = '') THEN
-                    SET @other_non_coded_concept = (select concept_id from concept where uuid = '3cee7fb4-26fe-102b-80cb-0017a47871b2');
-                    update hivmigration_drug_orders set drug_non_coded = _product_name, concept_id = @other_non_coded_concept where source_product_name = _product_name;
+                    SET @concept_id = (select concept_id from concept where uuid = '3cee7fb4-26fe-102b-80cb-0017a47871b2');
+                    SET @drug_non_coded = _product_name;
                 ELSE
                     SET @drug_id = (select drug_id from drug where uuid = _drug_uuid);
                     SET @concept_id = (select concept_id from drug where uuid = _drug_uuid);
-                    update hivmigration_drug_orders set drug_id = @drug_id, concept_id = @concept_id where source_product_name = _product_name;
                 END IF;
+                
+                UPDATE      hivmigration_drug_orders d
+                INNER JOIN  hivmigration_regimes r on r.source_regime_id = d.source_regime_id
+                SET         d.drug_id = @drug_id, 
+                            d.concept_id = @concept_id, 
+                            d.drug_non_coded = @drug_non_coded 
+                WHERE       r.source_product_name = _product_name;  
             END $$
             DELIMITER ;
 
@@ -452,17 +528,19 @@ class RegimenMigrator extends SqlMigrator {
             BEGIN
                 SET @concept_id = (select concept_id from concept where uuid = _concept_uuid);
                 IF @concept_id is null THEN
-                    update  hivmigration_drug_orders
-                    set     order_reason_non_coded = concat(_source_product_type, concat(' - ', _source_regime_type))
-                    where   order_action = 'NEW'
-                    and     ((_source_product_type is null and source_product_type is null) or _source_product_type = source_product_type)
-                    and     ((_source_regime_type is null and source_regime_type is null) or _source_regime_type = source_regime_type);
+                    update      hivmigration_drug_orders d
+                    INNER JOIN  hivmigration_regimes r on r.source_regime_id = d.source_regime_id
+                    set         d.order_reason_non_coded = concat(_source_product_type, concat(' - ', _source_regime_type))
+                    where       d.order_action = 'NEW'
+                    and         ((_source_product_type is null and r.source_product_type is null) or _source_product_type = r.source_product_type)
+                    and         ((_source_regime_type is null and r.source_regime_type is null) or _source_regime_type = r.source_regime_type);
                 ELSE
-                    update  hivmigration_drug_orders
-                    set     order_reason = @concept_id
-                    where   order_action = 'NEW'
-                    and     ((_source_product_type is null and source_product_type is null) or _source_product_type = source_product_type)
-                    and     ((_source_regime_type is null and source_regime_type is null) or _source_regime_type = source_regime_type);
+                    update      hivmigration_drug_orders d
+                    INNER JOIN  hivmigration_regimes r on r.source_regime_id = d.source_regime_id
+                    set         d.order_reason = @concept_id
+                    where       d.order_action = 'NEW'
+                    and         ((_source_product_type is null and r.source_product_type is null) or _source_product_type = r.source_product_type)
+                    and         ((_source_regime_type is null and r.source_regime_type is null) or _source_regime_type = r.source_regime_type);
                 END IF;
             END $$
             DELIMITER ;
@@ -492,21 +570,24 @@ class RegimenMigrator extends SqlMigrator {
             BEGIN
                 SET @concept_id = (select concept_id from concept where uuid = _concept_uuid);
                 IF @concept_id is null THEN
-                    update  hivmigration_drug_orders
-                    set     order_reason_non_coded = _reason
-                    where   order_action = 'DISCONTINUE'
-                    and     source_discontinue_reason = _reason;
+                    update      hivmigration_drug_orders d
+                    INNER JOIN  hivmigration_regimes r on r.source_regime_id = d.source_regime_id
+                    set         d.order_reason_non_coded = _reason
+                    where       d.order_action = 'DISCONTINUE'
+                    and         r.source_reason_for_closure = _reason;
                 ELSE
                     IF _reason is null THEN
-                        update  hivmigration_drug_orders
-                        set     order_reason = @concept_id
-                        where   order_action = 'DISCONTINUE'
-                        and     source_discontinue_reason is null;
+                        update      hivmigration_drug_orders d
+                        INNER JOIN  hivmigration_regimes r on r.source_regime_id = d.source_regime_id
+                        set         d.order_reason = @concept_id
+                        where       d.order_action = 'DISCONTINUE'
+                        and         r.source_reason_for_closure is null;
                     ELSE
-                        update  hivmigration_drug_orders
-                        set     order_reason = @concept_id
-                        where   order_action = 'DISCONTINUE'
-                        and     source_discontinue_reason = _reason;
+                        update      hivmigration_drug_orders d
+                        INNER JOIN  hivmigration_regimes r on r.source_regime_id = d.source_regime_id
+                        set         d.order_reason = @concept_id
+                        where       d.order_action = 'DISCONTINUE'
+                        and         r.source_reason_for_closure = _reason;
                     END IF;
                 END IF;
             END $$
@@ -548,12 +629,14 @@ class RegimenMigrator extends SqlMigrator {
     void populateDosingInstructions() {
         executeMysql("Populate dosing instructions from legacy data", '''
 
-            UPDATE  hivmigration_drug_orders SET dosing_instructions = concat(
-                ddd, ' /day', ' x ', dwd, ' days/week',
-                if (morning_dose > 0, concat(' - ', morning_dose, '/morning'), ''),
-                if (noon_dose > 0, concat(' - ', noon_dose, '/noon'), ''),
-                if (evening_dose > 0, concat(' - ', evening_dose, '/evening'), ''),
-                if (night_dose > 0, concat(' - ', night_dose, '/night'), '')
+            UPDATE      hivmigration_drug_orders d
+            INNER JOIN  hivmigration_regimes r on r.source_regime_id = d.source_regime_id
+            SET d.as_needed = r.source_prn, d.dosing_instructions = concat(
+                r.source_ddd, ' /day', ' x ', source_dwd, ' days/week',
+                if (r.source_morning_dose > 0, concat(' - ', r.source_morning_dose, '/morning'), ''),
+                if (r.source_noon_dose > 0, concat(' - ', r.source_noon_dose, '/noon'), ''),
+                if (r.source_evening_dose > 0, concat(' - ', r.source_evening_dose, '/evening'), ''),
+                if (r.source_night_dose > 0, concat(' - ', r.source_night_dose, '/night'), '')
             );
             
         ''')
@@ -567,14 +650,18 @@ class RegimenMigrator extends SqlMigrator {
             SET @unknown_provider = (SELECT provider_id FROM provider WHERE uuid = 'f9badd80-ab76-11e2-9e96-0800200c9a66');
 
             insert into orders (
-                order_id, uuid, order_type_id, patient_id, encounter_id, order_number, previous_order_id,
-                order_action, date_activated, urgency, scheduled_date, auto_expire_date, date_stopped, 
+                order_id, uuid, order_type_id, patient_id, encounter_id, 
+                order_number, previous_order_id,
+                order_action, date_activated, urgency, scheduled_date, 
+                auto_expire_date, date_stopped, 
                 care_setting, concept_id, order_reason, order_reason_non_coded,
                 orderer, creator, date_created, voided
             )
             select
-                d.order_id, d.order_uuid, @drug_order_type, d.patient_id, d.encounter_id, concat('HIVEMR-', d.source_regime_id), d.previous_order_id,
-                d.order_action, d.date_activated, d.urgency, d.scheduled_date, d.auto_expire_date, d.date_stopped,
+                d.order_id, d.order_uuid, @drug_order_type, d.patient_id, d.encounter_id, 
+                concat('HIVEMR-', d.source_regime_id), d.previous_order_id,
+                d.order_action, d.date_activated, d.urgency, if(d.urgency = 'ON_SCHEDULED_DATE', d.start_date, null), 
+                d.auto_expire_date, d.date_stopped,
                 @outpatient_care_setting, d.concept_id, d.order_reason, d.order_reason_non_coded,
                 @unknown_provider, 1, date_format(curdate(), '%Y-%m-%d %T'), 0
             from 
@@ -593,11 +680,20 @@ class RegimenMigrator extends SqlMigrator {
                 order_id, drug_inventory_id, drug_non_coded, dosing_type, dosing_instructions, as_needed, quantity, quantity_units, num_refills
             )
             select
-                d.order_id, d.drug_id, d.drug_non_coded, 'org.openmrs.FreeTextDosingInstructions', d.dosing_instructions, 0, 1, @dose_pack_units, 0
+                d.order_id, d.drug_id, d.drug_non_coded, 'org.openmrs.FreeTextDosingInstructions', d.dosing_instructions, d.as_needed, 1, @dose_pack_units, 0
             from 
                 hivmigration_drug_orders d
             ; 
             
+        ''')
+    }
+
+    void removeRegimenEncountersThatHaveNoAssociatedDrugOrders() {
+        executeMysql("Remove regime encounters that have no orders associated with them", '''
+            delete e.* from encounter e
+            inner join encounter_type t on e.encounter_type = t.encounter_type_id
+            where t.uuid = '0b242b71-5b60-11eb-8f5a-0242ac110002'
+            and e.encounter_id not in (select distinct encounter_id from orders);
         ''')
     }
 
@@ -620,25 +716,26 @@ class RegimenMigrator extends SqlMigrator {
             ''')
             executeMysql("drop table hivmigration_drug_orders")
         }
+        executeMysql("drop table if exists hivmigration_regimes")
     }
 
     void validateResults() {
 
         assertMatch(
-                "There should be 1 order for all regimes, 2 orders if discontinued",
-                "select sum(decode(r.close_date, null, 1, 2)) as num from hiv_regimes_real r, hiv_demographics_real d where r.patient_id = d.patient_id",
-                "select count(*) as num from drug_order"
+                "All data from Oracle should be loaded into staging table",
+                "select count(*) as num from hiv_regimes_real r, hiv_demographics_real d where r.patient_id = d.patient_id",
+                "select count(*) as num from hivmigration_regimes"
         )
 
         assertMatch(
-                "There should be a new order for all orders",
+                "There should be a new order for all regimes",
                 "select count(*) as num from hiv_regimes_real r, hiv_demographics_real d where r.patient_id = d.patient_id",
                 "select count(*) as num from orders where order_action = 'NEW'"
         )
 
         assertMatch(
-                "There should be a discontinue order for all closed orders",
-                "select count(*) as num from hiv_regimes_real r, hiv_demographics_real d where r.patient_id = d.patient_id and close_date is not null",
+                "There should be a discontinue order for all closed regimes where close date is not in the future",
+                "select count(*) as num from hiv_regimes_real r, hiv_demographics_real d where r.patient_id = d.patient_id and close_date is not null and close_date <= sysdate",
                 "select count(*) as num from orders where order_action = 'DISCONTINUE'"
         )
 
@@ -709,22 +806,15 @@ class RegimenMigrator extends SqlMigrator {
                 "select count(*) as num from orders o inner join encounter e on o.encounter_id = e.encounter_id where o.date_activated >= e.encounter_datetime"
         )
 
-        /** TODO: This validation fails (
-         * select * from hiv_regimes_real where close_date > sysdate; = 134
-         * select * from hivmigration_drug_orders where date_activated > now(); = 94
         assertNoRows(
                 "No orders can have date activated in the future",
                 "select count(*) from orders where date_activated > now()"
         )
-        */
 
-        /** TODO: This validation fails
-         * select count(*) from orders where date_stopped is not null and date_activated > date_stopped = 939
         assertNoRows(
                 "No orders can have date activated after date stopped",
                 "select count(*) from orders where date_stopped is not null and date_activated > date_stopped"
         )
-         */
 
         assertNoRows(
                 "No orders can have date activated after auto expire date",
@@ -743,24 +833,15 @@ class RegimenMigrator extends SqlMigrator {
 
         // From DrugOrderValidator.java
 
-        /* TODO: This fails but I think this is due to a bug in the openmrs validator - why should this be required?  Need to fix this
         assertNoRows(
                 "All rows must have a non-null as_needed",
                 "select count(*) from drug_order where as_needed is null"
         )
-         */
 
         assertNoRows(
                 "Dosing type is required if action != DISCONTINUE",
                 "select count(*) from orders o inner join drug_order d on o.order_id = d.order_id where dosing_type is null and order_action != 'DISCONTINUE'"
         )
-
-        /* TODO: This validation fails and I think this is a bug in OpenMRS - this would imply that the drug_non_coded won't ever work
-        assertAllRows(
-                "Drug is required and drug must be associated with a concept",
-                "select count(*) from drug_order o inner join drug d on o.drug_inventory_id = d.drug_id where d.concept_id is not null"
-        )
-         */
 
         assertNoRows(
                 "Concept associated with drug must not have a different concept than the one associated with the order",
