@@ -389,7 +389,7 @@ class RegimenMigrator extends SqlMigrator {
             CALL populate_drug('Acyclovir - 400 milligram Tablet', '3cd3d4de-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Albendazole - 400 milligram Tablet', '', '8112cd30-ae2a-11e4-ab27-0800200c9a66'); -- Albendazole, 400mg chewable tablet
             CALL populate_drug('Amoxycillin - 500 milligram Tablet', '', '1491ae88-f38c-4a8c-94d5-f8385eb3b9d9'); -- Amoxicillin, 500mg tablet
-            CALL populate_drug('Amprenavir - 150 milligram Tablet', '3cee7fb4-26fe-102b-80cb-0017a47871b2', '');
+            CALL populate_drug('Amprenavir - 150 milligram Tablet', '71193AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', '');
             CALL populate_drug('Atazanavir - 300 milligram Capsule', '71647AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', '');
             CALL populate_drug('Atazanavir/Ritonavir 300/100 mg - 400 milligram Tablet', '', '78f95d38-dfbe-11e9-8a34-2a2ae2dbcce4'); -- Atazanavir sulfate (ATV) 300mg + Ritonavir (r) 100mg tablet
             CALL populate_drug('Atenolol - 50 milligram Tablet', '', '2f8d7a99-d4ec-4ad7-b898-1c953cb332fd'); -- Atenolol, 50mg tablet
@@ -399,7 +399,7 @@ class RegimenMigrator extends SqlMigrator {
             CALL populate_drug('AZT+3TC+NVP 60/30/50 mg - 140 milligram Tablet', '', '78f97cfa-dfbe-11e9-8a34-2a2ae2dbcce4'); -- Lamivudine (3TC) 30mg + Nevirapine (NVP) 50mg + Zidovudine (AZT) 60mg dispersible tablet
             CALL populate_drug('B- Complex - 16 milligram Tablet', '3ccf6e62-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Benzyl PNC 5,000,000IU - 1 gram Other', '', '2896a1ad-f576-4073-875e-835d40d70548'); -- Benzylpenicillin (Penicillin G), Powder for solution for injection, 5 MIU vial
-            CALL populate_drug('Butylscopolamine - 10 milligram Tablet', '3cee7fb4-26fe-102b-80cb-0017a47871b2', '');
+            CALL populate_drug('Butylscopolamine - 10 milligram Tablet', '3cd0fc3c-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Capreomycin - 1 unspecified Other', '3cda1f60-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Capreomycine - 1 gram Ampulle', '3cda1f60-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Captopril - 50 milligram Tablet', '4add1344-ec52-41e3-b5b9-267f19d99aa2', '');
@@ -485,7 +485,7 @@ class RegimenMigrator extends SqlMigrator {
             CALL populate_drug('Nystatine gttes 100000ui/ml - 30 ml Bottle', '', '9b28cb67-999c-4fc3-aa9c-31237058fe1c'); -- Nystatin, Oral suspension, 100,000 IU/mL, 30mL bottle
             CALL populate_drug('Paracetamol - 500 milligram Tablet', '', '344fea71-ef04-47f8-86f2-0d3937ac4a32'); -- Paracetamol, 500mg tablet
             CALL populate_drug('Paracetamol (120mg/5ml) - 60 ml Bottle', '3cccd4d6-26fe-102b-80cb-0017a47871b2', '');
-            CALL populate_drug('PASER - 4 gram Sachet', '3cee7fb4-26fe-102b-80cb-0017a47871b2', '');
+            CALL populate_drug('PASER - 4 gram Sachet', '71107AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', '');
             CALL populate_drug('Penicillin Benzathine - 2.4 million_units Ampulle', '', 'ab912f78-2112-4e87-aca7-1ded71e8a04b'); -- Benzathine benzylpenicillin, Powder for solution for injection, 2.4 MIU vial
             CALL populate_drug('Promethazine - 25 milligram Tablet', '', '7965cb77-d7e1-4871-99eb-10718198c869'); -- Promethazine hydrochloride, 25mg coated tablet
             CALL populate_drug('Pyrazinamide - 500 milligram Capsule', '', '79a38c38-5bc8-11e9-8647-d663bd873d93'); -- Pyrazinamide (Z), 500mg tablet
@@ -504,16 +504,16 @@ class RegimenMigrator extends SqlMigrator {
             CALL populate_drug('Rifabutin - 1 unspecified Other', '3ce42dc0-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Rifampicin - 300 milligram Tablet', '', '78fab944-dfbe-11e9-8a34-2a2ae2dbcce4'); -- Rifampicin (R), 300mg capsule
             CALL populate_drug('Rifampicin - 1 unspecified Other', '3cd40b5c-26fe-102b-80cb-0017a47871b2', '');
-            CALL populate_drug('Rifampin/Ethambutol - 1 tab Ampulle', '3cee7fb4-26fe-102b-80cb-0017a47871b2', '');
+            CALL populate_drug('Rifampin/Ethambutol - 1 tab Ampulle', '543cd766-7ff2-4a26-ae60-20612821b681', '');
             CALL populate_drug('Ritonavir 100 mg - 100 milligram Tablet', '83412AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', '');
             CALL populate_drug('Salbutamol aerosol pompre - 100 milligram Other', '3cd4470c-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Salbutamol Nebulizer - 2 ml Other', '3cd4470c-26fe-102b-80cb-0017a47871b2', '');
-            CALL populate_drug('SHREZ - 1 unspecified Other', '3cee7fb4-26fe-102b-80cb-0017a47871b2', '');
+            CALL populate_drug('SHREZ - 1 unspecified Other', '3e426372-012e-4936-8d57-81bad52f3e3d', '');
             CALL populate_drug('Stavudine - 40 milligram Tablet', '3cd24984-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Stavudine - 1 unspecified Other', '3cd24984-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Streptomycin - 1 gram Ampulle', '', 'f55edf29-b1ac-4c43-8fb4-57a9c4415c0c'); -- Streptomycin sulfate, Powder for solution for injection, 1g vial
             CALL populate_drug('Streptomycin - 1 unspecified Other', '3cd10740-26fe-102b-80cb-0017a47871b2', '');
-            CALL populate_drug('Sulfate de Fer + HC fol (250mg/60mg) - 310 milligram Tablet', '3cee7fb4-26fe-102b-80cb-0017a47871b2', '');
+            CALL populate_drug('Sulfate de Fer + HC fol (250mg/60mg) - 310 milligram Tablet', '3cd41552-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Sulphate-de-fer - 200 milligram Capsule', '3ccee960-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Tenofovir - 300 milligram Tablet', '', '78faa576-dfbe-11e9-8a34-2a2ae2dbcce4'); -- Tenofovir disoproxil fumarate (TDF), 300mg tablet
             CALL populate_drug('Tenofovir - 1 unspecified Other', '3cd45166-26fe-102b-80cb-0017a47871b2', '');
