@@ -23,6 +23,7 @@ class EncounterMigrator extends SqlMigrator {
               comments varchar(4000),
               note_title varchar(100),
               response_to int,
+              form_version varchar(10),
               KEY `patient_id_idx` (`patient_id`),
               KEY `source_patient_id_idx` (`source_patient_id`),
               KEY `source_encounter_id_idx` (`source_encounter_id`),
@@ -39,8 +40,8 @@ class EncounterMigrator extends SqlMigrator {
 
         loadFromOracleToMySql(
                 '''
-                insert into hivmigration_encounters(source_encounter_id,source_patient_id,source_encounter_type,source_creator_id,encounter_date,date_created,comments,performed_by,source_location_id,note_title,response_to)
-                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                insert into hivmigration_encounters(source_encounter_id,source_patient_id,source_encounter_type,source_creator_id,encounter_date,date_created,comments,performed_by,source_location_id,note_title,response_to, form_version)
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
                 '''
                 select
@@ -54,14 +55,19 @@ class EncounterMigrator extends SqlMigrator {
                     e.performed_by,
                     e.encounter_site,
                     e.note_title,
-                    e.response_to
+                    e.response_to,
+                    NVL(i.FORM_VERSION,f.FORM_VERSION)
                 from
-                    hiv_encounters e, hiv_demographics_real p 
-                    where e.patient_id = p.patient_id 
+                    hiv_encounters e, hiv_demographics_real p, HIV_INTAKE_FORMS i, HIV_FOLLOWUP_FORMS f
+                    where e.patient_id = p.patient_id and i.ENCOUNTER_ID (+)= e.ENCOUNTER_ID and f.ENCOUNTER_ID (+) = e.ENCOUNTER_ID
             '''
         )
         executeMysql("Add UUIDs", '''
             UPDATE hivmigration_encounters SET encounter_uuid = uuid();
+        ''')
+
+        executeMysql("Set Form Version to 1 for all Intake and Followup with no versions", '''
+            update hivmigration_encounters set form_version='1' where (source_encounter_type='intake' or source_encounter_type='followup') and form_version is null;
         ''')
 
         executeMysql("Fill encounter types column", '''
@@ -83,15 +89,23 @@ class EncounterMigrator extends SqlMigrator {
         // TODO: Handle source_encounter_type "anlap_vital_signs", "patient_contact", "food_study", "note" (https://pihemr.atlassian.net/browse/UHM-3244)
 
         executeMysql("Fill form id column", '''
-            SET @form_intake = (select form_id from form where uuid = '3a0a04ae-4184-11e7-a919-92ebcb67fe33');
-            SET @form_followup = (select form_id from form where uuid = '3959f67c-b83a-11e7-abc4-cec278b6b50a');
+            SET @form_intake_v1 = (select form_id from form where uuid = '29a109f6-6dd3-4e98-af88-134cf7e7da1b');
+            SET @form_intake_v2 = (select form_id from form where uuid = '12f9aebe-0882-4211-a61e-006e4c7a5a96');
+            SET @form_intake_v3 = (select form_id from form where uuid = '53725d05-99c1-4fad-be82-c1ca60a8dd9b');
+            SET @form_followup_v1 = (select form_id from form where uuid = '9c180d22-7ef6-49e4-8e52-ff314e218451');
+            SET @form_followup_v2 = (select form_id from form where uuid = '60efebcc-a4ff-4459-9754-1eaeafc4dc24');
+            SET @form_followup_v3 = (select form_id from form where uuid = 'd2cee145-0b53-4588-9836-dadafa122a8e');
             SET @form_lab_results = (select form_id from form where uuid = '4d778ef4-0620-11e5-a6c0-1697f925ec7b');
             SET @form_hiv_dispensing = (select form_id from form where uuid = 'c3af594f-fd77-44b2-b3a0-44d4f3c7cc3a');
             SET @form_hiv_drug_order = (select form_id from form where uuid = '96482a6e-5b62-11eb-8f5a-0242ac110002');
             
             UPDATE hivmigration_encounters SET form_id = CASE
-                WHEN source_encounter_type = "intake" THEN @form_intake
-                WHEN source_encounter_type = "followup" THEN @form_followup
+                WHEN source_encounter_type = "intake" and form_version = 1 THEN @form_intake_v1
+                WHEN source_encounter_type = "intake" and form_version = 2 THEN @form_intake_v2
+                WHEN source_encounter_type = "intake" and form_version = 3 THEN @form_intake_v3
+                WHEN source_encounter_type = "followup" and form_version = 1 THEN @form_followup_v1
+                WHEN source_encounter_type = "followup" and form_version = 2 THEN @form_followup_v2
+                WHEN source_encounter_type = "followup" and form_version = 3 THEN @form_followup_v3
                 WHEN source_encounter_type = "lab_result" THEN @form_lab_results
                 WHEN source_encounter_type = "anlap_lab_result" THEN @form_lab_results
                 WHEN source_encounter_type = "accompagnateur" THEN @form_hiv_dispensing
