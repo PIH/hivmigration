@@ -755,12 +755,12 @@ class RegimenMigrator extends SqlMigrator {
         )
 
         assertAllRows(
-                "All drug orders must have a coded or non-coded drug",
+                "All drug orders must have a coded or non-coded drug", "drug_order",
                 "select count(*) as num from drug_order where drug_inventory_id is not null or drug_non_coded is not null"
         )
 
         assertAllRows(
-                "All orders must be routine or scheduled",
+                "All orders must be routine or scheduled","drug_order",
                 "select count(*) as num from orders o where (urgency = 'ROUTINE' and scheduled_date is null) or (urgency = 'ON_SCHEDULED_DATE' and scheduled_date > date_activated)"
         )
 
@@ -807,12 +807,12 @@ class RegimenMigrator extends SqlMigrator {
         )
 
         assertAllRows(
-                "All orders must have the same patient in the order and the encounter",
+                "All orders must have the same patient in the order and the encounter","drug_order",
                 "select count(*) as num from orders o inner join encounter e on e.encounter_id = o.encounter_id where o.patient_id = e.patient_id"
         )
 
         assertAllRows(
-                "All orders must have date activated on or after encounter date",
+                "All orders must have date activated on or after encounter date", "drug_order",
                 "select count(*) as num from orders o inner join encounter e on o.encounter_id = e.encounter_id where o.date_activated >= e.encounter_datetime"
         )
 
@@ -859,7 +859,7 @@ class RegimenMigrator extends SqlMigrator {
         )
 
         assertAllRows(
-                "All rows are outpatient",
+                "All rows are outpatient","drug_order",
                 "select count(*) from orders o inner join care_setting c on o.care_setting = c.care_setting_id where c.care_setting_type = 'OUTPATIENT'"
         )
 
@@ -869,7 +869,7 @@ class RegimenMigrator extends SqlMigrator {
         )
 
         assertAllRows(
-                "All drug orders must have a coded or non-coded drug",
+                "All drug orders must have a coded or non-coded drug","drug_order",
                 "select count(*) as num from drug_order where drug_inventory_id is not null or drug_non_coded is not null"
         )
 

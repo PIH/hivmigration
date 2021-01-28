@@ -323,9 +323,9 @@ abstract class SqlMigrator {
 
     // Methods that allow for creating tests that should pass
 
-    protected void assertAllRows(String description, String mysqlQuery) throws Exception {
+    protected void assertAllRows(String description, String tableName, String mysqlQuery) throws Exception {
         log.info("Testing: " + description);
-        Number allRows = (Number) selectMysql("select count(*) from drug_order", new ScalarHandler<Number>());
+        Number allRows = (Number) selectMysql("select count(*) from " + tableName, new ScalarHandler<Number>());
         Number result = (Number) selectMysql(mysqlQuery, new ScalarHandler<Number>());
         if (!allRows.equals(result)) {
             fail(allRows + " expected but " + result + " returned");
