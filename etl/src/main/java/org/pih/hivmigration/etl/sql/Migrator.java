@@ -113,6 +113,7 @@ public class Migrator {
                 revert(new ProviderMigrator());
                 revert(new ProgramMigrator());
                 revert(new RegistrationMigrator());
+                revert(new RegimenMigrator());
                 revert(new EncounterMigrator());
                 revert(new InfantMigrator());
                 revert(new PatientMigrator());
@@ -129,6 +130,7 @@ public class Migrator {
                 migrate(new PatientMigrator(), limit);
                 migrate(new InfantMigrator(), limit);
                 migrate(new EncounterMigrator(), limit);
+                migrate(new RegimenMigrator(), limit);
                 migrate(new RegistrationMigrator(), limit);
                 migrate(new ProgramMigrator(), limit);
                 migrate(new ProviderMigrator(), limit);
