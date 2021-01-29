@@ -56,7 +56,7 @@ class EncounterMigrator extends SqlMigrator {
                     e.encounter_site,
                     e.note_title,
                     e.response_to,
-                    NVL(i.FORM_VERSION,f.FORM_VERSION)
+                    COALESCE(i.FORM_VERSION,f.FORM_VERSION,'1')
                 from
                     hiv_encounters e, hiv_demographics_real p, HIV_INTAKE_FORMS i, HIV_FOLLOWUP_FORMS f
                     where e.patient_id = p.patient_id and i.ENCOUNTER_ID (+)= e.ENCOUNTER_ID and f.ENCOUNTER_ID (+) = e.ENCOUNTER_ID
@@ -64,10 +64,6 @@ class EncounterMigrator extends SqlMigrator {
         )
         executeMysql("Add UUIDs", '''
             UPDATE hivmigration_encounters SET encounter_uuid = uuid();
-        ''')
-
-        executeMysql("Set Form Version to 1 for all Intake and Followup with no versions", '''
-            update hivmigration_encounters set form_version='1' where (source_encounter_type='intake' or source_encounter_type='followup') and form_version is null;
         ''')
 
         executeMysql("Fill encounter types column", '''
