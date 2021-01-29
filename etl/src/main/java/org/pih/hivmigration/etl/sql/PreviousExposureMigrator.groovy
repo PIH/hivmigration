@@ -1,5 +1,12 @@
 package org.pih.hivmigration.etl.sql
 
+/**
+ * Migrates from Intake form sections 6 and 7 to "History of therapeutics" section of the new intake form.
+ *
+ * Data comes from HIV_PREVIOUS_EXPOSURES, which is migrated by StagingTablesMigrator.
+ *
+ * https://pihemr.atlassian.net/browse/UHM-5039
+ */
 class PreviousExposureMigrator extends ObsMigrator {
 
     @Override
@@ -17,19 +24,19 @@ class PreviousExposureMigrator extends ObsMigrator {
             VALUES
                 (
                  'CTX',
-                 concept_uuid_from_mapping('PIH', '1590'),
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT'),
                  concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('CIEL', '105281')
                     ),
                 (
                  'Isoniazid',
-                 concept_uuid_from_mapping('PIH', '1590'),
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT'),
                  concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('CIEL', '78280')
                     ),
                 (
                  'other',
-                 concept_uuid_from_mapping('PIH', '1501'),
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT'),
                  concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('CIEL', '5622')
                     ),
@@ -41,13 +48,13 @@ class PreviousExposureMigrator extends ObsMigrator {
                     ),
                 (
                  'AZT_3TC_NVP',
-                 concept_uuid_from_mapping('PIH', '1501'),
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
                  concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('PIH', '13014')
                     ),
                 (
                  'AZT_3TC_EFV',
-                 concept_uuid_from_mapping('PIH', '1501'),
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
                  concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('PIH', '13014')
                     ),
@@ -65,7 +72,7 @@ class PreviousExposureMigrator extends ObsMigrator {
                     ),
                 (
                  'D4T_3TC_NVP',
-                 concept_uuid_from_mapping('PIH', '1501'),
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
                  concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('PIH', '13012')
                     ),
@@ -77,13 +84,13 @@ class PreviousExposureMigrator extends ObsMigrator {
                     ),
                 (
                  'D4T_3TC_EFV',
-                 concept_uuid_from_mapping('PIH', '1501'),
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
                  concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('PIH', '13012')
                     ),
                 (
                  'Fluconazole',
-                 concept_uuid_from_mapping('PIH', '1590'),
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT'),
                  concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('CIEL', '76488')
                     ),
@@ -92,6 +99,51 @@ class PreviousExposureMigrator extends ObsMigrator {
                  concept_uuid_from_mapping('PIH', 'Family planning history construct'),
                  concept_uuid_from_mapping('CIEL', '374'),
                  concept_uuid_from_mapping('CIEL', '1472')
+                    ),
+                (
+                 '2HRZE_4HR',
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
+                 concept_uuid_from_mapping('CIEL', '1190'),
+                 concept_uuid_from_mapping('PIH', '2406')
+                    ),
+                (
+                 '2S+HRZE_1HRZE_5HR+E',
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
+                 concept_uuid_from_mapping('CIEL', '1190'),
+                 concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
+                    ),
+                (
+                 'mdr_tb_treatment',
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
+                 concept_uuid_from_mapping('CIEL', '1190'),
+                 concept_uuid_from_mapping('CIEL', '159909')
+                    ),
+                -- Hypothetical future values:
+                -- These don't exist in the data presently, but it is possible for the latest forms to
+                -- create these kinds of values.
+                (
+                 'AZT_3TC_EFV_NVP',
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
+                 concept_uuid_from_mapping('CIEL', '1282'),
+                 concept_uuid_from_mapping('PIH', '13014')
+                    ),
+                (
+                 'TDF_3TC_LPV_r',
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
+                 concept_uuid_from_mapping('CIEL', '1282'),
+                 concept_uuid_from_mapping('PIH', 'TENOFOVIR LAMIVUDINE LOPINAVIR RITONAVIR')
+                    ),
+                (
+                 'TDF_3TC_EFV_NVP',
+                 concept_uuid_from_mapping('CIEL', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
+                 concept_uuid_from_mapping('CIEL', '1282'),
+                 concept_uuid_from_mapping('CIEL', '166052')
+                    ),
+                (
+                 '2HRZ_4HR',
+                 concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
+                 concept_uuid_from_mapping('CIEL', '1190'),
+                 concept_uuid_from_mapping('PIH', '2RHZ / 4RH')
                     )
             ;
         ''')
