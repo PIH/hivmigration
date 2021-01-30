@@ -35,12 +35,6 @@ class PreviousExposureMigrator extends ObsMigrator {
                  concept_uuid_from_mapping('CIEL', '78280')
                     ),
                 (
-                 'other',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('CIEL', '5622')
-                    ),
-                (
                  'depo_provera',
                  concept_uuid_from_mapping('PIH', 'Family planning history construct'),
                  concept_uuid_from_mapping('CIEL', '374'),
@@ -151,9 +145,12 @@ class PreviousExposureMigrator extends ObsMigrator {
         executeMysql("Create row-per-group temporary table",'''
             CREATE TABLE hivmigration_tmp_previous_exposures_groups (
                 obs_group_id INT PRIMARY KEY AUTO_INCREMENT,
-                source_patient_id INT,
                 source_encounter_id INT,
-                source_value VARCHAR(255),
+                grouping_concept_uuid VARCHAR(38),
+                concept_uuid VARCHAR(38),
+                value_concept_uuid VARCHAR(38),  -- value for concept_uuid
+                other_concept_uuid VARCHAR(38),
+                other_value VARCHAR(40),  -- value for other_concept_uuid
                 start_date DATE,
                 end_date DATE
             );
@@ -163,35 +160,91 @@ class PreviousExposureMigrator extends ObsMigrator {
 
         executeMysql("Migrate previous exposures into row-per-group temporary table",'''
             INSERT INTO hivmigration_tmp_previous_exposures_groups
-                (source_patient_id, source_encounter_id, source_value, start_date, end_date)
+                (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, start_date, end_date)
             SELECT
-                hpp.source_patient_id,
                 he.source_encounter_id,
-                inn,
+                map.grouping_concept_uuid,
+                map.concept_uuid,
+                map.value_concept_uuid,
                 start_date,
                 end_date
             FROM hivmigration_previous_exposures hpp
             JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
                 ON hpp.source_patient_id = he.source_patient_id
-            WHERE inn IS NOT NULL;
+            JOIN hivmigration_tmp_previous_exposures_map map ON map.inn = hpp.inn;
+            
+            -- When inn is null and treatment_other is non-null, migrate to family planning other
+            INSERT INTO hivmigration_tmp_previous_exposures_groups
+                (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, other_concept_uuid, other_value, start_date, end_date)
+            SELECT
+                he.source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Family planning history construct'),
+                concept_uuid_from_mapping('CIEL', '374'),
+                concept_uuid_from_mapping('CIEL', '5622'),
+                concept_uuid_from_mapping('PIH', '2996'),
+                treatment_other,
+                start_date,
+                end_date
+            FROM hivmigration_previous_exposures hpp
+            JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
+                ON hpp.source_patient_id = he.source_patient_id
+            WHERE hpp.inn IS NULL;
+            
+            -- DMPA in treatment_other gets migrated as coded depo_provera
+            INSERT INTO hivmigration_tmp_previous_exposures_groups
+                (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, start_date, end_date)
+            SELECT
+                he.source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Family planning history construct'),
+                concept_uuid_from_mapping('CIEL', '374'),
+                concept_uuid_from_mapping('CIEL', '79494'),
+                start_date,
+                end_date
+            FROM hivmigration_previous_exposures hpp
+            JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
+                ON hpp.source_patient_id = he.source_patient_id
+            WHERE hpp.treatment_other = 'DMPA';
+            
+            -- All other treatment_other gets migrated to HIV other
+            INSERT INTO hivmigration_tmp_previous_exposures_groups
+                (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, other_concept_uuid, other_value, start_date, end_date)
+            SELECT
+                he.source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('CIEL', '5622'),
+                concept_uuid_from_mapping('PIH', '1527'),
+                treatment_other,
+                start_date,
+                end_date
+            FROM hivmigration_previous_exposures hpp
+            JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
+                ON hpp.source_patient_id = he.source_patient_id
+            WHERE hpp.inn IS NOT NULL AND hpp.treatment_other IS NOT NULL AND hpp.treatment_other != 'DMPA';
         ''')
 
         create_tmp_obs_table()
 
         executeMysql("Migrate previous exposures from row-per-group into tmp_obs table",'''
             INSERT INTO tmp_obs
-                (obs_id, source_patient_id, source_encounter_id, concept_uuid)
+                (obs_id, source_encounter_id, concept_uuid)
             SELECT
-                obs_group_id, source_patient_id, source_encounter_id, map.grouping_concept_uuid
-            FROM hivmigration_tmp_previous_exposures_groups pegroups
-            JOIN hivmigration_tmp_previous_exposures_map map ON map.inn = pegroups.source_value;
+                obs_group_id, source_encounter_id, grouping_concept_uuid
+            FROM hivmigration_tmp_previous_exposures_groups;
             
             INSERT INTO tmp_obs
-                (obs_group_id, source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
+                (obs_group_id, source_encounter_id, concept_uuid, value_coded_uuid)
             SELECT
-                obs_group_id, source_patient_id, source_encounter_id, map.concept_uuid, map.value_concept_uuid
-            FROM hivmigration_tmp_previous_exposures_groups pegroups
-            JOIN hivmigration_tmp_previous_exposures_map map ON map.inn = pegroups.source_value;
+                obs_group_id, source_encounter_id, concept_uuid, value_concept_uuid
+            FROM hivmigration_tmp_previous_exposures_groups
+            WHERE value_concept_uuid IS NOT NULL;
+            
+            INSERT INTO tmp_obs
+                (obs_group_id, source_encounter_id, concept_uuid, value_text)
+            SELECT
+                obs_group_id, source_encounter_id, other_concept_uuid, other_value
+            FROM hivmigration_tmp_previous_exposures_groups
+            WHERE other_value IS NOT NULL;
         ''')
 
         migrate_tmp_obs()
