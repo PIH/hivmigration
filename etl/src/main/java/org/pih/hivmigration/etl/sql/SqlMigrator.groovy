@@ -328,7 +328,7 @@ abstract class SqlMigrator {
         Number allRows = (Number) selectMysql("select count(*) from " + tableName, new ScalarHandler<Number>());
         Number result = (Number) selectMysql(mysqlQuery, new ScalarHandler<Number>());
         if (!allRows.equals(result)) {
-            fail(allRows + " expected but " + result + " returned");
+            fail(description, allRows + " expected but " + result + " returned");
         }
         log.info("Test successful");
     }
@@ -337,7 +337,7 @@ abstract class SqlMigrator {
         log.info("Testing: " + description);
         Number result = (Number) selectMysql(mysqlQuery, new ScalarHandler<Number>());
         if (result.intValue() != 0) {
-            fail("0 rows expected but " + result + " returned");
+            fail(description, "0 rows expected but " + result + " returned");
         }
         log.info("Test successful");
     }
@@ -367,12 +367,12 @@ abstract class SqlMigrator {
                 Object mysqlValue = mysqlRow.get(key);
                 if (oracleValue != null || mysqlValue != null) {
                     if (oracleValue == null && mysqlValue != null) {
-                        fail("Oracle does not have a value for " + key + " but MySQL has " + mysqlValue);
+                        fail(description, "Oracle does not have a value for " + key + " but MySQL has " + mysqlValue);
                     } else if (mysqlValue == null && oracleValue != null) {
-                        fail("MySQL does not have a value for " + key + " but Oracle has " + oracleValue);
+                        fail(description, "MySQL does not have a value for " + key + " but Oracle has " + oracleValue);
                     } else {
                         if (!oracleValue.toString().equals(mysqlValue.toString())) {
-                            fail("Oracle and MySQL have different values for " + key + "; Oracle = " + oracleValue + ", MySQL = " + mysqlValue);
+                            fail(description, "Oracle and MySQL have different values for " + key + "; Oracle = " + oracleValue + ", MySQL = " + mysqlValue);
                         }
                     }
                     log.info("Test passes for " + key + ": " + oracleValue + " = " + mysqlValue);
@@ -382,7 +382,14 @@ abstract class SqlMigrator {
         log.info("Test successful.");
     }
 
-    protected void fail(String message) {
-        throw new IllegalArgumentException(message);
+    protected void fail(String description, String message) {
+        executeMysql("Log validation failure", '''
+            insert  into hivmigration_data_warnings (
+                    warning_type, warning_details
+            )
+            values (
+                \'validation_error\', \'''' + description + ": " + message + '''\'
+            );
+        ''');
     }
 }
