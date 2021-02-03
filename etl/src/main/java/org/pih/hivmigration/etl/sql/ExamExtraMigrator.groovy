@@ -134,7 +134,8 @@ class ExamExtraMigrator extends ObsMigrator {
             create table hivmigration_transfer_in_from (   
               obs_id int PRIMARY KEY AUTO_INCREMENT,                         
               source_encounter_id int,
-              source_patient_id int,                            
+              source_patient_id int,           
+              transfer_p VARCHAR(1),                 
               transfer_in_from VARCHAR(48),               
               obs_date date             
             );
@@ -146,17 +147,22 @@ class ExamExtraMigrator extends ObsMigrator {
             insert into hivmigration_transfer_in_from
                 (source_encounter_id,
                  source_patient_id,
+                 transfer_p,
                  transfer_in_from,
                  obs_date)
-            values (?, ?, ?, ?)
+            values (?, ?, ?, ?, ?)
             ''', '''
             select o.encounter_id as source_encounter_id,
-                    e.patient_id as source_patient_id,                             
-                    o.value as transfer_in_from,
+                    e.patient_id as source_patient_id,                         
+                    o.value as transfer_p,
+                    case when (o.value='t') then 
+                    ( select obs.value from hiv_observations obs
+                      where  obs.observation='transfer_in_from' and obs.encounter_id= o.encounter_id)                          
+                    end as transfer_in_from,
                     to_char(o.entry_date, 'yyyy-mm-dd') as obs_date 
             from hiv_observations o, hiv_encounters e, hiv_demographics_real d  
             where o.ENCOUNTER_ID = e.ENCOUNTER_ID and e.patient_id = d.patient_id  
-                    and observation='transfer_in_from' and o.value is not null 
+                    and observation='transfer_p' and o.value = 't' 
             order by o.ENCOUNTER_ID
         ''')
 
@@ -175,7 +181,7 @@ class ExamExtraMigrator extends ObsMigrator {
                 source_encounter_id, 
                 concept_uuid_from_mapping('PIH', '13169') as concept_uuid
             FROM hivmigration_transfer_in_from 
-            WHERE transfer_in_from is not null;
+            WHERE transfer_p = 't';
             
             --  Add Transfer in to the construct
             INSERT INTO tmp_obs(
@@ -189,7 +195,7 @@ class ExamExtraMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('CIEL', '160563') as concept_uuid,
                 concept_uuid_from_mapping('CIEL', '160036') as value_coded_uuid
             FROM hivmigration_transfer_in_from 
-            WHERE transfer_in_from is not null;
+            WHERE transfer_p = 't';
             
             --  Add Referred from another site to the construct
             INSERT INTO tmp_obs(
