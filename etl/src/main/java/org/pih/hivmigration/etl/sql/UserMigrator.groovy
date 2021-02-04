@@ -67,9 +67,33 @@ class UserMigrator extends SqlMigrator {
                 SELECT  person_id, first_name, last_name, 1, 1, now(), uuid()
                 FROM    hivmigration_users;
              
-              INSERT INTO users (person_id, username, system_id, creator, date_created, uuid, password, salt)
-                SELECT  person_id, username, source_user_id, 1, now(), user_uuid, password, salt
-                FROM    hivmigration_users;
+              INSERT INTO users (
+                person_id, 
+                username, 
+                system_id, 
+                creator, 
+                date_created, 
+                uuid, 
+                password, 
+                salt, 
+                retired, 
+                retired_by, 
+                date_retired, 
+                retire_reason)
+              SELECT  
+                person_id, 
+                username, 
+                source_user_id, 
+                1, 
+                now(), 
+                user_uuid, 
+                password, 
+                salt, 
+                1, 
+                1,
+                now(),
+                'hivmigration reset'
+              FROM    hivmigration_users;
                 
               UPDATE        hivmigration_users hu
               INNER JOIN    users u on u.uuid = hu.user_uuid
