@@ -1,7 +1,4 @@
 package org.pih.hivmigration.etl.sql
-
-import org.apache.commons.dbutils.handlers.ScalarHandler
-
 /* References:
  *  Legacy model: https://pihemr.atlassian.net/wiki/spaces/ZL/pages/996507669/ART+Regimens+modeling+and+migration
  *  Original ticket: https://pihemr.atlassian.net/browse/UHM-4832
@@ -548,7 +545,8 @@ class TreatmentObsMigrator extends ObsMigrator {
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '159792'),
                 CASE comments
-                    WHEN '2HRZE_4HR' THEN concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR
+                    WHEN '2HRZE_4HR' THEN concept_uuid_from_mapping('PIH', '2406')  -- TB initial treatment with 2HRZE/4HR 
+                    WHEN '2HRZ_4HR' THEN concept_uuid_from_mapping('PIH', '2RHZ / 4RH')  -- TB initial treatment with 2RHZ/4RH
                     WHEN 'mdr_tb_treatment' THEN concept_uuid_from_mapping('CIEL', '159909')  -- 'MDR TB'
                     WHEN 'hrez' THEN concept_uuid_from_mapping('PIH', 'RHZE')
                     WHEN '2S+HRZE_1HRZE_5HR+E' THEN concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
