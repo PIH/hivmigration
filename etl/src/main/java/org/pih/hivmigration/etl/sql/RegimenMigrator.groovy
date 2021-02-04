@@ -684,13 +684,11 @@ class RegimenMigrator extends SqlMigrator {
     void createDrugOrders() {
         executeMysql("Insert data into the Drug Order table", '''
 
-            SET @dose_pack_units = (SELECT concept_id FROM concept WHERE uuid = '162398AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-
             insert into drug_order (
-                order_id, drug_inventory_id, drug_non_coded, dosing_type, dosing_instructions, as_needed, quantity, quantity_units, num_refills
+                order_id, drug_inventory_id, drug_non_coded, dosing_type, dosing_instructions, as_needed
             )
             select
-                d.order_id, d.drug_id, d.drug_non_coded, 'org.openmrs.FreeTextDosingInstructions', d.dosing_instructions, d.as_needed, 1, @dose_pack_units, 0
+                d.order_id, d.drug_id, d.drug_non_coded, 'org.openmrs.FreeTextDosingInstructions', d.dosing_instructions, d.as_needed
             from 
                 hivmigration_drug_orders d
             ; 
@@ -861,11 +859,6 @@ class RegimenMigrator extends SqlMigrator {
         assertAllRows(
                 "All rows are outpatient","drug_order",
                 "select count(*) from orders o inner join care_setting c on o.care_setting = c.care_setting_id where c.care_setting_type = 'OUTPATIENT'"
-        )
-
-        assertNoRows(
-                "Since all are outpatient, all non-discontinue orders need non-null quantity, quantity units, and num refills",
-                "select count(*) from drug_order dro inner join orders o on dro.order_id = o.order_id where o.order_action != 'DISCONTINUE' and (quantity is null or quantity_units is null or num_refills is null)"
         )
 
         assertAllRows(
