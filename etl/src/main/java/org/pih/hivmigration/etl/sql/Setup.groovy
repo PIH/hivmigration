@@ -95,12 +95,12 @@ class Setup extends SqlMigrator {
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 openmrs_patient_id INT,
                 openmrs_encounter_id INT,
-                hiv_emr_encounter_id INT,
-                zl_emr_id VARCHAR(255),
-                hivemr_v1_id INT,
-                hiv_dossier_id VARCHAR(255),
-                hivemr_v1_infant_id int,
-                hivemr_v1_infant_code varchar(20),
+                hiv_emr_encounter_id INT,  -- interpolated
+                zl_emr_id VARCHAR(255),  -- interpolated
+                hivemr_v1_id INT,  -- interpolated
+                hiv_dossier_id VARCHAR(255),  -- interpolated
+                hivemr_v1_infant_id int,  -- interpolated
+                hivemr_v1_infant_code varchar(20),  -- interpolated
                 encounter_date DATE,
                 field_name VARCHAR(100),
                 field_value VARCHAR(1000),
