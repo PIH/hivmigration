@@ -208,6 +208,15 @@ class PreviousExposureMigrator extends ObsMigrator {
 
         executeMysql("Create obs groups for concatenated HIV Other values", '''
             -- We extract unmapped values from inn, and values of treatment_other that are
+            -- not explicitly handled above. Since we need to FULL OUTER JOIN them, which
+            -- in MySQL is accomplished as the union of two joins, we put these values in
+            -- temporary tables which can be joined easily.
+            --
+            -- The result of this is that the "if other, specify" field is populated with text
+            -- giving the treatment names in a comma-delimited list, with start and end dates
+            -- for each one in parentheses, when available. e.g.
+            -- "Zidovudine (du 2004-07-01 à 2008-04-01), Nevirapine, Lamivudine (à 2008-06-01)"
+            
             CREATE TABLE hivmigration_tmp_previous_exposures_inn_other (
                 source_encounter_id INT PRIMARY KEY,
                 inn_other_text VARCHAR(256)
@@ -252,7 +261,7 @@ class PreviousExposureMigrator extends ObsMigrator {
             FROM hivmigration_previous_exposures hpp
             JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
                 ON hpp.source_patient_id = he.source_patient_id
-            WHERE hpp.inn IS NOT NULL AND hpp.treatment_other IS NOT NULL AND hpp.treatment_other != 'DMPA\'
+            WHERE hpp.inn IS NOT NULL AND hpp.treatment_other IS NOT NULL AND hpp.treatment_other != 'DMPA'
             GROUP BY source_encounter_id;
             
             INSERT INTO hivmigration_tmp_previous_exposures_groups
