@@ -192,7 +192,7 @@ abstract class SqlMigrator {
             }
         }
         finally {
-            DbUtils.closeQuietly(targetConnection);
+            DbUtils.closeQuietly((Connection)targetConnection);
         }
     }
 
@@ -273,14 +273,14 @@ abstract class SqlMigrator {
                                 }
                             }
                             finally {
-                                DbUtils.closeQuietly(resultSet);
+                                DbUtils.closeQuietly((ResultSet)resultSet);
                             }
                         }
                         sw.stop();
                         log.info("    Statement executed in: " + sw.toString());
                     }
                     finally {
-                        DbUtils.closeQuietly(statement);
+                        DbUtils.closeQuietly((Statement)statement);
                     }
                 }
             }
@@ -290,8 +290,8 @@ abstract class SqlMigrator {
             }
         }
         finally {
-            DbUtils.closeQuietly(targetConnection);
-            DbUtils.closeQuietly(sourceConnection);
+            DbUtils.closeQuietly((Connection)targetConnection);
+            DbUtils.closeQuietly((Connection)sourceConnection);
         }
     }
 
