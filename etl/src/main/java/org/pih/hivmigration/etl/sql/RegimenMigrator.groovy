@@ -576,13 +576,13 @@ class RegimenMigrator extends SqlMigrator {
 
             DROP PROCEDURE IF EXISTS populate_discontinue_order_reason;
             DELIMITER $$ ;
-            CREATE PROCEDURE populate_discontinue_order_reason ( _reason varchar(100), _concept_uuid char(36))
+            CREATE PROCEDURE populate_discontinue_order_reason ( _reason varchar(100), _concept_uuid char(36), _non_coded_value varchar(100))
             BEGIN
                 SET @concept_id = (select concept_id from concept where uuid = _concept_uuid);
                 IF @concept_id is null THEN
                     update      hivmigration_drug_orders d
                     INNER JOIN  hivmigration_regimes r on r.source_regime_id = d.source_regime_id
-                    set         d.order_reason_non_coded = _reason
+                    set         d.order_reason_non_coded = _non_coded_value
                     where       d.order_action = 'DISCONTINUE'
                     and         r.source_reason_for_closure = _reason;
                 ELSE
@@ -603,34 +603,34 @@ class RegimenMigrator extends SqlMigrator {
             END $$
             DELIMITER ;
 
-            CALL populate_discontinue_order_reason('abandoned', '3cdd5176-26fe-102b-80cb-0017a47871b2'); -- Patient defaulted
-            CALL populate_discontinue_order_reason('cd4_augmented', '');
-            CALL populate_discontinue_order_reason('compliance', '159598AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Non-compliance with treatment or therapy
-            CALL populate_discontinue_order_reason('died', '3cdd446a-26fe-102b-80cb-0017a47871b2'); -- Patient died
-            CALL populate_discontinue_order_reason('dose_change', '981AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Dosing change
-            CALL populate_discontinue_order_reason('finished_prophylaxis', '');
-            CALL populate_discontinue_order_reason('finished_ptme', '3cd91b56-26fe-102b-80cb-0017a47871b2'); -- Completed total PMTCT
-            CALL populate_discontinue_order_reason('finished_treatment', '3cdcecea-26fe-102b-80cb-0017a47871b2'); -- Treatment complete
-            CALL populate_discontinue_order_reason('formulation_change', '981AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Dosing change
-            CALL populate_discontinue_order_reason('ineffective', '3cd49432-26fe-102b-80cb-0017a47871b2');  -- Regimen failure
-            CALL populate_discontinue_order_reason('lost', '3cdd5176-26fe-102b-80cb-0017a47871b2'); -- Patient defaulted
-            CALL populate_discontinue_order_reason('moved_in_haiti_txfer', '');
-            CALL populate_discontinue_order_reason('moved_out_haiti_txfe', '');
-            CALL populate_discontinue_order_reason('other', '3cee7fb4-26fe-102b-80cb-0017a47871b2'); -- Other non-coded
-            CALL populate_discontinue_order_reason('pregnancy', '3cdd8132-26fe-102b-80cb-0017a47871b2'); -- Patient pregnant
-            CALL populate_discontinue_order_reason('prev_undoc_txfer_con', '');
-            CALL populate_discontinue_order_reason('prev_undoc_txfer_not', '');
-            CALL populate_discontinue_order_reason('refused_return_to_tr', 'efab937b-853e-47da-b97e-220f1bdff97d'); -- Refusal of treatment by patient
-            CALL populate_discontinue_order_reason('resistant', '');
-            CALL populate_discontinue_order_reason('side_effect', '3cccecdc-26fe-102b-80cb-0017a47871b2'); -- Toxicity, drug
-            CALL populate_discontinue_order_reason('stock_out', '3cde143a-26fe-102b-80cb-0017a47871b2'); -- Medications unavailable
-            CALL populate_discontinue_order_reason('tb', '');
-            CALL populate_discontinue_order_reason('traced_not_found', '');
-            CALL populate_discontinue_order_reason('transferred_out', '3cdd5c02-26fe-102b-80cb-0017a47871b2'); -- Patient transferred out
-            CALL populate_discontinue_order_reason('treatment_refused', 'efab937b-853e-47da-b97e-220f1bdff97d'); -- Refusal of treatment by patient
-            CALL populate_discontinue_order_reason('treatment_stopped_ot', '3cdc0d7a-26fe-102b-80cb-0017a47871b2'); -- Treatment stopped
-            CALL populate_discontinue_order_reason('tx_stop_side_effects', '3cccecdc-26fe-102b-80cb-0017a47871b2'); -- Toxicity, drug
-            CALL populate_discontinue_order_reason(null, '3cd743f8-26fe-102b-80cb-0017a47871b2'); -- None
+            CALL populate_discontinue_order_reason('abandoned', '3cdd5176-26fe-102b-80cb-0017a47871b2', null); -- Patient defaulted
+            CALL populate_discontinue_order_reason('cd4_augmented', '', 'CD4 augmenté');
+            CALL populate_discontinue_order_reason('compliance', '159598AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', null); -- Non-compliance with treatment or therapy
+            CALL populate_discontinue_order_reason('died', '3cdd446a-26fe-102b-80cb-0017a47871b2', null); -- Patient died
+            CALL populate_discontinue_order_reason('dose_change', '981AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', null); -- Dosing change
+            CALL populate_discontinue_order_reason('finished_prophylaxis', '', 'Prophylaxie complété');
+            CALL populate_discontinue_order_reason('finished_ptme', '3cd91b56-26fe-102b-80cb-0017a47871b2', null); -- Completed total PMTCT
+            CALL populate_discontinue_order_reason('finished_treatment', '3cdcecea-26fe-102b-80cb-0017a47871b2', null); -- Treatment complete
+            CALL populate_discontinue_order_reason('formulation_change', '981AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', null); -- Dosing change
+            CALL populate_discontinue_order_reason('ineffective', '3cd49432-26fe-102b-80cb-0017a47871b2', null);  -- Regimen failure
+            CALL populate_discontinue_order_reason('lost', '3cdd5176-26fe-102b-80cb-0017a47871b2', null); -- Patient defaulted
+            CALL populate_discontinue_order_reason('moved_in_haiti_txfer', '', 'Déplacé à l\\'interieur du pays');
+            CALL populate_discontinue_order_reason('moved_out_haiti_txfe', '', 'Déplacé à l\\'extérieur du pays');
+            CALL populate_discontinue_order_reason('other', '3cee7fb4-26fe-102b-80cb-0017a47871b2', null); -- Other non-coded
+            CALL populate_discontinue_order_reason('pregnancy', '3cdd8132-26fe-102b-80cb-0017a47871b2', null); -- Patient pregnant
+            CALL populate_discontinue_order_reason('prev_undoc_txfer_con', '', 'Transfert précédemment non documenté, confirmé');
+            CALL populate_discontinue_order_reason('prev_undoc_txfer_not', '', 'Transfert précédemment non documenté, non confirmé');
+            CALL populate_discontinue_order_reason('refused_return_to_tr', 'efab937b-853e-47da-b97e-220f1bdff97d', null); -- Refusal of treatment by patient
+            CALL populate_discontinue_order_reason('resistant', '', 'Résistant');
+            CALL populate_discontinue_order_reason('side_effect', '3cccecdc-26fe-102b-80cb-0017a47871b2', null); -- Toxicity, drug
+            CALL populate_discontinue_order_reason('stock_out', '3cde143a-26fe-102b-80cb-0017a47871b2', null); -- Medications unavailable
+            CALL populate_discontinue_order_reason('tb', '', 'Tuberculose');
+            CALL populate_discontinue_order_reason('traced_not_found', '', 'Recherché, non retrouvé');
+            CALL populate_discontinue_order_reason('transferred_out', '3cdd5c02-26fe-102b-80cb-0017a47871b2', null); -- Patient transferred out
+            CALL populate_discontinue_order_reason('treatment_refused', 'efab937b-853e-47da-b97e-220f1bdff97d', null); -- Refusal of treatment by patient
+            CALL populate_discontinue_order_reason('treatment_stopped_ot', '3cdc0d7a-26fe-102b-80cb-0017a47871b2', null); -- Treatment stopped
+            CALL populate_discontinue_order_reason('tx_stop_side_effects', '3cccecdc-26fe-102b-80cb-0017a47871b2', null); -- Toxicity, drug
+            CALL populate_discontinue_order_reason(null, '3cd743f8-26fe-102b-80cb-0017a47871b2', null); -- None
 
             DROP PROCEDURE IF EXISTS populate_discontinue_order_reason;
         ''')
