@@ -17,6 +17,7 @@ class TreatmentObsMigrator extends ObsMigrator {
         migrateArtPlan()
         migrateTbState()
         migrateTbPlan()
+        migrateCurrentOtherMeds()
     }
 
     def void migrateProphylaxesState() {
@@ -576,6 +577,25 @@ class TreatmentObsMigrator extends ObsMigrator {
         ''')
 
         // TODO: migrate 'other' TB treatments
+        migrate_tmp_obs()
+    }
+
+    def void migrateCurrentOtherMeds() {
+        create_tmp_obs_table()
+
+        executeMysql("Migrate Current Other Medications", '''
+            INSERT INTO tmp_obs (
+                source_encounter_id, 
+                concept_uuid, 
+                value_text)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '13318'), -- Current treatment with other medications, non-coded
+                value
+            FROM hivmigration_observations
+            WHERE OBSERVATION='current_tx.other_medications' and value is not null;
+        ''')
+
         migrate_tmp_obs()
     }
 
