@@ -36,43 +36,26 @@ class SocioEconomicAssistanceMigrator extends ObsMigrator {
                    concept_uuid_from_mapping('PIH', 'NUTRITIONAL AID')
             FROM hivmigration_ordered_other
             WHERE ordered = 'nutritional_aid' AND comments IS NOT NULL AND comments != 'non';
-            
+           
             INSERT INTO tmp_obs
             (source_encounter_id, concept_uuid, value_text)
             SELECT source_encounter_id,
                    concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE NON-CODED'),
                    GROUP_CONCAT(value_text SEPARATOR ', ')
             FROM (
-                SELECT source_encounter_id,
-                       CASE ordered
-                           WHEN 'financial_aid' THEN 'Aide financière'
-                           WHEN 'funeral_aid' THEN 'Aide pour funérailles'
-                           WHEN 'house_assistance' THEN 'Aide au logement'
-                           WHEN 'professional_training' THEN 'Formation professionnelle'
-                           WHEN 'school_aid' THEN 'Aide scolaire'
-                           WHEN 'social_assistance_other' THEN comments
-                           END AS value_text
-                FROM hivmigration_ordered_other
-                WHERE ordered IN ('financial_aid', 'funeral_aid', 'house_assistance', 'professional_training', 'school_aid', 'social_assistance_other')
-                    AND comments IS NOT NULL AND comments NOT LIKE 'no%' AND comments NOT LIKE 'aucun') o
+                     SELECT source_encounter_id,
+                            CONCAT(CASE ordered
+                                WHEN 'financial_aid' THEN 'Aide financière\'
+                                WHEN 'funeral_aid' THEN 'Aide pour funérailles\'
+                                WHEN 'house_assistance' THEN 'Aide au logement\'
+                                WHEN 'professional_training' THEN 'Formation professionnelle\'
+                                WHEN 'school_aid' THEN 'Aide scolaire\'
+                                WHEN 'social_assistance_other' THEN comments
+                                END, ' (', comments, ')') AS value_text
+                     FROM hivmigration_ordered_other
+                     WHERE ordered IN ('financial_aid', 'funeral_aid', 'house_assistance', 'professional_training', 'school_aid', 'social_assistance_other')
+                       AND comments IS NOT NULL AND comments NOT LIKE 'no%' AND comments NOT LIKE 'aucun') o
             GROUP BY source_encounter_id;
-            
-            INSERT INTO tmp_obs
-            (source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT source_encounter_id,
-                   concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE ALREADY RECEIVED'),
-                   concept_uuid_from_mapping('CIEL', '5622')  -- Other
-            FROM (SELECT * FROM hivmigration_ordered_other
-                  WHERE ordered IN ('financial_aid', 'funeral_aid', 'house_assistance', 'school_aid', 'social_assistance_other')
-                  GROUP BY source_encounter_id) o;
-            
-            INSERT INTO tmp_obs
-            (source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT source_encounter_id,
-                   concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE RECOMMENDED'),
-                   concept_uuid_from_mapping('CIEL', '5622')  -- Other
-            FROM hivmigration_ordered_other
-            WHERE ordered = 'professional_training';
         ''')
 
         migrate_tmp_obs()
