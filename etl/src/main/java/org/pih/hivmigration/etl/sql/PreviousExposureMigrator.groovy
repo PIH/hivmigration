@@ -97,19 +97,19 @@ class PreviousExposureMigrator extends ObsMigrator {
                 (
                  '2HRZE_4HR',
                  concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1190'),
+                 concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('PIH', '2406')
                     ),
                 (
                  '2S+HRZE_1HRZE_5HR+E',
                  concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1190'),
+                 concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
                     ),
                 (
                  'mdr_tb_treatment',
                  concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1190'),
+                 concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('CIEL', '159909')
                     ),
                 -- Hypothetical future values:
@@ -136,7 +136,7 @@ class PreviousExposureMigrator extends ObsMigrator {
                 (
                  '2HRZ_4HR',
                  concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1190'),
+                 concept_uuid_from_mapping('CIEL', '1282'),
                  concept_uuid_from_mapping('PIH', '2RHZ / 4RH')
                     )
             ;
@@ -276,16 +276,16 @@ class PreviousExposureMigrator extends ObsMigrator {
                        IF(inn_other_text != '' AND tx_other_text != '', ', ', ''),
                        tx_other_text)
             FROM (
-                 SELECT inn_other.source_encounter_id, inn_other_text, '' AS tx_other_text
-                 FROM hivmigration_tmp_previous_exposures_inn_other inn_other
-                          LEFT JOIN hivmigration_tmp_previous_exposures_tx_other tx_other
-                                    on inn_other.source_encounter_id = tx_other.source_encounter_id
-                 UNION ALL
-                 SELECT inn_other.source_encounter_id, '' AS inn_other_text, tx_other_text
-                 FROM hivmigration_tmp_previous_exposures_inn_other inn_other
-                          RIGHT JOIN hivmigration_tmp_previous_exposures_tx_other tx_other
-                                     on inn_other.source_encounter_id = tx_other.source_encounter_id
-                 WHERE inn_other.source_encounter_id IS NULL) other_texts;
+                     SELECT inn_other.source_encounter_id, inn_other_text, '' AS tx_other_text
+                     FROM hivmigration_tmp_previous_exposures_inn_other inn_other
+                              LEFT JOIN hivmigration_tmp_previous_exposures_tx_other tx_other
+                                        on inn_other.source_encounter_id = tx_other.source_encounter_id
+                     UNION ALL
+                     SELECT tx_other.source_encounter_id, '' AS inn_other_text, tx_other_text
+                     FROM hivmigration_tmp_previous_exposures_tx_other tx_other
+                              LEFT JOIN hivmigration_tmp_previous_exposures_inn_other inn_other
+                                        on inn_other.source_encounter_id = tx_other.source_encounter_id
+                     WHERE inn_other.source_encounter_id IS NULL) other_texts;
         ''')
 
         create_tmp_obs_table()
