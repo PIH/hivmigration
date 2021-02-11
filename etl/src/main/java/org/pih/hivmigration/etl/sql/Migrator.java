@@ -29,8 +29,8 @@ public class Migrator {
     @Parameter(names={"--limit", "-l"}, description="Limit the number of rows to import.")
     private int limit = -1;
 
-    @Parameter(names={"--de-identify", "-d"}, description="De-identify patient names.")
-    private boolean deIdentify = false;
+    @Parameter(names={"--dev-features", "-d"}, description="De-identify patient names and insert sample data.")
+    private boolean devFeatures = false;
 
     @Parameter(names={"--help", "-h"}, help = true)
     private boolean help = false;
@@ -160,7 +160,8 @@ public class Migrator {
                 migrate(new SocioEconomicAssistanceMigrator(), -1);
                 migrate(new VisitMigrator(), limit);
                 migrate(new DataWarningsMigrator(), limit);
-                if (deIdentify) {
+                if (devFeatures) {
+//                    migrate(new SampleDataMigrator(), -1);
                     migrate(new DeIdentifyMigrator(), -1);
                 }
             }
