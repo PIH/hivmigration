@@ -152,7 +152,8 @@ class PreviousExposureMigrator extends ObsMigrator {
                 other_concept_uuid VARCHAR(38),
                 other_value VARCHAR(256),  -- value for other_concept_uuid
                 start_date DATE,
-                end_date DATE
+                end_date DATE,
+                result_uuid VARCHAR(38)
             );
         ''')
 
@@ -160,14 +161,19 @@ class PreviousExposureMigrator extends ObsMigrator {
 
         executeMysql("Migrate previous exposures into row-per-group temporary table",'''
             INSERT INTO hivmigration_tmp_previous_exposures_groups
-                (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, start_date, end_date)
+            (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, start_date, end_date, result_uuid)
             SELECT
                 he.source_encounter_id,
                 map.grouping_concept_uuid,
                 map.concept_uuid,
                 map.value_concept_uuid,
                 start_date,
-                end_date
+                end_date,
+                CASE treatment_outcome
+                    WHEN 'cured' THEN concept_uuid_from_mapping('CIEL', '159791')  -- cured
+                    WHEN 'failed' THEN concept_uuid_from_mapping('CIEL', '843')  -- regimen failure
+                    WHEN 'defaulted' THEN concept_uuid_from_mapping('CIEL', '160031')  -- abandoned
+                    END
             FROM hivmigration_previous_exposures hpp
             JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
                 ON hpp.source_patient_id = he.source_patient_id
@@ -175,7 +181,7 @@ class PreviousExposureMigrator extends ObsMigrator {
             
             -- When inn is null and treatment_other is non-null, migrate to family planning other
             INSERT INTO hivmigration_tmp_previous_exposures_groups
-                (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, other_concept_uuid, other_value, start_date, end_date)
+            (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, other_concept_uuid, other_value, start_date, end_date, result_uuid)
             SELECT
                 he.source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'Family planning history construct'),
@@ -184,15 +190,21 @@ class PreviousExposureMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', '2996'),
                 treatment_other,
                 start_date,
-                end_date
+                end_date,
+                CASE treatment_outcome
+                    WHEN 'cured' THEN concept_uuid_from_mapping('CIEL', '159791')  -- cured
+                    WHEN 'failed' THEN concept_uuid_from_mapping('CIEL', '843')  -- regimen failure
+                    WHEN 'defaulted' THEN concept_uuid_from_mapping('CIEL', '160031')  -- abandoned
+                    END
             FROM hivmigration_previous_exposures hpp
             JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
                 ON hpp.source_patient_id = he.source_patient_id
             WHERE hpp.inn IS NULL;
             
             -- DMPA in treatment_other gets migrated as coded depo_provera
+            -- no data with treatment_outcome is present
             INSERT INTO hivmigration_tmp_previous_exposures_groups
-                (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, start_date, end_date)
+            (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, start_date, end_date)
             SELECT
                 he.source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'Family planning history construct'),
@@ -201,8 +213,8 @@ class PreviousExposureMigrator extends ObsMigrator {
                 start_date,
                 end_date
             FROM hivmigration_previous_exposures hpp
-            JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
-                ON hpp.source_patient_id = he.source_patient_id
+                     JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
+                          ON hpp.source_patient_id = he.source_patient_id
             WHERE hpp.treatment_other = 'DMPA';
         ''')
 
@@ -335,6 +347,13 @@ class PreviousExposureMigrator extends ObsMigrator {
                 obs_group_id, source_encounter_id, concept_uuid_from_mapping('CIEL', '1191'), end_date
             FROM hivmigration_tmp_previous_exposures_groups
             WHERE end_date IS NOT NULL;
+            
+            INSERT INTO tmp_obs
+            (obs_group_id, source_encounter_id, concept_uuid, value_coded_uuid)
+            SELECT
+                obs_group_id, source_encounter_id, concept_uuid_from_mapping('CIEL', '6098'), result_uuid
+            FROM hivmigration_tmp_previous_exposures_groups
+            WHERE result_uuid IS NOT NULL;
         ''')
 
         migrate_tmp_obs()
