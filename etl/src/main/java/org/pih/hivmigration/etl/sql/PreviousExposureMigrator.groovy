@@ -14,131 +14,131 @@ class PreviousExposureMigrator extends ObsMigrator {
 
         executeMysql("Create previous exposures mapping table",'''
             CREATE TABLE hivmigration_tmp_previous_exposures_map (
-                inn VARCHAR(255),
-                grouping_concept_uuid CHAR(38),
-                concept_uuid CHAR(38),
-                value_concept_uuid CHAR(38)
+                 inn VARCHAR(255),
+                 group_type VARCHAR(20),
+                 concept_uuid CHAR(38),
+                 value_concept_uuid CHAR(38)
             );
-        
+            
             INSERT INTO hivmigration_tmp_previous_exposures_map
             VALUES
-                (
-                 'CTX',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('CIEL', '105281')
-                    ),
-                (
-                 'Isoniazid',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('CIEL', '78280')
-                    ),
-                (
-                 'depo_provera',
-                 concept_uuid_from_mapping('PIH', 'Family planning history construct'),
-                 concept_uuid_from_mapping('CIEL', '374'),
-                 concept_uuid_from_mapping('CIEL', '907')
-                    ),
-                (
-                 'AZT_3TC_NVP',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('PIH', '13014')
-                    ),
-                (
-                 'AZT_3TC_EFV',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('PIH', '13014')
-                    ),
-                (
-                 'condom',
-                 concept_uuid_from_mapping('PIH', 'Family planning history construct'),
-                 concept_uuid_from_mapping('CIEL', '374'),
-                 concept_uuid_from_mapping('CIEL', '190')
-                    ),
-                (
-                 'oral_contraceptive',
-                 concept_uuid_from_mapping('PIH', 'Family planning history construct'),
-                 concept_uuid_from_mapping('CIEL', '374'),
-                 concept_uuid_from_mapping('CIEL', '780')
-                    ),
-                (
-                 'D4T_3TC_NVP',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('PIH', '13012')
-                    ),
-                (
-                 'norplant',
-                 concept_uuid_from_mapping('PIH', 'Family planning history construct'),
-                 concept_uuid_from_mapping('CIEL', '374'),
-                 concept_uuid_from_mapping('CIEL', '78796')
-                    ),
-                (
-                 'D4T_3TC_EFV',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('PIH', '13012')
-                    ),
-                (
-                 'Fluconazole',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('CIEL', '76488')
-                    ),
-                (
-                 'sterilization',
-                 concept_uuid_from_mapping('PIH', 'Family planning history construct'),
-                 concept_uuid_from_mapping('CIEL', '374'),
-                 concept_uuid_from_mapping('CIEL', '1472')
-                    ),
-                (
-                 '2HRZE_4HR',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('PIH', '2406')
-                    ),
-                (
-                 '2S+HRZE_1HRZE_5HR+E',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
-                    ),
-                (
-                 'mdr_tb_treatment',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('CIEL', '159909')
-                    ),
-                -- Hypothetical future values:
-                -- These don't exist in the data presently, but it is possible for the latest forms to
-                -- create these kinds of values.
-                (
-                 'AZT_3TC_EFV_NVP',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('PIH', '13014')
-                    ),
-                (
-                 'TDF_3TC_LPV_r',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('PIH', 'TENOFOVIR LAMIVUDINE LOPINAVIR RITONAVIR')
-                    ),
-                (
-                 'TDF_3TC_EFV_NVP',
-                 concept_uuid_from_mapping('CIEL', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('CIEL', '166052')
-                    ),
-                (
-                 '2HRZ_4HR',
-                 concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT'),
-                 concept_uuid_from_mapping('CIEL', '1282'),
-                 concept_uuid_from_mapping('PIH', '2RHZ / 4RH')
-                    )
+            (
+                'CTX',
+                'prophylaxis',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('CIEL', '105281')
+            ),
+            (
+                'Isoniazid',
+                'prophylaxis',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('CIEL', '78280')
+            ),
+            (
+                'depo_provera',
+                'fp',
+                concept_uuid_from_mapping('CIEL', '374'),
+                concept_uuid_from_mapping('CIEL', '907')
+            ),
+            (
+                'AZT_3TC_NVP',
+                'hiv',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', '13014')
+            ),
+            (
+                'AZT_3TC_EFV',
+                'hiv',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', '13014')
+            ),
+            (
+                'condom',
+                'fp',
+                concept_uuid_from_mapping('CIEL', '374'),
+                concept_uuid_from_mapping('CIEL', '190')
+            ),
+            (
+                'oral_contraceptive',
+                'fp',
+                concept_uuid_from_mapping('CIEL', '374'),
+                concept_uuid_from_mapping('CIEL', '780')
+            ),
+            (
+                'D4T_3TC_NVP',
+                'hiv',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', '13012')
+            ),
+            (
+                'norplant',
+                'fp',
+                concept_uuid_from_mapping('CIEL', '374'),
+                concept_uuid_from_mapping('CIEL', '78796')
+            ),
+            (
+                'D4T_3TC_EFV',
+                'hiv',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', '13012')
+            ),
+            (
+                'Fluconazole',
+                'prophylaxis',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('CIEL', '76488')
+            ),
+            (
+                'sterilization',
+                'fp',
+                concept_uuid_from_mapping('CIEL', '374'),
+                concept_uuid_from_mapping('CIEL', '1472')
+            ),
+            (
+                '2HRZE_4HR',
+                'tb',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', '2406')
+            ),
+            (
+                '2S+HRZE_1HRZE_5HR+E',
+                'tb',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
+            ),
+            (
+                'mdr_tb_treatment',
+                'tb',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('CIEL', '159909')
+            ),
+            -- Hypothetical future values:
+            -- These don't exist in the data presently, but it is possible for the latest forms to
+            -- create these kinds of values.
+            (
+                'AZT_3TC_EFV_NVP',
+                'hiv',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', '13014')
+            ),
+            (
+                'TDF_3TC_LPV_r',
+                'hiv',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', 'TENOFOVIR LAMIVUDINE LOPINAVIR RITONAVIR')
+            ),
+            (
+                'TDF_3TC_EFV_NVP',
+                concept_uuid_from_mapping('CIEL', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT'),
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('CIEL', '166052')
+            ),
+            (
+                '2HRZ_4HR',
+                'tb',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('PIH', '2RHZ / 4RH')
+            )
             ;
         ''')
 
@@ -146,12 +146,14 @@ class PreviousExposureMigrator extends ObsMigrator {
             CREATE TABLE hivmigration_tmp_previous_exposures_groups (
                 obs_group_id INT PRIMARY KEY AUTO_INCREMENT,
                 source_encounter_id INT,
-                grouping_concept_uuid VARCHAR(38),
-                concept_uuid VARCHAR(38),
-                value_concept_uuid VARCHAR(38),  -- value for concept_uuid
-                other_concept_uuid VARCHAR(38),
+                grouping_concept_uuid CHAR(38),
+                concept_uuid CHAR(38),
+                value_concept_uuid CHAR(38),  -- value for concept_uuid
+                other_concept_uuid CHAR(38),
                 other_value VARCHAR(256),  -- value for other_concept_uuid
+                start_date_concept_uuid CHAR(38),
                 start_date DATE,
+                end_date_concept_uuid CHAR(38),
                 end_date DATE,
                 result_uuid VARCHAR(38)
             );
@@ -160,28 +162,63 @@ class PreviousExposureMigrator extends ObsMigrator {
         setAutoIncrement("hivmigration_tmp_previous_exposures_groups", "(select max(obs_id)+1 from obs)")
 
         executeMysql("Migrate previous exposures into row-per-group temporary table",'''
+            DROP FUNCTION IF EXISTS result_concept_uuid_for_treatment_outcome;
+            DELIMITER //
+            CREATE FUNCTION result_concept_uuid_for_treatment_outcome (_input VARCHAR(20)) RETURNS CHAR(38)
+            BEGIN
+                RETURN CASE _input
+                   WHEN 'cured' THEN concept_uuid_from_mapping('CIEL', '159791')  -- cured
+                   WHEN 'failed' THEN concept_uuid_from_mapping('CIEL', '843')  -- regimen failure
+                   WHEN 'defaulted' THEN concept_uuid_from_mapping('CIEL', '160031')  -- abandoned
+                END;
+            END; //
+            DELIMITER ;
+            
+            DROP FUNCTION IF EXISTS start_date_concept_uuid_for_group_type;
+            DELIMITER //
+            CREATE FUNCTION start_date_concept_uuid_for_group_type (_input VARCHAR(20)) RETURNS CHAR(38)
+            BEGIN
+                RETURN IF(_input IN ('tb', 'hiv', 'prophylaxis'),
+                          concept_uuid_from_mapping('CIEL', '1190'),
+                          concept_uuid_from_mapping('CIEL', '163757'));
+            END; //
+            DELIMITER ;
+            
+            DROP FUNCTION IF EXISTS end_date_concept_uuid_for_group_type;
+            DELIMITER //
+            CREATE FUNCTION end_date_concept_uuid_for_group_type (_input VARCHAR(20)) RETURNS CHAR(38)
+            BEGIN
+                RETURN IF(_input IN ('tb', 'hiv', 'prophylaxis'),
+                          concept_uuid_from_mapping('CIEL', '1191'),
+                          concept_uuid_from_mapping('CIEL', '163758'));
+            END; //
+            DELIMITER ;
+            
             INSERT INTO hivmigration_tmp_previous_exposures_groups
-            (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, start_date, end_date, result_uuid)
+            (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, start_date_concept_uuid, start_date, end_date_concept_uuid, end_date, result_uuid)
             SELECT
                 he.source_encounter_id,
-                map.grouping_concept_uuid,
+                CASE map.group_type
+                    WHEN 'tb' THEN concept_uuid_from_mapping('PIH', 'PREVIOUS TB TREATMENT HISTORY CONSTRUCT')
+                    WHEN 'hiv' THEN concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT HISTORY HIV CONSTRUCT')
+                    WHEN 'prophylaxis' THEN concept_uuid_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT')
+                    WHEN 'fp' THEN concept_uuid_from_mapping('PIH', 'Family planning history construct')
+                    END,
                 map.concept_uuid,
                 map.value_concept_uuid,
+                start_date_concept_uuid_for_group_type(map.group_type),
                 start_date,
+                end_date_concept_uuid_for_group_type(map.group_type),
                 end_date,
-                CASE treatment_outcome
-                    WHEN 'cured' THEN concept_uuid_from_mapping('CIEL', '159791')  -- cured
-                    WHEN 'failed' THEN concept_uuid_from_mapping('CIEL', '843')  -- regimen failure
-                    WHEN 'defaulted' THEN concept_uuid_from_mapping('CIEL', '160031')  -- abandoned
-                    END
+                result_concept_uuid_for_treatment_outcome(treatment_outcome)
             FROM hivmigration_previous_exposures hpp
-            JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
-                ON hpp.source_patient_id = he.source_patient_id
-            JOIN hivmigration_tmp_previous_exposures_map map ON map.inn = hpp.inn;
+                     JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
+                          ON hpp.source_patient_id = he.source_patient_id
+                     JOIN hivmigration_tmp_previous_exposures_map map ON map.inn = hpp.inn;
             
             -- When inn is null and treatment_other is non-null, migrate to family planning other
             INSERT INTO hivmigration_tmp_previous_exposures_groups
-            (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, other_concept_uuid, other_value, start_date, end_date, result_uuid)
+            (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, other_concept_uuid, other_value, start_date_concept_uuid, start_date, end_date_concept_uuid, end_date, result_uuid)
             SELECT
                 he.source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'Family planning history construct'),
@@ -189,28 +226,28 @@ class PreviousExposureMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('CIEL', '5622'),  -- Other non-coded
                 concept_uuid_from_mapping('PIH', '2996'),
                 treatment_other,
+                start_date_concept_uuid_for_group_type('fp'),
                 start_date,
+                end_date_concept_uuid_for_group_type('fp'),
                 end_date,
-                CASE treatment_outcome
-                    WHEN 'cured' THEN concept_uuid_from_mapping('CIEL', '159791')  -- cured
-                    WHEN 'failed' THEN concept_uuid_from_mapping('CIEL', '843')  -- regimen failure
-                    WHEN 'defaulted' THEN concept_uuid_from_mapping('CIEL', '160031')  -- abandoned
-                    END
+                result_concept_uuid_for_treatment_outcome(treatment_outcome)
             FROM hivmigration_previous_exposures hpp
-            JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
-                ON hpp.source_patient_id = he.source_patient_id
+                     JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
+                          ON hpp.source_patient_id = he.source_patient_id
             WHERE hpp.inn IS NULL;
             
             -- DMPA in treatment_other gets migrated as coded depo_provera
             -- no data with treatment_outcome is present
             INSERT INTO hivmigration_tmp_previous_exposures_groups
-            (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, start_date, end_date)
+            (source_encounter_id, grouping_concept_uuid, concept_uuid, value_concept_uuid, start_date_concept_uuid, start_date, end_date_concept_uuid, end_date)
             SELECT
                 he.source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'Family planning history construct'),
                 concept_uuid_from_mapping('CIEL', '374'),
                 concept_uuid_from_mapping('CIEL', '79494'),
+                start_date_concept_uuid_for_group_type('fp'),
                 start_date,
+                end_date_concept_uuid_for_group_type('fp'),
                 end_date
             FROM hivmigration_previous_exposures hpp
                      JOIN (SELECT * FROM hivmigration_encounters WHERE source_encounter_type = 'intake') he
@@ -337,14 +374,14 @@ class PreviousExposureMigrator extends ObsMigrator {
             INSERT INTO tmp_obs
                 (obs_group_id, source_encounter_id, concept_uuid, value_datetime)
             SELECT
-                obs_group_id, source_encounter_id, concept_uuid_from_mapping('CIEL', '1190'), start_date
+                obs_group_id, source_encounter_id, start_date_concept_uuid, start_date
             FROM hivmigration_tmp_previous_exposures_groups
             WHERE start_date IS NOT NULL;
             
             INSERT INTO tmp_obs
                 (obs_group_id, source_encounter_id, concept_uuid, value_datetime)
             SELECT
-                obs_group_id, source_encounter_id, concept_uuid_from_mapping('CIEL', '1191'), end_date
+                obs_group_id, source_encounter_id, end_date_concept_uuid, end_date
             FROM hivmigration_tmp_previous_exposures_groups
             WHERE end_date IS NOT NULL;
             
