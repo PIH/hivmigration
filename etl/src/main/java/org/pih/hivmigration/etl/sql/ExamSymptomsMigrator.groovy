@@ -38,7 +38,26 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 ('vomissements', 'Vomiting', 'CIEL', '122983'),
                 ('jaundice', 'Jaundice', 'CIEL', '136443'),
                 ('diarrhea', 'Diarrhea', 'CIEL', '142412'),
-                ('diarrhea_short', 'Diarrhea', 'CIEL', '142412')
+                ('diarrhea_short', 'Diarrhea', 'CIEL', '142412'),
+                ('dysphagia', 'Dysphagia', 'CIEL', '118789'),
+                ('prurigo_nodularis', 'PrurigoNodularis', 'CIEL', '128321'),
+                ('prurigo', 'PrurigoNodularis', 'CIEL', '128321'),
+                ('rash', 'Rash', 'CIEL', '512'),
+                ('headache', 'Headache', 'CIEL', '139084'),
+                ('vision_problems', 'VisionProblem', 'CIEL', '118938'),
+                ('seizures', 'Seizure', 'CIEL', '113054'),
+                ('neurologic_deficit', 'DéficitNeurologiqueFocal', 'CIEL', '1466'),
+                ('vertiges', 'Vertigo', 'CIEL', '111525'),
+                ('vertige', 'Vertigo', 'CIEL', '111525'),
+                ('vertiges.', 'Vertigo', 'CIEL', '111525'),
+                ('confusion', 'Confusion', 'CIEL', '120345'),
+                ('paresthesia', 'Paresthesia', 'CIEL', '6004'),
+                ('genital_discharge', 'GenitalDischarge', 'PIH', '1816'),
+                ('genital_ulcers', 'UlcérationsGénitales', 'CIEL', '864'),
+                ('fever', 'Fever', 'CIEL', '140238'),
+                ('cough', 'Cough', 'CIEL', '143264'),
+                ('productive_cough', 'Cough', 'CIEL', '143264'),
+                ('dry_cough', 'Cough', 'CIEL', '143264')                                                          
             ''')
 
         executeMysql("Create staging table for migrating HIV_EXAM_SYMPTOMS", '''
@@ -133,9 +152,9 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 concept_uuid_from_mapping('CIEL', '1728') as concept_uuid, -- Sign/Symptom name
                 concept_uuid_from_mapping('CIEL', '5622') as value_coded_uuid, -- Other non-coded
                 case
-                  when (lower(s.symptom) = 'other' and s.symptom_comment is not null) then s.symptom_comment 
-                  when (lower(s.symptom) != 'other' and s.symptom_comment is not null) then CONCAT(s.symptom, ", ", s.symptom_comment) 
-                  when (s.symptom_comment is null) then s.symptom  
+                  when (lower(s.symptom) = 'other' and s.symptom_comment is not null) then SUBSTRING(s.symptom_comment, 0, 254) 
+                  when (lower(s.symptom) != 'other' and s.symptom_comment is not null) then SUBSTRING(CONCAT(s.symptom, ", ", s.symptom_comment), 0, 254) 
+                  when (s.symptom_comment is null) then SUBSTRING(s.symptom, 0, 254) 
                   else null 
                 end as comments                  
             from hivmigration_exam_symptoms s  
