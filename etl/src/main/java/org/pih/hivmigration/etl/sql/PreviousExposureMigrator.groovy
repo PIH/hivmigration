@@ -138,6 +138,12 @@ class PreviousExposureMigrator extends ObsMigrator {
                 'tb',
                 concept_uuid_from_mapping('CIEL', '1282'),
                 concept_uuid_from_mapping('PIH', '2RHZ / 4RH')
+            ),
+            (
+                'D4T_WITH_REGIMENT',
+                'hiv',
+                concept_uuid_from_mapping('CIEL', '1282'),
+                concept_uuid_from_mapping('CIEL', '166054')  -- Regimen with D4T, PIH:13012
             )
             ;
         ''')
