@@ -331,16 +331,15 @@ class PreviousExposureMigrator extends ObsMigrator {
                        IF(inn_other_text != '' AND tx_other_text != '', ', ', ''),
                        tx_other_text)
             FROM (
-                     SELECT inn_other.source_encounter_id, inn_other_text, '' AS tx_other_text
-                     FROM hivmigration_tmp_previous_exposures_inn_other inn_other
-                              LEFT JOIN hivmigration_tmp_previous_exposures_tx_other tx_other
-                                        on inn_other.source_encounter_id = tx_other.source_encounter_id
-                     UNION ALL
-                     SELECT tx_other.source_encounter_id, '' AS inn_other_text, tx_other_text
-                     FROM hivmigration_tmp_previous_exposures_tx_other tx_other
-                              LEFT JOIN hivmigration_tmp_previous_exposures_inn_other inn_other
-                                        on inn_other.source_encounter_id = tx_other.source_encounter_id
-                     WHERE inn_other.source_encounter_id IS NULL) other_texts;
+                SELECT inn_other.source_encounter_id, inn_other_text, tx_other_text
+                FROM hivmigration_tmp_previous_exposures_inn_other inn_other
+                LEFT JOIN hivmigration_tmp_previous_exposures_tx_other tx_other
+                       ON inn_other.source_encounter_id = tx_other.source_encounter_id
+                UNION ALL
+                SELECT tx_other.source_encounter_id, NULL AS inn_other_text, tx_other_text
+                FROM hivmigration_tmp_previous_exposures_tx_other tx_other
+                LEFT JOIN hivmigration_tmp_previous_exposures_inn_other inn_other
+                       ON inn_other.source_encounter_id = tx_other.source_encounter_id) other_texts;
         ''')
 
         create_tmp_obs_table()
