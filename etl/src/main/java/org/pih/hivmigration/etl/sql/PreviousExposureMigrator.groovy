@@ -339,7 +339,9 @@ class PreviousExposureMigrator extends ObsMigrator {
                 SELECT tx_other.source_encounter_id, NULL AS inn_other_text, tx_other_text
                 FROM hivmigration_tmp_previous_exposures_tx_other tx_other
                 LEFT JOIN hivmigration_tmp_previous_exposures_inn_other inn_other
-                       ON inn_other.source_encounter_id = tx_other.source_encounter_id) other_texts;
+                       ON inn_other.source_encounter_id = tx_other.source_encounter_id
+                ) other_texts
+            WHERE inn_other_text IS NOT NULL OR tx_other_text IS NOT NULL;
         ''')
 
         create_tmp_obs_table()
