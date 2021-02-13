@@ -47,14 +47,6 @@ class SampleDataMigrator extends ObsMigrator {
             END; //
             DELIMITER ;
             
-            DROP FUNCTION IF EXISTS years_since;
-            DELIMITER //
-            CREATE FUNCTION years_since (_birthdate DATE) RETURNS NUMERIC
-            BEGIN
-                RETURN TIMESTAMPDIFF(YEAR, _birthdate, NOW());
-            END; //
-            DELIMITER ;
-            
             DROP FUNCTION IF EXISTS concept_uuid_for_population_name;
             DELIMITER //
             CREATE FUNCTION concept_uuid_for_population_name (_population_name VARCHAR(8)) RETURNS CHAR(38)
