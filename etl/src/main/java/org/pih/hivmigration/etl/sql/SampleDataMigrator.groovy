@@ -134,10 +134,10 @@ class SampleDataMigrator extends ObsMigrator {
             call add_sample_data('F', TRUE, 'iv', 0, 0.002);
             
             -- adult F
-            call add_sample_data('M', FALSE, 'sw', 0, 0.03);
-            call add_sample_data('M', FALSE, 'prisoner', 0.03, 0.04);
-            call add_sample_data('M', FALSE, 'trans', 0.04, 0.042);
-            call add_sample_data('M', FALSE, 'iv', 0.042, 0.092);
+            call add_sample_data('F', FALSE, 'sw', 0, 0.03);
+            call add_sample_data('F', FALSE, 'prisoner', 0.03, 0.04);
+            call add_sample_data('F', FALSE, 'trans', 0.04, 0.042);
+            call add_sample_data('F', FALSE, 'iv', 0.042, 0.092);
         ''')
 
         executeMysql("Add second YESes to some", '''
