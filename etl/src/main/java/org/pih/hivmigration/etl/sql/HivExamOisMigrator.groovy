@@ -88,7 +88,10 @@ class HivExamOisMigrator extends ObsMigrator {
               source_encounter_id int,
               source_patient_id int,
               oi VARCHAR(32),
-              comments VARCHAR(128)     
+              comments VARCHAR(128),
+              form_name VARCHAR(16),
+              form_version char(1),
+              migrated BOOLEAN DEFAULT FALSE     
             );
         ''')
 
@@ -99,15 +102,29 @@ class HivExamOisMigrator extends ObsMigrator {
               source_encounter_id,
               source_patient_id,
               oi,              
-              comments 
+              comments,
+              form_name,
+              form_version
             )
-            values(?,?,?,?) 
+            values(?,?,?,?,?,?) 
             ''', '''
             select 
                 x.ENCOUNTER_ID as source_encounter_id, 
                 e.patient_id as source_patient_id, 
                 lower(trim(x.oi)) as oi,                  
-                x.COMMENTS
+                x.COMMENTS,
+                case
+                    when (x.encounter_id in (select k.encounter_id from HIV_INTAKE_FORMS k where k.encounter_id=x.encounter_id)) then 'hiv_intake'                     
+                    when (x.encounter_id in (select f.encounter_id from HIV_FOLLOWUP_FORMS f where f.encounter_id=x.encounter_id)) then 'hiv_followup'                     
+                    else null 
+                end as form_name,
+                case
+                    when (x.encounter_id in (select k.encounter_id from HIV_INTAKE_FORMS k where k.encounter_id=x.encounter_id)) then 
+                    ( select form_version from HIV_INTAKE_FORMS where encounter_id=x.encounter_id ) 
+                    when (x.encounter_id in (select f.encounter_id from HIV_FOLLOWUP_FORMS f where f.encounter_id=x.encounter_id)) then 
+                    ( select form_version from HIV_FOLLOWUP_FORMS where encounter_id=x.encounter_id ) 
+                    else null 
+                end as form_version
             from HIV_EXAM_OIS x, HIV_ENCOUNTERS e, hiv_demographics_real d  
             where x.ENCOUNTER_ID = e.ENCOUNTER_ID and e.patient_id = d.patient_id;
             ''')
@@ -129,7 +146,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', '1401') as concept_uuid,                
                 concept_uuid_from_mapping('CIEL', '1107') as value_coded_uuid
             from hivmigration_hiv_exam_ois x 
-            where x.oi = 'none';
+            where x.oi = 'none' and x.form_version='3';
             
             ''')
 
@@ -147,7 +164,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 x.source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'Visit Diagnoses') as concept_uuid
             from hivmigration_hiv_exam_ois x 
-            where x.oi is not null and x.oi != 'none'; 
+            where x.oi is not null and x.oi != 'none' and x.form_version='3'; 
             
             -- Mark it as PRESUMED diagnosis
             INSERT INTO tmp_obs (
@@ -163,7 +180,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', 'CLINICAL IMPRESSION DIAGNOSIS CONFIRMED') as concept_uuid,
                 concept_uuid_from_mapping('PIH', 'PRESUMED') as value_coded_uuid
             from hivmigration_hiv_exam_ois x 
-            where x.oi is not null and x.oi != 'none';  
+            where x.oi is not null and x.oi != 'none' and x.form_version='3';  
             
             -- Set Diagnosis order to PRIMARY
             INSERT INTO tmp_obs (
@@ -179,7 +196,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', 'Diagnosis order') as concept_uuid,
                 concept_uuid_from_mapping('PIH', 'primary') as value_coded_uuid
             from hivmigration_hiv_exam_ois x 
-            where x.oi is not null and x.oi != 'none'; 
+            where x.oi is not null and x.oi != 'none' and x.form_version='3'; 
             
             -- Create Coded Diagnosis            
             INSERT INTO tmp_obs (
@@ -197,7 +214,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 concept_uuid_from_mapping(m.openmrs_concept_source, m.openmrs_concept_code) as value_coded_uuid,
                 x.comments
             from hivmigration_hiv_exam_ois x, hivmigration_hiv_ois_mapping m  
-            where x.oi is not null and x.oi != 'none' and x.oi != 'other' and x.oi != 'candidiaris_other' and x.oi = m.oi 
+            where x.oi is not null and x.form_version='3' and x.oi != 'none' and x.oi != 'other' and x.oi != 'candidiaris_other' and x.oi = m.oi 
                 and m.openmrs_concept_source != '' and m.openmrs_concept_code != '';  
             
             -- Create non-coded Diagnosis for other diagnoses
@@ -214,7 +231,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', 'Diagnosis or problem, non-coded') as concept_uuid,                
                 x.comments
             from hivmigration_hiv_exam_ois x 
-            where x.oi = 'other'; 
+            where x.oi = 'other' and x.form_version='3'; 
             
              -- Create non-coded Diagnosis for candidiaris_other
             INSERT INTO tmp_obs (
@@ -230,7 +247,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', 'Diagnosis or problem, non-coded') as concept_uuid,                
                 CONCAT('Candidiasis (' , IFNULL(x.comments, ''), ')') as value_text
             from hivmigration_hiv_exam_ois x 
-            where x.oi = 'candidiaris_other'; 
+            where x.oi = 'candidiaris_other' and x.form_version='3'; 
             
             -- Create non-coded Diagnoses for OI that do not have a mapping yet            
             INSERT INTO tmp_obs (
@@ -248,9 +265,11 @@ class HivExamOisMigrator extends ObsMigrator {
                 x.oi,
                 x.comments
             from hivmigration_hiv_exam_ois x, hivmigration_hiv_ois_mapping m  
-            where x.oi is not null and x.oi != 'none' and x.oi != 'other' and x.oi != 'candidiaris_other' and x.oi = m.oi 
+            where x.oi is not null and x.form_version='3' and x.oi != 'none' and x.oi != 'other' and x.oi != 'candidiaris_other' and x.oi = m.oi 
                 and (m.openmrs_concept_source = '' or m.openmrs_concept_code = ''); 
                                              
+            -- Set migrated=TRUE for all obs with form_version=3
+            UPDATE hivmigration_hiv_exam_ois SET migrated=TRUE where oi is not null and form_version='3';                        
         ''')
 
         migrate_tmp_obs()
