@@ -170,7 +170,7 @@ class PreviousExposureMigrator extends ObsMigrator {
         executeMysql("Migrate previous exposures into row-per-group temporary table",'''
             DROP FUNCTION IF EXISTS result_concept_uuid_for_treatment_outcome;
             DELIMITER //
-            CREATE FUNCTION DETERMINISTIC result_concept_uuid_for_treatment_outcome (_input VARCHAR(20)) RETURNS CHAR(38)
+            CREATE FUNCTION result_concept_uuid_for_treatment_outcome (_input VARCHAR(20)) RETURNS CHAR(38) DETERMINISTIC 
             BEGIN
                 RETURN CASE _input
                    WHEN 'cured' THEN concept_uuid_from_mapping('CIEL', '159791')  -- cured
@@ -182,7 +182,7 @@ class PreviousExposureMigrator extends ObsMigrator {
             
             DROP FUNCTION IF EXISTS start_date_concept_uuid_for_group_type;
             DELIMITER //
-            CREATE FUNCTION DETERMINISTIC start_date_concept_uuid_for_group_type (_input VARCHAR(20)) RETURNS CHAR(38)
+            CREATE FUNCTION start_date_concept_uuid_for_group_type (_input VARCHAR(20)) RETURNS CHAR(38) DETERMINISTIC 
             BEGIN
                 RETURN IF(_input IN ('tb', 'hiv', 'prophylaxis'),
                           concept_uuid_from_mapping('CIEL', '1190'),
@@ -192,7 +192,7 @@ class PreviousExposureMigrator extends ObsMigrator {
             
             DROP FUNCTION IF EXISTS end_date_concept_uuid_for_group_type;
             DELIMITER //
-            CREATE FUNCTION DETERMINISTIC end_date_concept_uuid_for_group_type (_input VARCHAR(20)) RETURNS CHAR(38)
+            CREATE FUNCTION end_date_concept_uuid_for_group_type (_input VARCHAR(20)) RETURNS CHAR(38) DETERMINISTIC
             BEGIN
                 RETURN IF(_input IN ('tb', 'hiv', 'prophylaxis'),
                           concept_uuid_from_mapping('CIEL', '1191'),
