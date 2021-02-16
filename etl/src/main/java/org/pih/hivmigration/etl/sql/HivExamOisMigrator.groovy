@@ -114,19 +114,19 @@ class HivExamOisMigrator extends ObsMigrator {
                 lower(trim(x.oi)) as oi,                  
                 x.COMMENTS,
                 case
-                    when (x.encounter_id in (select k.encounter_id from HIV_INTAKE_FORMS k where k.encounter_id=x.encounter_id)) then 'hiv_intake'                     
-                    when (x.encounter_id in (select f.encounter_id from HIV_FOLLOWUP_FORMS f where f.encounter_id=x.encounter_id)) then 'hiv_followup'                     
+                    when (k.form_version is not null) then 'hiv_intake'                     
+                    when (f.form_version is not null) then 'hiv_followup'                     
                     else null 
                 end as form_name,
                 case
-                    when (x.encounter_id in (select k.encounter_id from HIV_INTAKE_FORMS k where k.encounter_id=x.encounter_id)) then 
-                    ( select form_version from HIV_INTAKE_FORMS where encounter_id=x.encounter_id ) 
-                    when (x.encounter_id in (select f.encounter_id from HIV_FOLLOWUP_FORMS f where f.encounter_id=x.encounter_id)) then 
-                    ( select form_version from HIV_FOLLOWUP_FORMS where encounter_id=x.encounter_id ) 
+                    when (k.form_version is not null) then k.form_version                    
+                    when (f.form_version is not null) then f.form_version 
                     else null 
                 end as form_version
-            from HIV_EXAM_OIS x, HIV_ENCOUNTERS e, hiv_demographics_real d  
-            where x.ENCOUNTER_ID = e.ENCOUNTER_ID and e.patient_id = d.patient_id;
+            from HIV_EXAM_OIS x join HIV_ENCOUNTERS e on x.ENCOUNTER_ID = e.ENCOUNTER_ID 
+                join hiv_demographics_real d on e.patient_id = d.patient_id 
+                left outer join HIV_INTAKE_FORMS k on x.ENCOUNTER_ID=k.ENCOUNTER_ID 
+                left outer join HIV_FOLLOWUP_FORMS f on x.ENCOUNTER_ID=f.ENCOUNTER_ID; 
             ''')
 
         create_tmp_obs_table()
