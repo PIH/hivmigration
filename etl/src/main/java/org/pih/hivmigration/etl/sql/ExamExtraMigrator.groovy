@@ -62,69 +62,109 @@ class ExamExtraMigrator extends ObsMigrator {
         migrate_tmp_obs()
 
         executeMysql("Create staging table for migrating transfer_out_to obs", '''
-            create table hivmigration_transfer_out_to (                            
-              source_encounter_id int PRIMARY KEY,
-              source_patient_id int,                            
+            create table hivmigration_transfer_out_to (   
+              obs_id int PRIMARY KEY AUTO_INCREMENT,                   
+              source_encounter_id int,            
+              hiv_institution_id int,                         
               transfer_out_to VARCHAR(48) ,               
               obs_date date             
             );
         ''')
 
+        setAutoIncrement("hivmigration_transfer_out_to", "(select max(obs_id)+1 from obs)")
+
         loadFromOracleToMySql('''
-            insert into hivmigration_transfer_out_to
-                (source_encounter_id,
-                 source_patient_id,
+            insert into hivmigration_transfer_out_to(
+                 source_encounter_id,
+                 hiv_institution_id,
                  transfer_out_to,
                  obs_date)
             values (?, ?, ?, ?)
             ''', '''
-            select o.encounter_id as source_encounter_id,
-                    e.patient_id as source_patient_id,         
+            select o.encounter_id as source_encounter_id,                    
+                    i.INSTITUTION_ID as hiv_institution_id,
                     i.name as transfer_out_to,
                     to_char(o.entry_date, 'yyyy-mm-dd') as obs_date 
             from hiv_observations o, hiv_encounters e, hiv_demographics_real d, hiv_institutions i  
             where o.ENCOUNTER_ID = e.ENCOUNTER_ID and e.patient_id = d.patient_id and o.VALUE = i.INSTITUTION_ID 
                     and observation='transfer_out_to' and o.value is not null 
-            order by o.ENCOUNTER_ID 
+            order by o.ENCOUNTER_ID; 
         ''')
 
         create_tmp_obs_table()
+        setAutoIncrement("tmp_obs", "(select max(obs_id)+1 from hivmigration_transfer_out_to)")
 
         executeMysql("Load transferred_out observations", ''' 
-                      
-            SET @disposition_category = 'c8b22b09-e2f2-4606-af7d-e52579996de3'; 
-            SET @transferred_out = '3cdd5c02-26fe-102b-80cb-0017a47871b2';           
-            
-                         
-            INSERT INTO tmp_obs (value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT @transferred_out, source_patient_id, source_encounter_id, @disposition_category
+                                                       
+            -- Create Transfer out to another location obs_group
+            INSERT INTO tmp_obs (
+                obs_id,
+                source_encounter_id, 
+                concept_uuid)
+            SELECT 
+                obs_id,
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '13170') as concept_uuid
             FROM hivmigration_transfer_out_to
-            WHERE transfer_out_to is not null;     
+            WHERE transfer_out_to is not null;    
+
+            -- Create HUM Disposition categories obs
+            INSERT INTO tmp_obs (
+                obs_group_id,
+                source_encounter_id,
+                concept_uuid,
+                value_coded_uuid)
+            SELECT 
+                obs_id,
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'HUM Disposition categories') as concept_uuid,
+                concept_uuid_from_mapping('PIH', 'PATIENT TRANSFERRED OUT') as value_coded_uuid
+            FROM hivmigration_transfer_out_to
+            WHERE transfer_out_to is not null; 
             
-            -- External transfers
-            SET @transferred_out_location = '113a5ce0-6487-4f45-964d-2dcbd7d23b67'; 
-            SET @external_location = '5b1f137c-b757-46c3-9735-c2fcb6ba221d';
-            
-            INSERT INTO tmp_obs (value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT @external_location, source_patient_id, source_encounter_id, @transferred_out_location
+            -- External transfers                        
+            INSERT INTO tmp_obs (
+                obs_group_id,
+                source_encounter_id,
+                concept_uuid,
+                value_coded_uuid)
+            SELECT 
+                obs_id,
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Transfer out location') as concept_uuid, 
+                concept_uuid_from_mapping('PIH', 'Non-ZL supported site') as value_coded_uuid
             FROM hivmigration_transfer_out_to
             WHERE transfer_out_to = 'Autre (non-ZL)';
             
-            -- Internal transfers
-            SET @internal_location = '83192b97-480c-4533-8ede-aeac15a3a736';
-            
-            INSERT INTO tmp_obs (value_coded_uuid, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT @internal_location, source_patient_id, source_encounter_id, @transferred_out_location
+            -- ZL-supported site transfers                    
+            INSERT INTO tmp_obs (
+                obs_group_id,
+                source_encounter_id,
+                concept_uuid,
+                value_coded_uuid)
+            SELECT 
+                obs_id,
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Transfer out location') as concept_uuid,
+                concept_uuid_from_mapping('PIH', 'ZL-supported site') as value_coded_uuid
             FROM hivmigration_transfer_out_to
             WHERE transfer_out_to != 'Autre (non-ZL)';
             
-            -- ZL transfered location name
-            SET @zl_transfer_site = 'a96352e3-3afc-418b-b79f-3290fc26a3b3';
-            
-            INSERT INTO tmp_obs (value_text, source_patient_id, source_encounter_id, concept_uuid)
-            SELECT transfer_out_to, source_patient_id, source_encounter_id, @zl_transfer_site
-            FROM hivmigration_transfer_out_to
-            WHERE transfer_out_to != 'Autre (non-ZL)';
+            -- ZL-supported site name            
+            INSERT INTO tmp_obs (
+                obs_group_id,
+                source_encounter_id,
+                concept_uuid,
+                value_text,
+                comments)
+            SELECT 
+                t.obs_id,
+                t.source_encounter_id,
+                concept_uuid_from_mapping('PIH', '8621') as concept_uuid,
+                c.openmrs_id as value_text,
+                'org.openmrs.Location'
+            FROM hivmigration_transfer_out_to t, hivmigration_health_center c 
+            WHERE t.transfer_out_to != 'Autre (non-ZL)' and t.hiv_institution_id = c.hiv_emr_id;
                    
         ''')
 
@@ -401,7 +441,7 @@ class ExamExtraMigrator extends ObsMigrator {
                     t.source_encounter_id = e.source_encounter_id and e.source_encounter_type='intake';  
 
         ''')
-        migrate_tmp_obs()
+        migrate_tmp_obs()        
     }
 
     @Override
