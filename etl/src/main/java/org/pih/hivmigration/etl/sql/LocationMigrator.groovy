@@ -99,7 +99,7 @@ class LocationMigrator extends SqlMigrator {
             
             # TODO Promotion Objectif Zerosida (POZ)
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 40, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 40, location_id from location where uuid='c488ed05-f259-4f7b-a9d4-8f56736da691'; 
             
             # TODO Jean Denis (?)
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
