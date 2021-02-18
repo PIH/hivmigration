@@ -202,7 +202,7 @@ class TreatmentObsMigrator extends ObsMigrator {
                     base.source_encounter_id,
                     he.encounter_date
                 FROM hivmigration_ordered_other base
-                JOIN (
+                LEFT JOIN (
                     SELECT source_encounter_id, comments
                     FROM hivmigration_ordered_other
                     WHERE ordered = 'other_prophylaxis') other ON base.source_encounter_id = other.source_encounter_id
