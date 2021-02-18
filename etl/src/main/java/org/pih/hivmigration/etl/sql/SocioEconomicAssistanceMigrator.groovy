@@ -17,14 +17,29 @@ class SocioEconomicAssistanceMigrator extends ObsMigrator {
         executeMysql("Migrate socio-economic assistance", '''
             INSERT INTO tmp_obs
             (source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT source_encounter_id,
+            SELECT hoo.source_encounter_id,
                    CASE comments
                        WHEN 'already_receiving' THEN concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE ALREADY RECEIVED')
                        WHEN 'recommended' THEN concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE RECOMMENDED')
+                       ELSE concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE RECOMMENDED')
                        END,
                    concept_uuid_from_mapping('PIH', 'ASSISTANCE WITH TRANSPORT')
-            FROM hivmigration_ordered_other
-            WHERE ordered = 'tranportation_aid' AND comments IS NOT NULL AND comments != 'no';
+            FROM hivmigration_ordered_other hoo
+            JOIN hivmigration_intake_forms hif on hoo.source_encounter_id = hif.source_encounter_id
+            WHERE ordered = 'tranportation_aid' AND (form_version != 3 OR comments != 'no');   -- `!= anything` implies IS NOT NULL
+            
+            INSERT INTO tmp_obs
+            (source_encounter_id, concept_uuid, value_coded_uuid)
+            SELECT hoo.source_encounter_id,
+                   CASE comments
+                       WHEN 'already_receiving' THEN concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE ALREADY RECEIVED')
+                       WHEN 'recommended' THEN concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE RECOMMENDED')
+                       ELSE concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE RECOMMENDED')
+                       END,
+                   concept_uuid_from_mapping('PIH', 'NUTRITIONAL AID')
+            FROM hivmigration_ordered_other hoo
+            JOIN hivmigration_intake_forms hif on hoo.source_encounter_id = hif.source_encounter_id
+            WHERE ordered = 'nutritional_aid' AND (form_version != 3 OR comments != 'no');   -- `!= anything` implies IS NOT NULL
             
             INSERT INTO tmp_obs
             (source_encounter_id, concept_uuid, value_text)
@@ -32,29 +47,30 @@ class SocioEconomicAssistanceMigrator extends ObsMigrator {
                    concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE NON-CODED'),
                    GROUP_CONCAT(value_text SEPARATOR ', ')
             FROM (
-                     SELECT source_encounter_id,
+                     SELECT hoo.source_encounter_id,
                             CONCAT(
-                                CASE ordered
-                                   WHEN 'financial_aid' THEN 'Aide financière'
-                                   WHEN 'funeral_aid' THEN 'Aide pour funérailles'
-                                   WHEN 'house_assistance' THEN 'Aide au logement'
-                                   WHEN 'professional_training' THEN 'Formation professionnelle'
-                                   WHEN 'school_aid' THEN 'Aide scolaire'
-                                   WHEN 'social_assistance_other' THEN comments
-                                   END,
-                                IF(ordered = 'social_assistance_other', '',
-                                    CONCAT(' (',
-                                       CASE comments
-                                           WHEN 'recommended' THEN 'Recommandé'
-                                           WHEN 'already_receiving' THEN 'Reçu'
-                                           ELSE comments
-                                           END,
-                                       ')')
-                                    )
+                                    CASE ordered
+                                        WHEN 'financial_aid' THEN 'Aide financière'
+                                        WHEN 'funeral_aid' THEN 'Aide pour funérailles'
+                                        WHEN 'house_assistance' THEN 'Aide au logement'
+                                        WHEN 'professional_training' THEN 'Formation professionnelle'
+                                        WHEN 'school_aid' THEN 'Aide scolaire'
+                                        WHEN 'social_assistance_other' THEN comments
+                                        END,
+                                    IF(ordered = 'social_assistance_other' OR comments IS NULL, '',
+                                       CONCAT(' (',
+                                              CASE comments
+                                                 WHEN 'recommended' THEN 'Recommandé'
+                                                 WHEN 'already_receiving' THEN 'Reçu'
+                                                 ELSE comments
+                                                 END,
+                                              ')')
+                                       )
                                 ) AS value_text
-                     FROM hivmigration_ordered_other
+                     FROM hivmigration_ordered_other hoo
+                              JOIN hivmigration_intake_forms hif on hoo.source_encounter_id = hif.source_encounter_id
                      WHERE ordered IN ('financial_aid', 'funeral_aid', 'house_assistance', 'professional_training', 'school_aid', 'social_assistance_other')
-                       AND comments IS NOT NULL AND comments NOT LIKE 'no%' AND comments NOT LIKE 'aucun') o
+                       AND form_version != 3 OR (comments NOT LIKE 'no%' AND comments NOT LIKE 'aucun')) o  -- NOT LIKE implies IS NOT NULL
             GROUP BY source_encounter_id;
         ''')
 
