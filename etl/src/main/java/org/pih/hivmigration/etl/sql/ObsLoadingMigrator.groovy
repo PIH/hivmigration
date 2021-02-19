@@ -16,6 +16,7 @@ class ObsLoadingMigrator extends SqlMigrator {
               observation_uuid char(38),
               KEY `source_observation_idx` (`source_observation_id`),
               KEY `source_encounter_idx` (`source_encounter_id`),
+              KEY `observation_idx` (`observation`),
               UNIQUE KEY `uuid_idx` (`observation_uuid`)
             );
         ''')

@@ -21,6 +21,14 @@ class StagingTablesMigrator extends SqlMigrator {
         migrateTable("HIV_DEMOGRAPHICS_AUD")
         migrateTable("HIV_CONTACTS")
         migrateTable("HIV_ORDERED_OTHER")
+
+        executeMysql('''
+            ALTER TABLE hivmigration_ordered_other
+            MODIFY ordered VARCHAR(36);
+            
+            CREATE INDEX ordered_idx
+            ON hivmigration_ordered_other (`ordered`);
+        ''')
     }
     
     def void migrateTable(String tableName) {
