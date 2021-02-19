@@ -65,6 +65,10 @@ class LocationMigrator extends SqlMigrator {
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
             select 82, location_id from location where uuid = '97c241a0-eaec-11e5-a837-0800200c9a66';
             
+            # Promotion Objectif Zerosida (POZ)
+            insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
+              select 40, location_id from location where uuid='c488ed05-f259-4f7b-a9d4-8f56736da691'; 
+            
             ## TODO:
             ## Review all of the below and change to valid locations as appropriate in OpenMRS
             ## Also review which of these locations might be able to be deleted or merged in HIV EMR
@@ -96,10 +100,6 @@ class LocationMigrator extends SqlMigrator {
             # TODO Dufailly
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
               select 39, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
-            
-            # TODO Promotion Objectif Zerosida (POZ)
-            insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 40, location_id from location where uuid='c488ed05-f259-4f7b-a9d4-8f56736da691'; 
             
             # TODO Jean Denis (?)
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
