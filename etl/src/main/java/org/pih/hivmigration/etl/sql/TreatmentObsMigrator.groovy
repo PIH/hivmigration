@@ -306,36 +306,32 @@ class TreatmentObsMigrator extends ObsMigrator {
     def void migrateArtStatus() {
         create_tmp_obs_table()
         executeMysql("Set up for ARV Regimen migration", '''
-            DROP TABLE IF EXISTS hivmigration_tmp_arv_regimen;
-            CREATE TABLE hivmigration_tmp_arv_regimen
-            (
+            DROP TABLE IF EXISTS hivmigration_arv_regimen;
+            CREATE TABLE hivmigration_arv_regimen (
                 obs_group_id int primary key auto_increment,
                 source_encounter_id int,
-                coded varchar(32),
-                other varchar(255)
+                comments varchar(255)
             );
         ''')
-        setAutoIncrement('hivmigration_tmp_arv_regimen', '(select max(obs_id)+1 from obs)')
+        setAutoIncrement('hivmigration_arv_regimen', '(select max(obs_id)+1 from obs)')
 
         executeMysql("Populate ARV regimen staging table", '''
-            INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, coded, other)
-            SELECT hoo1.source_encounter_id, trim(hoo1.value), trim(hoo2.value)
-            FROM hivmigration_observations hoo1
-                     LEFT JOIN hivmigration_observations hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.observation = 'current_tx.art_other'
-            WHERE hoo1.observation = 'current_tx.art' AND length(trim(hoo2.value)) > 0;
+            INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
+            SELECT source_encounter_id, value
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.art';
             
-            -- get the instances where there is a current_tx.art_other entry but no current_tx.art
-            INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, other)
-            SELECT hoo1.source_encounter_id, trim(hoo1.value)
-            FROM hivmigration_observations hoo1
-                     LEFT JOIN hivmigration_observations hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.observation = 'current_tx.art'
-            WHERE hoo1.observation = 'current_tx.art_other' AND hoo2.source_encounter_id IS NULL AND length(trim(hoo1.value)) > 0;
+            INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
+            SELECT source_encounter_id, value
+            FROM hivmigration_observations
+            WHERE observation = 'current_tx.art_other'
+                AND LENGTH(TRIM(value)) > 0;  -- skip one weird entry that's 297 chars of whitespace
         ''')
 
         executeMysql("Create ARV regimen status obs group ", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, obs_id)
             SELECT source_encounter_id, concept_uuid_from_mapping('PIH', '13156'), obs_group_id
-            FROM hivmigration_tmp_arv_regimen;
+            FROM hivmigration_arv_regimen;
         ''')
 
         migrateArvsFromHivmigrationArvRegimenTableToTmpObs()
@@ -346,7 +342,7 @@ class TreatmentObsMigrator extends ObsMigrator {
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '160117'),
                 concept_uuid_from_mapping('CIEL', '1065')
-            FROM hivmigration_tmp_arv_regimen;
+            FROM hivmigration_arv_regimen;
         ''')
 
         executeMysql("Migrate ART start date from follow-up form", '''
@@ -403,36 +399,31 @@ class TreatmentObsMigrator extends ObsMigrator {
         create_tmp_obs_table()
 
         executeMysql("Set up for ARV Regimen migration", '''
-            DROP TABLE IF EXISTS hivmigration_tmp_arv_regimen;
-            CREATE TABLE hivmigration_tmp_arv_regimen
-            (
+            DROP TABLE IF EXISTS hivmigration_arv_regimen;
+            CREATE TABLE hivmigration_arv_regimen (
                 obs_group_id int primary key auto_increment,
                 source_encounter_id int,
-                coded varchar(32),
-                other varchar(255)
+                comments varchar(255)
             );
         ''')
-        setAutoIncrement('hivmigration_tmp_arv_regimen', '(select max(obs_id)+1 from obs)')
+        setAutoIncrement('hivmigration_arv_regimen', '(select max(obs_id)+1 from obs)')
 
         executeMysql("Populate ARV regimen staging table", '''
-            INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, coded, other)
-            SELECT hoo1.source_encounter_id, trim(hoo1.comments), trim(hoo2.comments)
-            FROM hivmigration_ordered_other hoo1
-            LEFT JOIN hivmigration_ordered_other hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.ordered = 'arv_regimen_other'
-            WHERE hoo1.ordered = 'arv_regimen';
+            INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
+            SELECT source_encounter_id, comments
+            FROM hivmigration_ordered_other
+            WHERE ordered = 'arv_regimen';
             
-            -- get the instances where there is an arv_regimen_other entry but no arv_regimen
-            INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, other)
-            SELECT hoo1.source_encounter_id, trim(hoo1.comments)
-            FROM hivmigration_ordered_other hoo1
-            LEFT JOIN hivmigration_ordered_other hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.ordered = 'arv_regimen'
-            WHERE hoo1.ordered = 'arv_regimen_other' AND hoo2.source_encounter_id IS NULL;
+            INSERT INTO hivmigration_arv_regimen (source_encounter_id, comments)
+            SELECT source_encounter_id, comments
+            FROM hivmigration_ordered_other
+            WHERE ordered = 'arv_regimen_other';
         ''')
 
         executeMysql("Create ARV regimen obs group ", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, obs_id)
             SELECT source_encounter_id, concept_uuid_from_mapping('PIH', '6116'), obs_group_id
-            FROM hivmigration_tmp_arv_regimen;
+            FROM hivmigration_arv_regimen;
         ''')
 
         migrateArvsFromHivmigrationArvRegimenTableToTmpObs()
@@ -609,89 +600,51 @@ class TreatmentObsMigrator extends ObsMigrator {
     }
 
     def migrateArvsFromHivmigrationArvRegimenTableToTmpObs() {
-        executeMysql("Create coding function", '''
-            drop function if exists coded_art_regimen;
-            delimiter //
-            create function coded_art_regimen (_text_value varchar(255)) returns char(38) deterministic
-            begin
-                return CASE
-                    WHEN _text_value LIKE 'azt%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164511')
-                    WHEN _text_value LIKE 'azt%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160124')
-                    WHEN _text_value LIKE 'azt%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '1652')
-                    WHEN _text_value LIKE 'd4t%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160104')
-                    WHEN _text_value LIKE 'd4t%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '792')
-                    WHEN _text_value LIKE 'tdf%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164512')
-                    WHEN _text_value LIKE 'tdf%3tc%dtg' THEN concept_uuid_from_mapping('CIEL', '165086')
-                    WHEN _text_value LIKE 'tdf%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '164505')
-                    WHEN _text_value LIKE 'tdf%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '162565')
-                    END;
-            end; //
-            delimiter ;
-        ''')
-
-        executeMysql("Add coded value that was put in as a coded value", '''
+        executeMysql("Migrate known ARV regimens into coded obs", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
-            SELECT source_encounter_id,
-                   concept_uuid_from_mapping('PIH', '1282'),
-                   value_uuid,
-                   obs_group_id
-            FROM (
-                SELECT source_encounter_id,
-                       coded_art_regimen(coded) as value_uuid,
-                       obs_group_id
-                FROM hivmigration_tmp_arv_regimen) arv
-            WHERE value_uuid IS NOT NULL;
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '1282'),
+                CASE
+                    WHEN comments LIKE 'azt%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164511')
+                    WHEN comments LIKE 'azt%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160124')
+                    WHEN comments LIKE 'azt%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '1652')
+                    WHEN comments LIKE 'd4t%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '160104')
+                    WHEN comments LIKE 'd4t%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '792')
+                    WHEN comments LIKE 'tdf%3tc%atv/r' THEN concept_uuid_from_mapping('CIEL', '164512')
+                    WHEN comments LIKE 'tdf%3tc%dtg' THEN concept_uuid_from_mapping('CIEL', '165086')
+                    WHEN comments LIKE 'tdf%3tc%efv' THEN concept_uuid_from_mapping('CIEL', '164505')
+                    WHEN comments LIKE 'tdf%3tc%nvp' THEN concept_uuid_from_mapping('CIEL', '162565')
+                    ELSE concept_uuid_from_mapping('CIEL', '5424')  -- other
+                    END,
+                obs_group_id
+            FROM hivmigration_arv_regimen;
         ''')
 
-        executeMysql("Add codifiable values that were put in 'other', if there's not already a coded value", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
-            SELECT arv.source_encounter_id,
-                   concept_uuid_from_mapping('PIH', '1282'),
-                   value_uuid,
-                   arv.obs_group_id
-            FROM (
-                     SELECT source_encounter_id,
-                            coded_art_regimen(other) as value_uuid,
-                            obs_group_id
-                     FROM hivmigration_tmp_arv_regimen) arv
-            LEFT JOIN tmp_obs o ON o.obs_group_id = arv.obs_group_id
-            WHERE value_uuid IS NOT NULL AND o.obs_id IS NULL;
-        ''')
-
-        executeMysql("Fill in 'other' as the coded value if there is none yet", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
-            SELECT arv.source_encounter_id,
-                   concept_uuid_from_mapping('PIH', '1282'),
-                   concept_uuid_from_mapping('CIEL', '5622'),
-                   arv.obs_group_id
-            FROM hivmigration_tmp_arv_regimen arv
-            WHERE coded_art_regimen(arv.coded) IS NULL AND coded_art_regimen(arv.other) IS NULL;
-        ''')
-
-        executeMysql("Add the non-coded other value", '''
+        executeMysql("Migrate old ARV Regimens into 'other' text box", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text, obs_group_id)
-            SELECT a.source_encounter_id,
-                   concept_uuid_from_mapping('CIEL', '5424'),
-                   value_text,
-                   obs_group_id
-            FROM (
-                SELECT
-                    arv.source_encounter_id,
-                    concat_ws(', ',
-                        if(arv.coded IS NOT NULL AND arv.coded != 'other' AND coded_art_regimen(arv.coded) IS NULL, arv.coded, NULL),
-                        if(arv.other IS NOT NULL AND coded_art_regimen(arv.other) IS NULL, arv.other, NULL)) as value_text,
-                    arv.obs_group_id
-                FROM hivmigration_tmp_arv_regimen arv
-                JOIN tmp_obs o ON o.obs_group_id = arv.obs_group_id
-                ) a
-            WHERE a.value_text IS NOT NULL AND trim(a.value_text) != '';
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '5424'),
+                comments,
+                obs_group_id
+            FROM hivmigration_arv_regimen
+            WHERE comments NOT LIKE 'azt%3tc%atv/r'
+              AND comments NOT LIKE 'azt%3tc%efv' 
+              AND comments NOT LIKE 'azt%3tc%nvp' 
+              AND comments NOT LIKE 'd4t%3tc%efv' 
+              AND comments NOT LIKE 'd4t%3tc%nvp' 
+              AND comments NOT LIKE 'tdf%3tc%atv/r'
+              AND comments NOT LIKE 'tdf%3tc%dtg'
+              AND comments NOT LIKE 'tdf%3tc%efv' 
+              AND comments NOT LIKE 'tdf%3tc%nvp';
         ''')
     }
 
     @Override
     def void revert() {
         executeMysql("DROP TABLE IF EXISTS hivmigration_prophylaxis")
-        executeMysql("DROP TABLE IF EXISTS hivmigration_tmp_arv_regimen")
+        executeMysql("DROP TABLE IF EXISTS hivmigration_arv_regimen")
         clearTable("obs")
     }
 }
