@@ -85,9 +85,9 @@ class SampleDataMigrator extends ObsMigrator {
             END $$
             DELIMITER ;
             
-            DROP PROCEDURE IF EXISTS fill_unknowns_and_nos;
+            DROP PROCEDURE IF EXISTS fill_unknowns;
             DELIMITER $$ ;
-            CREATE PROCEDURE fill_unknowns_and_nos(_population_name VARCHAR(8))
+            CREATE PROCEDURE fill_unknowns(_population_name VARCHAR(8))
             BEGIN
                 INSERT INTO tmp_obs
                 (source_encounter_id, concept_uuid, value_coded_uuid)
@@ -100,17 +100,6 @@ class SampleDataMigrator extends ObsMigrator {
                 GROUP BY source_encounter_id
                 HAVING COUNT(CASE WHEN o.concept_uuid = concept_uuid_for_population_name(_population_name) THEN 1 END) = 0
                    AND p_hash(LEFT(GROUP_CONCAT(first_name, last_name), 120), 2) < 0.25;
-            
-                INSERT INTO tmp_obs
-                (source_encounter_id, concept_uuid, value_coded_uuid)
-                SELECT he.source_encounter_id,
-                       concept_uuid_for_population_name(_population_name),
-                       concept_uuid_from_mapping('PIH', 'NO')
-                FROM hivmigration_patients hp
-                         JOIN hivmigration_encounters he ON hp.source_patient_id = he.source_patient_id AND he.source_encounter_type = 'intake\'
-                         LEFT JOIN tmp_obs o on he.source_encounter_id = o.source_encounter_id
-                GROUP BY source_encounter_id
-                HAVING COUNT(CASE WHEN o.concept_uuid = concept_uuid_for_population_name(_population_name) THEN 1 END) = 0;
             END $$
             DELIMITER ;
         ''')
@@ -176,11 +165,11 @@ class SampleDataMigrator extends ObsMigrator {
                AND p_hash(GROUP_CONCAT(first_name, last_name), 4) < 0.2;
         ''')
 
-        executeMysql("call fill_unknowns_and_nos('msm');")
-        executeMysql("call fill_unknowns_and_nos('sw');")
-        executeMysql("call fill_unknowns_and_nos('prisoner');")
-        executeMysql("call fill_unknowns_and_nos('trans');")
-        executeMysql("call fill_unknowns_and_nos('iv');")
+        executeMysql("call fill_unknowns('msm');")
+        executeMysql("call fill_unknowns('sw');")
+        executeMysql("call fill_unknowns('prisoner');")
+        executeMysql("call fill_unknowns('trans');")
+        executeMysql("call fill_unknowns('iv');")
 
         migrate_tmp_obs()
 
