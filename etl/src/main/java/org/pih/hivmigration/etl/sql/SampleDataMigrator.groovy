@@ -41,7 +41,7 @@ class SampleDataMigrator extends ObsMigrator {
         executeMysql("Set up all the functions and procedures", '''
             DROP FUNCTION IF EXISTS p_hash;
             DELIMITER //
-            CREATE FUNCTION p_hash (_input VARCHAR(120), _iteration INT) RETURNS DECIMAL(3, 3)
+            CREATE FUNCTION p_hash (_input VARCHAR(120), _iteration INT) RETURNS DECIMAL(3, 3) DETERMINISTIC 
             BEGIN
                 RETURN conv(substring(md5(_input), 1, 4 + _iteration), 16, 10) % 1000 / 1000;
             END; //
@@ -49,7 +49,7 @@ class SampleDataMigrator extends ObsMigrator {
             
             DROP FUNCTION IF EXISTS concept_uuid_for_population_name;
             DELIMITER //
-            CREATE FUNCTION concept_uuid_for_population_name (_population_name VARCHAR(8)) RETURNS CHAR(38)
+            CREATE FUNCTION concept_uuid_for_population_name (_population_name VARCHAR(8)) RETURNS CHAR(38) DETERMINISTIC 
             BEGIN
                 RETURN CASE _population_name
                            WHEN 'msm' THEN concept_uuid_from_mapping('CIEL', '160578')
