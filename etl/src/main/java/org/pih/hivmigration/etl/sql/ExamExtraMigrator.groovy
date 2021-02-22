@@ -23,7 +23,8 @@ class ExamExtraMigrator extends ObsMigrator {
               post_test_counseling_p BOOLEAN,
               partner_referred_for_tr_p BOOLEAN,              
               next_exam_date date,
-              who_stage CHAR(1)            
+              who_stage CHAR(1),
+              socioecon_encounter_id INT            
             );
         ''')
 
@@ -217,53 +218,92 @@ class ExamExtraMigrator extends ObsMigrator {
             FROM hivmigration_exam_extra      
             WHERE post_test_counseling_p is not null; 
 
+            -- create new SocioEconomics encounters if an encounter was not already created during the SocioEconomicsMigrator
+             set @form_id = (select form_id from form where name = 'Socioeconomics Note');
+             insert into encounter(
+                encounter_datetime, 
+                date_created, 
+                encounter_type, 
+                form_id, 
+                patient_id, 
+                creator, 
+                location_id, 
+                uuid)
+            select 
+                h.encounter_date,
+                h.date_created,
+                encounter_type('Socio-economics') as encounter_type,
+                @form_id as form_id,
+                p.person_id,
+                1,
+                ifnull(h.location_id, 1) as location_id,
+                uuid() as uuid
+             from  hivmigration_exam_extra x   
+            join hivmigration_encounters h on x.source_encounter_id = h.source_encounter_id 
+            join hivmigration_patients p on p.source_patient_id = x.source_patient_id  
+            where x.socioecon_encounter_id is null and (x.main_activity_before is not null or x.other_activities_before is not null) 
+                and x.source_encounter_id not in (
+                select x.source_encounter_id from hivmigration_exam_extra x  
+                        join hivmigration_encounters h on x.source_encounter_id = h.source_encounter_id 
+                        join hivmigration_patients p on p.source_patient_id = x.source_patient_id  
+                        join encounter e on e.encounter_type = encounter_type('Socio-economics') and e.patient_id = p.person_id             
+                        where (x.main_activity_before is not null or x.other_activities_before is not null) and date(e.encounter_datetime) = date(h.encounter_date)); 
+
+            -- Add socioeconomics encounter_id                 
+            update hivmigration_exam_extra x  
+            join hivmigration_encounters h on x.source_encounter_id = h.source_encounter_id 
+            join hivmigration_patients p on p.source_patient_id = x.source_patient_id  
+            join encounter e on e.encounter_type = encounter_type('Socio-economics') and e.patient_id = p.person_id 
+            SET x.socioecon_encounter_id = e.encounter_id 
+            where (x.main_activity_before is not null or x.other_activities_before is not null) and date(e.encounter_datetime) = date(h.encounter_date);
+                
             -- Main activity before illness 
             INSERT INTO tmp_obs(
-                source_encounter_id,
+                encounter_id,
                 concept_uuid,
                 value_text)
             SELECT 
-                source_encounter_id,
+                socioecon_encounter_id,
                 concept_uuid_from_mapping('PIH', '1402') as concept_uuid,                
                 main_activity_before  
             FROM hivmigration_exam_extra      
-            WHERE main_activity_before is not null;
+            WHERE main_activity_before is not null and socioecon_encounter_id is not null;
 
             -- Ability to perform main activity now 
             INSERT INTO tmp_obs(
-                source_encounter_id,
+                encounter_id,
                 concept_uuid,
                 value_text)
             SELECT 
-                source_encounter_id,
+                socioecon_encounter_id,
                 concept_uuid_from_mapping('PIH', '11543') as concept_uuid,                
                 main_activity_how_now  
             FROM hivmigration_exam_extra      
-            WHERE main_activity_how_now is not null; 
+            WHERE main_activity_how_now is not null and socioecon_encounter_id is not null; 
 
             -- Other activities before illness 
             INSERT INTO tmp_obs(
-                source_encounter_id,
+                encounter_id,
                 concept_uuid,
                 value_text)
             SELECT 
-                source_encounter_id,
+                socioecon_encounter_id,
                 concept_uuid_from_mapping('PIH', 'OTHER ACTIVITIES BEFORE ILLNESS') as concept_uuid,                
                 other_activities_before  
             FROM hivmigration_exam_extra      
-            WHERE other_activities_before is not null;
+            WHERE other_activities_before is not null and socioecon_encounter_id is not null;
 
             -- Ability to perform other activities now 
             INSERT INTO tmp_obs(
-                source_encounter_id,
+                encounter_id,
                 concept_uuid,
                 value_text)
             SELECT 
-                source_encounter_id,
+                socioecon_encounter_id,
                 concept_uuid_from_mapping('PIH', 'CURRENT ABILITY TO PERFORM OTHER ACTIVITIES BEFORE ILLNESS') as concept_uuid,                
                 other_activities_how_now  
             FROM hivmigration_exam_extra      
-            WHERE other_activities_how_now is not null;
+            WHERE other_activities_how_now is not null and socioecon_encounter_id is not null;
         ''')
 
         migrate_tmp_obs()
@@ -648,8 +688,7 @@ class ExamExtraMigrator extends ObsMigrator {
                     t.source_encounter_id = e.source_encounter_id and e.source_encounter_type='intake';  
 
         ''')
-        migrate_tmp_obs()  
-              
+        migrate_tmp_obs()              
     }
 
     @Override
