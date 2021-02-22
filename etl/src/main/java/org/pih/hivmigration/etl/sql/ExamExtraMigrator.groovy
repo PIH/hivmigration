@@ -9,7 +9,21 @@ class ExamExtraMigrator extends ObsMigrator {
             create table hivmigration_exam_extra (                            
               source_encounter_id int,
               source_patient_id int,
-              next_exam_date date            
+              main_activity_before VARCHAR(76),
+              main_activity_how_now VARCHAR(10),
+              other_activities_before VARCHAR(64),
+              other_activities_how_now VARCHAR(10),
+              oi_now_p BOOLEAN,
+              plan_extra VARCHAR(2436),
+              pregnant_p BOOLEAN,
+              last_period_date date,
+              expected_delivery_date date,
+              mothers_first_name VARCHAR(32),
+              mothers_last_name VARCHAR(32),
+              post_test_counseling_p BOOLEAN,
+              partner_referred_for_tr_p BOOLEAN,              
+              next_exam_date date,
+              who_stage CHAR(1)            
             );
         ''')
 
@@ -30,33 +44,226 @@ class ExamExtraMigrator extends ObsMigrator {
             ''')
 
 
-        // migrate next_exam_dates on intake and followup forms
+        // migrate all HIV_EXAM_EXTRA data from the intake and followup encounters
         loadFromOracleToMySql('''
             insert into hivmigration_exam_extra (
               source_encounter_id,
               source_patient_id,
-              next_exam_date 
+              main_activity_before,
+              main_activity_how_now,
+              other_activities_before,
+              other_activities_how_now,
+              oi_now_p,
+              plan_extra,
+              pregnant_p,
+              last_period_date,
+              expected_delivery_date,
+              mothers_first_name,
+              mothers_last_name,
+              post_test_counseling_p,
+              partner_referred_for_tr_p,
+              next_exam_date,
+              who_stage 
             )
-            values(?,?,?) 
+            values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) 
             ''', '''
-                select x.encounter_id as source_encounter_id,
+                select 
+                        x.encounter_id as source_encounter_id,
                         e.patient_id as source_patient_id,
-                        to_char(x.next_exam_date, 'yyyy-mm-dd') as next_exam_date
+                        x.main_activity_before,
+                        x.main_activity_how_now,
+                        x.other_activities_before,
+                        x.other_activities_how_now,                      
+                        case 
+                            when (x.oi_now_p = 't') then 1 
+                            when (x.oi_now_p = 'f') then 0 
+                            else null 
+                        end as oi_now_p,
+                        x.plan_extra,                      
+                        case 
+                            when (x.pregnant_p = 't') then 1 
+                            when (x.pregnant_p = 'f') then 0 
+                            else null 
+                        end as pregnant_p,
+                        to_char(x.last_period_date, 'yyyy-mm-dd') as last_period_date,
+                        to_char(x.expected_delivery_date, 'yyyy-mm-dd') as expected_delivery_date,
+                        x.mothers_first_name,
+                        x.mothers_last_name,                      
+                        case 
+                            when (x.post_test_counseling_p = 't') then 1 
+                            when (x.post_test_counseling_p = 'f') then 0 
+                            else null 
+                        end as post_test_counseling_p,                         
+                        case 
+                            when (x.partner_referred_for_tr_p = 't') then 1 
+                            when (x.partner_referred_for_tr_p = 'f') then 0 
+                            else null 
+                        end as partner_referred_for_tr_p,                                           
+                        to_char(x.next_exam_date, 'yyyy-mm-dd') as next_exam_date,
+                        x.who_stage
                 from hiv_exam_extra x,hiv_encounters e, hiv_demographics_real d 
-                where x.next_exam_date is not null and x.encounter_id = e.encounter_id and e.patient_id = d.patient_id
-                    and e.type in ('intake','followup')
+                where x.encounter_id = e.encounter_id and e.patient_id = d.patient_id
+                    and e.type in ('intake','followup');
             ''')
 
         create_tmp_obs_table()
 
-        executeMysql("Load next visit date as observations", ''' 
+        executeMysql("Load HIV_EXAM_EXTRA observations", ''' 
                       
             SET @next_visit_date_concept_uuid = '3ce94df0-26fe-102b-80cb-0017a47871b2';            
                         
             INSERT INTO tmp_obs (value_datetime, source_patient_id, source_encounter_id, concept_uuid)
             SELECT next_exam_date, source_patient_id, source_encounter_id, @next_visit_date_concept_uuid
             FROM hivmigration_exam_extra
-            WHERE next_exam_date is not null;            
+            WHERE next_exam_date is not null;      
+
+
+            -- Plan Extra (Action plan) obs     
+            INSERT INTO tmp_obs(
+                source_encounter_id,
+                concept_uuid,
+                value_text)
+            SELECT 
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '1620') as concept_uuid,                
+                plan_extra  
+            FROM hivmigration_exam_extra      
+            WHERE plan_extra is not null; 
+
+            -- WHO_STAGE obs     
+            INSERT INTO tmp_obs(
+                source_encounter_id,
+                concept_uuid,
+                value_coded_uuid)
+            SELECT 
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'CURRENT WHO HIV STAGE') as concept_uuid,                
+                case 
+                    when (who_stage= '1') then concept_uuid_from_mapping('PIH', 'WHO STAGE 1 ADULT')
+                    when (who_stage= '2') then concept_uuid_from_mapping('PIH', 'WHO STAGE 2 ADULT')
+                    when (who_stage= '3') then concept_uuid_from_mapping('PIH', 'WHO STAGE 3 ADULT')
+                    when (who_stage= '4') then concept_uuid_from_mapping('PIH', '1207')
+                    else null 
+                end as value_coded_uuid  
+            FROM hivmigration_exam_extra      
+            WHERE who_stage in ('1', '2', '3', '4');  
+
+            -- Pregnant
+            INSERT INTO tmp_obs(
+                source_encounter_id,
+                concept_uuid,
+                value_coded_uuid)
+            SELECT 
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'PREGNANCY STATUS') as concept_uuid,                
+                concept_uuid_from_mapping('PIH', 'YES') as value_coded_uuid                
+            FROM hivmigration_exam_extra      
+            WHERE pregnant_p = true; 
+
+            -- Last period date
+            INSERT INTO tmp_obs(
+                source_encounter_id,
+                concept_uuid,
+                value_datetime)
+            SELECT 
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'DATE OF LAST MENSTRUAL PERIOD') as concept_uuid,                
+                last_period_date               
+            FROM hivmigration_exam_extra      
+            WHERE last_period_date is not null; 
+
+            -- Due date
+            INSERT INTO tmp_obs(
+                source_encounter_id,
+                concept_uuid,
+                value_datetime)
+            SELECT 
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '5596') as concept_uuid,                
+                expected_delivery_date               
+            FROM hivmigration_exam_extra      
+            WHERE expected_delivery_date is not null; 
+
+
+            -- Partner referred for HIV test
+            INSERT INTO tmp_obs(
+                source_encounter_id,
+                concept_uuid,
+                value_coded_uuid)
+            SELECT 
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'PARTNER REFERRED FOR HIV TEST') as concept_uuid,                                                
+                case 
+                    when (partner_referred_for_tr_p=true) then concept_uuid_from_mapping('PIH', 'YES')
+                    when (partner_referred_for_tr_p=false) then concept_uuid_from_mapping('PIH', 'NO')                    
+                    else null 
+                end as value_coded_uuid                
+            FROM hivmigration_exam_extra      
+            WHERE partner_referred_for_tr_p is not null;
+
+            -- Post test counseling
+            INSERT INTO tmp_obs(
+                source_encounter_id,
+                concept_uuid,
+                value_coded_uuid)
+            SELECT 
+                source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '159382') as concept_uuid,                                                
+                case 
+                    when (post_test_counseling_p=true) then concept_uuid_from_mapping('PIH', 'YES')
+                    when (post_test_counseling_p=false) then concept_uuid_from_mapping('PIH','NO')                    
+                    else null 
+                end as value_coded_uuid                
+            FROM hivmigration_exam_extra      
+            WHERE post_test_counseling_p is not null; 
+
+            -- Main activity before illness 
+            INSERT INTO tmp_obs(
+                source_encounter_id,
+                concept_uuid,
+                value_text)
+            SELECT 
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '1402') as concept_uuid,                
+                main_activity_before  
+            FROM hivmigration_exam_extra      
+            WHERE main_activity_before is not null;
+
+            -- Ability to perform main activity now 
+            INSERT INTO tmp_obs(
+                source_encounter_id,
+                concept_uuid,
+                value_text)
+            SELECT 
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '11543') as concept_uuid,                
+                main_activity_how_now  
+            FROM hivmigration_exam_extra      
+            WHERE main_activity_how_now is not null; 
+
+            -- Other activities before illness 
+            INSERT INTO tmp_obs(
+                source_encounter_id,
+                concept_uuid,
+                value_text)
+            SELECT 
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'OTHER ACTIVITIES BEFORE ILLNESS') as concept_uuid,                
+                other_activities_before  
+            FROM hivmigration_exam_extra      
+            WHERE other_activities_before is not null;
+
+            -- Ability to perform other activities now 
+            INSERT INTO tmp_obs(
+                source_encounter_id,
+                concept_uuid,
+                value_text)
+            SELECT 
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'CURRENT ABILITY TO PERFORM OTHER ACTIVITIES BEFORE ILLNESS') as concept_uuid,                
+                other_activities_how_now  
+            FROM hivmigration_exam_extra      
+            WHERE other_activities_how_now is not null;
         ''')
 
         migrate_tmp_obs()
@@ -441,7 +648,8 @@ class ExamExtraMigrator extends ObsMigrator {
                     t.source_encounter_id = e.source_encounter_id and e.source_encounter_type='intake';  
 
         ''')
-        migrate_tmp_obs()        
+        migrate_tmp_obs()  
+              
     }
 
     @Override
