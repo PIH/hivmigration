@@ -30,6 +30,24 @@ class FormsMigrator extends ObsMigrator {
             FROM hivmigration_followup_forms WHERE progress IS NOT NULL;
         ''')
 
+        executeMysql("Migrate provider", '''
+            insert into tmp_obs
+            (source_encounter_id, concept_uuid, value_text)
+            select source_encounter_id,
+                   concept_uuid_from_mapping('PIH', 'Provider name non-coded'),
+                   examining_doctor
+            from hivmigration_intake_forms
+            where examining_doctor is not null;
+            
+            insert into tmp_obs
+            (source_encounter_id, concept_uuid, value_text)
+            select source_encounter_id,
+                   concept_uuid_from_mapping('PIH', 'Provider name non-coded'),
+                   examining_doctor
+            from hivmigration_followup_forms
+            where examining_doctor is not null;
+        ''')
+
         migrate_tmp_obs()
     }
 
