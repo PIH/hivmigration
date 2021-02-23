@@ -317,7 +317,7 @@ class TreatmentObsMigrator extends ObsMigrator {
         ''')
         setAutoIncrement('hivmigration_tmp_arv_regimen', '(select max(obs_id)+1 from obs)')
 
-        executeMysql("Populate ARV regimen staging table", '''
+        executeMysql("Populate ARV regimen staging table for ARV Status", '''
             INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, coded, other)
             SELECT hoo1.source_encounter_id, trim(hoo1.value), trim(hoo2.value)
             FROM hivmigration_observations hoo1
@@ -414,7 +414,7 @@ class TreatmentObsMigrator extends ObsMigrator {
         ''')
         setAutoIncrement('hivmigration_tmp_arv_regimen', '(select max(obs_id)+1 from obs)')
 
-        executeMysql("Populate ARV regimen staging table", '''
+        executeMysql("Populate ARV regimen staging table for ARV Plan", '''
             INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, coded, other)
             SELECT hoo1.source_encounter_id, trim(hoo1.comments), trim(hoo2.comments)
             FROM hivmigration_ordered_other hoo1
@@ -429,7 +429,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE hoo1.ordered = 'arv_regimen_other' AND hoo2.source_encounter_id IS NULL;
         ''')
 
-        executeMysql("Create ARV regimen obs group ", '''
+        executeMysql("Create ARV regimen obs group", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, obs_id)
             SELECT source_encounter_id, concept_uuid_from_mapping('PIH', '6116'), obs_group_id
             FROM hivmigration_tmp_arv_regimen;
