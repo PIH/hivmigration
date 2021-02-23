@@ -154,9 +154,9 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 concept_uuid_from_mapping('CIEL', '1728') as concept_uuid, -- Sign/Symptom name
                 concept_uuid_from_mapping('CIEL', '5622') as value_coded_uuid, -- Other non-coded
                 case
-                  when (lower(s.symptom) = 'other' and s.symptom_comment is not null) then SUBSTRING(s.symptom_comment, 0, 254) 
-                  when (lower(s.symptom) != 'other' and s.symptom_comment is not null) then SUBSTRING(CONCAT(s.symptom, ", ", s.symptom_comment), 0, 254) 
-                  when (s.symptom_comment is null) then SUBSTRING(s.symptom, 0, 254) 
+                  when (lower(s.symptom) = 'other' and s.symptom_comment is not null) then TRIM(SUBSTRING(s.symptom_comment, 0, 254)) 
+                  when (lower(s.symptom) != 'other' and s.symptom_comment is not null) then TRIM(SUBSTRING(CONCAT(s.symptom, ", ", s.symptom_comment), 0, 254)) 
+                  when (s.symptom_comment is null) then s.symptom 
                   else null 
                 end as comments                  
             from hivmigration_exam_symptoms s  
