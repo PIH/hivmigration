@@ -11,6 +11,7 @@ class LabResultMigrator extends ObsMigrator {
               source_result_id int,
               sample_id VARCHAR(20),
               test_type VARCHAR(16), -- viral_load, CD4, tr, ppd, hematocrit
+              performed_by VARCHAR(80),
               obs_datetime date,
               value_numeric DOUBLE,
               value_text VARCHAR(100),
@@ -29,18 +30,20 @@ class LabResultMigrator extends ObsMigrator {
                 source_result_id,
                 sample_id,
                 test_type,
+                performed_by,
                 obs_datetime,
                 value_numeric,
                 value_text,
                 value_boolean,
                 vl_beyond_detectable_limit,
                 vl_detectable_lower_limit)
-            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', '''
             select   e.ENCOUNTER_ID as source_encounter_id, 
                      r.RESULT_ID as source_result_id,
                      r.sample_id, 
                      lower(t.name) as test_type,
+                     trim(e.performed_by),
                      to_char(e.encounter_date, 'yyyy-mm-dd') as obs_datetime,
                      value as value_numeric, 
                      value_string as value_text,   
@@ -62,12 +65,14 @@ class LabResultMigrator extends ObsMigrator {
             insert into hivmigration_lab_results
                (source_encounter_id,                                
                 test_type,
+                performed_by,
                 value_boolean,
                 obs_datetime)
-            values (?, ?, ?, ?)
+            values (?, ?, ?, ?, ?)
         ''', '''
             select e.ENCOUNTER_ID as source_encounter_id, 
                     r.LAB_TEST,
+                    e.performed_by,
                     case when ( r.RESULT='t' ) then 1 else 0 end as value_boolean,
                     case when (r.test_date is null) then to_char(e.encounter_date, 'yyyy-mm-dd') 
                     else to_char(r.test_date, 'yyyy-mm-dd') 
@@ -82,7 +87,10 @@ class LabResultMigrator extends ObsMigrator {
         executeMysql("Load lab results as observations",
         '''
 
-            -- Specimen number: top level obs for all lab tests
+            -- Top-level obs for all lab tests
+            --
+            
+            -- Specimen number
             INSERT INTO tmp_obs(
                 value_text, 
                 source_encounter_id, 
@@ -93,6 +101,13 @@ class LabResultMigrator extends ObsMigrator {
                 '162086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
             FROM hivmigration_lab_results
             WHERE sample_id IS NOT NULL;
+
+            -- Performed by
+            INSERT INTO tmp_obs
+            (source_encounter_id, concept_uuid, value_text)
+            SELECT source_encounter_id, concept_uuid_from_mapping('PIH', 'Lab tech non-coded'), performed_by
+            FROM hivmigration_lab_results
+            WHERE performed_by IS NOT NULL;
 
             -- Viral load
             --
