@@ -643,6 +643,10 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE value_uuid IS NOT NULL;
         ''')
 
+        executeMysql("Add index to tmp_obs.obs_group_id to support the next step", '''
+            CREATE INDEX obs_group_id_idx ON tmp_obs (`obs_group_id`);
+        ''')
+
         executeMysql("Add codifiable values that were put in 'other', if there's not already a coded value", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
             SELECT arv.source_encounter_id,
