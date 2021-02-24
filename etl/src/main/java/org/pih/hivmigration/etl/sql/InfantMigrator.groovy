@@ -182,18 +182,26 @@ class InfantMigrator extends SqlMigrator {
         ''')
 
         executeMysql("Create empty registration encounter for each infant", '''
-            INSERT INTO encounter
-                (encounter_type, patient_id, location_id, form_id, encounter_datetime, creator, date_created, voided, uuid)
+            INSERT INTO encounter(
+                encounter_type, 
+                patient_id, 
+                location_id, 
+                form_id, 
+                encounter_datetime, 
+                creator, 
+                date_created, 
+                voided, 
+                uuid)
             SELECT
-                (SELECT encounter_type_id FROM encounter_type WHERE name = 'Enregistrement de patient'),
+                (SELECT encounter_type_id FROM encounter_type WHERE name = 'Enregistrement de patient') as encounter_type,
                 person_id,
-                hhc.openmrs_id,
-                (SELECT form_id FROM form WHERE uuid = '6F6E6FA0-1E99-41A3-9391-E5CB8A127C11'),
-                IFNULL(birthdate, now()),
+                IFNULL(hhc.openmrs_id, 1) as location_id,
+                (SELECT form_id FROM form WHERE uuid = '6F6E6FA0-1E99-41A3-9391-E5CB8A127C11') as form_id,
+                IFNULL(birthdate, now()) as encounter_datetime,
                 1,
-                now(),
+                now() as date_created,
                 0,
-                uuid()
+                uuid() as uuid
             FROM hivmigration_infants i
             LEFT JOIN hivmigration_health_center hhc ON i.health_center = hhc.hiv_emr_id;
         ''')
