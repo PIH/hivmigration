@@ -18,6 +18,7 @@ class TreatmentObsMigrator extends ObsMigrator {
         migrateTbState()
         migrateTbPlan()
         migrateCurrentOtherMeds()
+        migrateARTChangeReason()
     }
 
     def void migrateProphylaxesState() {
@@ -704,6 +705,30 @@ class TreatmentObsMigrator extends ObsMigrator {
                 ) a
             WHERE a.value_text IS NOT NULL AND trim(a.value_text) != '';
         ''')
+    }
+
+    def migrateARTChangeReason() {
+        create_tmp_obs_table()
+
+        executeMysql("Migrate reasons for changing ART treatment", '''
+            INSERT INTO tmp_obs (
+                source_encounter_id, 
+                concept_uuid, 
+                value_coded_uuid, 
+                comments)
+            select source_encounter_id,  concept_uuid_from_mapping('PIH', 'REASON ANTIRETROVIRALS CHANGED OR STOPPED') as concept_uuid,
+            case 
+                when (lower(trim(comments)) = 'pregnancy') then concept_uuid_from_mapping('PIH', 'PATIENT PREGNANT') 
+                when (lower(trim(comments)) = 'treatment_refused') then concept_uuid_from_mapping('PIH', 'PATIENT REFUSED') 
+                when (lower(trim(comments)) = 'finished_ptme') then concept_uuid_from_mapping('PIH', 'COMPLETED TOTAL PMTCT')
+                else concept_uuid_from_mapping('PIH', 'OTHER NON-CODED') 
+            end as value_coded_uuid,
+            trim(comments) as comments
+            from hivmigration_ordered_other 
+            where ORDERED like 'change_arv%' and comments is not null;    
+        ''')
+
+        migrate_tmp_obs()
     }
 
     @Override
