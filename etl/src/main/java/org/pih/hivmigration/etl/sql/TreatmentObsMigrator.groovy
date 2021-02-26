@@ -694,15 +694,23 @@ class TreatmentObsMigrator extends ObsMigrator {
                    value_text,
                    obs_group_id
             FROM (
-                SELECT
-                    arv.source_encounter_id,
-                    concat_ws(', ',
-                        if(arv.coded IS NOT NULL AND arv.coded != 'other' AND coded_art_regimen(arv.coded) IS NULL, arv.coded, NULL),
-                        if(arv.other IS NOT NULL AND coded_art_regimen(arv.other) IS NULL, arv.other, NULL)) as value_text,
-                    arv.obs_group_id
-                FROM hivmigration_tmp_arv_regimen arv
-                JOIN tmp_obs o ON o.obs_group_id = arv.obs_group_id
-                ) a
+                     SELECT
+                         arv.source_encounter_id,
+                         concat_ws(', ',
+                                   if(arv.coded IS NOT NULL AND arv.coded != 'other'
+                                          AND coded_art_regimen(arv.coded) IS NULL,
+                                       arv.coded,
+                                       NULL),
+                                   if(arv.other IS NOT NULL
+                                          AND (coded_art_regimen(arv.other) IS NULL
+                                                   OR coded_art_regimen(arv.other) != o.value_coded_uuid),
+                                       arv.other,
+                                       NULL)
+                             ) as value_text,
+                         arv.obs_group_id
+                     FROM hivmigration_tmp_arv_regimen arv
+                     JOIN tmp_obs o ON o.obs_group_id = arv.obs_group_id
+                 ) a
             WHERE a.value_text IS NOT NULL AND trim(a.value_text) != '';
         ''')
     }
