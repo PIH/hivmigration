@@ -22,12 +22,21 @@ class StagingTablesMigrator extends SqlMigrator {
         migrateTable("HIV_CONTACTS")
         migrateTable("HIV_ORDERED_OTHER")
 
-        executeMysql("Add index to hivmigration_ordered_other.source_encounter_id", '''
+        executeMysql("Add source_encounter_id index to some tables", '''
             ALTER TABLE hivmigration_ordered_other
             MODIFY source_encounter_id INT;
-            
             CREATE INDEX source_encounter_id_idx
             ON hivmigration_ordered_other (`source_encounter_id`);
+            
+            ALTER TABLE hivmigration_intake_forms
+            MODIFY source_encounter_id INT;
+            CREATE INDEX source_encounter_id_idx
+            ON hivmigration_intake_forms (`source_encounter_id`);
+            
+            ALTER TABLE hivmigration_followup_forms
+            MODIFY source_encounter_id INT;
+            CREATE INDEX source_encounter_id_idx
+            ON hivmigration_followup_forms (`source_encounter_id`);
         ''')
     }
     
