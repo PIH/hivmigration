@@ -21,7 +21,7 @@ class ExamExtraMigrator extends ObsMigrator {
               mothers_first_name VARCHAR(32),
               mothers_last_name VARCHAR(32),
               post_test_counseling_p BOOLEAN,
-              partner_referred_for_tr_p BOOLEAN,              
+              partner_referred_for_tr_p CHAR(1),              
               next_exam_date date,
               who_stage CHAR(1),
               socioecon_encounter_id INT            
@@ -94,12 +94,8 @@ class ExamExtraMigrator extends ObsMigrator {
                             when (x.post_test_counseling_p = 't') then 1 
                             when (x.post_test_counseling_p = 'f') then 0 
                             else null 
-                        end as post_test_counseling_p,                         
-                        case 
-                            when (x.partner_referred_for_tr_p = 't') then 1 
-                            when (x.partner_referred_for_tr_p = 'f') then 0 
-                            else null 
-                        end as partner_referred_for_tr_p,                                           
+                        end as post_test_counseling_p,    
+                        x.partner_referred_for_tr_p,                                                                                       
                         to_char(x.next_exam_date, 'yyyy-mm-dd') as next_exam_date,
                         x.who_stage
                 from hiv_exam_extra x,hiv_encounters e, hiv_demographics_real d 
@@ -195,8 +191,9 @@ class ExamExtraMigrator extends ObsMigrator {
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'PARTNER REFERRED FOR HIV TEST') as concept_uuid,                                                
                 case 
-                    when (partner_referred_for_tr_p=true) then concept_uuid_from_mapping('PIH', 'YES')
-                    when (partner_referred_for_tr_p=false) then concept_uuid_from_mapping('PIH', 'NO')                    
+                    when (partner_referred_for_tr_p='t') then concept_uuid_from_mapping('PIH', 'YES')
+                    when (partner_referred_for_tr_p='f') then concept_uuid_from_mapping('PIH', 'NO')
+                    when (partner_referred_for_tr_p='9') then concept_uuid_from_mapping('PIH', 'NO PARTNER')                    
                     else null 
                 end as value_coded_uuid                
             FROM hivmigration_exam_extra      
@@ -241,13 +238,13 @@ class ExamExtraMigrator extends ObsMigrator {
              from  hivmigration_exam_extra x   
             join hivmigration_encounters h on x.source_encounter_id = h.source_encounter_id 
             join hivmigration_patients p on p.source_patient_id = x.source_patient_id  
-            where x.socioecon_encounter_id is null and (x.main_activity_before is not null or x.other_activities_before is not null) 
+            where x.socioecon_encounter_id is null and (x.main_activity_before is not null or main_activity_how_now is not null or x.other_activities_before is not null or other_activities_how_now is not null) 
                 and x.source_encounter_id not in (
                 select x.source_encounter_id from hivmigration_exam_extra x  
                         join hivmigration_encounters h on x.source_encounter_id = h.source_encounter_id 
                         join hivmigration_patients p on p.source_patient_id = x.source_patient_id  
                         join encounter e on e.encounter_type = encounter_type('Socio-economics') and e.patient_id = p.person_id             
-                        where (x.main_activity_before is not null or x.other_activities_before is not null) and date(e.encounter_datetime) = date(h.encounter_date)); 
+                        where (x.main_activity_before is not null or main_activity_how_now is not null or x.other_activities_before is not null or other_activities_how_now is not null) and date(e.encounter_datetime) = date(h.encounter_date)); 
 
             -- Add socioeconomics encounter_id                 
             update hivmigration_exam_extra x  
@@ -255,7 +252,7 @@ class ExamExtraMigrator extends ObsMigrator {
             join hivmigration_patients p on p.source_patient_id = x.source_patient_id  
             join encounter e on e.encounter_type = encounter_type('Socio-economics') and e.patient_id = p.person_id 
             SET x.socioecon_encounter_id = e.encounter_id 
-            where (x.main_activity_before is not null or x.other_activities_before is not null) and date(e.encounter_datetime) = date(h.encounter_date);
+            where (x.main_activity_before is not null or main_activity_how_now is not null or x.other_activities_before is not null or other_activities_how_now is not null) and date(e.encounter_datetime) = date(h.encounter_date);
                 
             -- Main activity before illness 
             INSERT INTO tmp_obs(
@@ -688,7 +685,7 @@ class ExamExtraMigrator extends ObsMigrator {
                     t.source_encounter_id = e.source_encounter_id and e.source_encounter_type='intake';  
 
         ''')
-        migrate_tmp_obs()              
+        migrate_tmp_obs()
     }
 
     @Override
