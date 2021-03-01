@@ -724,16 +724,25 @@ class TreatmentObsMigrator extends ObsMigrator {
                 concept_uuid, 
                 value_coded_uuid, 
                 comments)
-            select source_encounter_id,  concept_uuid_from_mapping('PIH', 'REASON ANTIRETROVIRALS CHANGED OR STOPPED') as concept_uuid,
-            case 
-                when (lower(trim(comments)) = 'pregnancy') then concept_uuid_from_mapping('PIH', 'PATIENT PREGNANT') 
-                when (lower(trim(comments)) = 'treatment_refused') then concept_uuid_from_mapping('PIH', 'PATIENT REFUSED') 
-                when (lower(trim(comments)) = 'finished_ptme') then concept_uuid_from_mapping('PIH', 'COMPLETED TOTAL PMTCT')
-                else concept_uuid_from_mapping('PIH', 'OTHER NON-CODED') 
-            end as value_coded_uuid,
-            trim(comments) as comments
-            from hivmigration_ordered_other 
-            where ORDERED like 'change_arv%' and comments is not null;    
+            select 
+                o.source_encounter_id, 
+                concept_uuid_from_mapping('PIH', 'REASON ANTIRETROVIRALS CHANGED OR STOPPED') as concept_uuid,
+                case 
+                    when (lower(trim(o.comments)) = 'pregnancy') then concept_uuid_from_mapping('PIH', 'PATIENT PREGNANT') 
+                    when (lower(trim(o.comments)) = 'treatment_refused') then concept_uuid_from_mapping('PIH', 'PATIENT REFUSED')                 
+                    when (lower(trim(o.comments)) = 'side_effect') then concept_uuid_from_mapping('PIH', 'TOXICITY, DRUG')
+                    when (lower(trim(o.comments)) = 'stock_out') then concept_uuid_from_mapping('PIH', 'DRUG OUT OF STOCK')
+                    when (lower(trim(o.comments)) = 'ineffective') then concept_uuid_from_mapping('PIH', 'REGIMEN FAILURE')
+                    else concept_uuid_from_mapping('PIH', 'OTHER NON-CODED') 
+                end as value_coded_uuid,
+                case 
+                    when (lower(trim(o.comments)) = 'other') then (
+                        select r.comments from hivmigration_ordered_other r where r.source_encounter_id=o.source_encounter_id and r.ORDERED = 'change_arvs_other')
+                    else trim(o.comments)
+                end as comments,
+                trim(o.comments) as comments_A
+            from hivmigration_ordered_other o
+            where o.ORDERED = 'change_arvs' and o.comments is not null;    
         ''')
 
         migrate_tmp_obs()
