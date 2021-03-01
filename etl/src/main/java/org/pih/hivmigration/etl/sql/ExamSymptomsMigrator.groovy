@@ -20,46 +20,22 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 openmrs_symptom_name,                
                 concept_source_map, 
                 openmrs_concept_code) 
-            values
-                ('douleur epigastrique', 'EpigastricPain', 'CIEL', '141128'),
-                ('epigastralgie', 'EpigastricPain', 'CIEL', '141128'),
-                ('dlrs epigastriques', 'EpigastricPain', 'CIEL', '141128'),
-                ('douleurs epigastriques', 'EpigastricPain', 'CIEL', '141128'),
-                ('douleur hypogastrique', 'EpigastricPain', 'CIEL', '141128'),
-                ('doul epigastrique', 'EpigastricPain', 'CIEL', '141128'),
-                ('douleurs epigastriques.', 'EpigastricPain', 'CIEL', '141128'),
-                ('epigastralgie.', 'EpigastricPain', 'CIEL', '141128'),                               
-                ('douleurs hypogastriques', 'EpigastricPain', 'CIEL', '141128'),
-                ('dlrs epigastriques.', 'EpigastricPain', 'CIEL', '141128'),
-                ('nausea', 'Nausea', 'CIEL', '5978'),
-                ('nausee', 'Nausea', 'CIEL', '5978'),                                
-                ('vomiting', 'Vomiting', 'CIEL', '122983'),
-                ('vomissement', 'Vomiting', 'CIEL', '122983'),
-                ('vomissements', 'Vomiting', 'CIEL', '122983'),
-                ('jaundice', 'Jaundice', 'CIEL', '136443'),
-                ('icterus', 'Jaundice', 'CIEL', '136443'),
+            values                
+                ('confusion', 'Confusion', 'CIEL', '120345'),                
+                ('convulsions', 'Seizure', 'CIEL', '113054'),   
                 ('diarrhea', 'Diarrhea', 'CIEL', '142412'),
-                ('diarrhea_short', 'Diarrhea', 'CIEL', '142412'),
                 ('dysphagia', 'Dysphagia', 'CIEL', '118789'),
-                ('prurigo_nodularis', 'PrurigoNodularis', 'CIEL', '128321'),
-                ('prurigo', 'PrurigoNodularis', 'CIEL', '128321'),
-                ('rash', 'Rash', 'CIEL', '512'),
-                ('headache', 'Headache', 'CIEL', '139084'),
-                ('vision_problems', 'VisionProblem', 'CIEL', '118938'),
-                ('seizures', 'Seizure', 'CIEL', '113054'),
-                ('convulsions', 'Seizure', 'CIEL', '113054'),                
-                ('neurologic_deficit', 'DéficitNeurologiqueFocal', 'CIEL', '1466'),
-                ('vertiges', 'Vertigo', 'CIEL', '111525'),
-                ('vertige', 'Vertigo', 'CIEL', '111525'),
-                ('vertiges.', 'Vertigo', 'CIEL', '111525'),
-                ('confusion', 'Confusion', 'CIEL', '120345'),
-                ('paresthesia', 'Paresthesia', 'CIEL', '6004'),
                 ('genital_discharge', 'GenitalDischarge', 'PIH', '1816'),
                 ('genital_ulcers', 'UlcérationsGénitales', 'CIEL', '864'),
-                ('fever', 'Fever', 'CIEL', '140238'),
-                ('cough', 'Cough', 'CIEL', '143264'),
-                ('productive_cough', 'Cough', 'CIEL', '143264'),
-                ('dry_cough', 'Cough', 'CIEL', '143264')                                                          
+                ('headache', 'Headache', 'CIEL', '139084'),
+                ('icterus', 'Jaundice', 'CIEL', '136443'),   
+                ('nausea', 'Nausea', 'CIEL', '5978'),
+                ('neurologic_deficit', 'DéficitNeurologiqueFocal', 'CIEL', '1466'),
+                ('paresthesia', 'Paresthesia', 'CIEL', '6004'),
+                ('prurigo_nodularis', 'PrurigoNodularis', 'CIEL', '128321'),
+                ('rash', 'Rash', 'CIEL', '512'),
+                ('vision_problems', 'VisionProblem', 'CIEL', '118938'),
+                ('vomiting', 'Vomiting', 'CIEL', '122983')                                                                 
             ''')
 
         executeMysql("Create staging table for migrating HIV_EXAM_SYMPTOMS", '''
@@ -118,11 +94,11 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 source_encounter_id, 
                 concept_uuid) 
             SELECT 
-                obs_id,                 
-                source_encounter_id, 
+                s.obs_id,                 
+                s.source_encounter_id, 
                 concept_uuid_from_mapping('CIEL', '1727') as concept_uuid
-            FROM hivmigration_exam_symptoms 
-            WHERE symptom is not null;
+            FROM hivmigration_exam_symptoms s, hivmigration_encounters e 
+            WHERE s.symptom is not null and s.source_encounter_id = e.source_encounter_id and e.form_version=3 and e.source_encounter_type='intake';
 
             -- Create Coded Symptom Name           
             INSERT INTO tmp_obs (
@@ -137,9 +113,10 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 concept_uuid_from_mapping('CIEL', '1728') as concept_uuid, -- Sign/Symptom name
                 concept_uuid_from_mapping(m.concept_source_map, m.openmrs_concept_code) as value_coded_uuid,
                 s.symptom_comment
-            from hivmigration_exam_symptoms s, hivmigration_symptoms_map m  
+            from hivmigration_exam_symptoms s, hivmigration_symptoms_map m, hivmigration_encounters e  
             where s.symptom is not null and s.symptom = m.hiv_symptom 
-                and m.concept_source_map != '' and m.openmrs_concept_code != ''; 
+                and m.concept_source_map != '' and m.openmrs_concept_code != '' and 
+                s.source_encounter_id = e.source_encounter_id and e.form_version=3 and e.source_encounter_type='intake'; 
 
             -- Create Non-Coded Symptom Name           
             INSERT INTO tmp_obs (
@@ -154,13 +131,12 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 concept_uuid_from_mapping('CIEL', '1728') as concept_uuid, -- Sign/Symptom name
                 concept_uuid_from_mapping('CIEL', '5622') as value_coded_uuid, -- Other non-coded
                 case
-                  when (lower(s.symptom) = 'other' and s.symptom_comment is not null) then TRIM(SUBSTRING(s.symptom_comment, 0, 254)) 
-                  when (lower(s.symptom) != 'other' and s.symptom_comment is not null) then TRIM(SUBSTRING(CONCAT(s.symptom, ", ", s.symptom_comment), 0, 254)) 
-                  when (s.symptom_comment is null) then s.symptom 
+                  when (lower(s.symptom) = 'other' and s.symptom_comment is not null) then TRIM(SUBSTRING(s.symptom_comment, 0, 254))                   
                   else null 
                 end as comments                  
-            from hivmigration_exam_symptoms s  
-            where s.symptom is not null and s.symptom not in (select hiv_symptom from hivmigration_symptoms_map);     
+            from hivmigration_exam_symptoms s, hivmigration_encounters e   
+            where lower(s.symptom) = 'other' and s.source_encounter_id = e.source_encounter_id 
+                and e.form_version=3 and e.source_encounter_type='intake';     
 
             -- Create Sympton present(Yes/No) obs
             INSERT INTO tmp_obs (
@@ -177,8 +153,10 @@ class ExamSymptomsMigrator extends ObsMigrator{
                     when (s.symptom_present = false) then concept_uuid_from_mapping('CIEL', '1066')                       
                     else null 
                 end as value_coded_uuid
-            from hivmigration_exam_symptoms s  
-            where s.symptom is not null and s.symptom_present is not null;
+            from hivmigration_exam_symptoms s, hivmigration_encounters e    
+            where s.symptom is not null and s.symptom_present is not null and 
+                s.source_encounter_id = e.source_encounter_id 
+                and e.form_version=3 and e.source_encounter_type='intake';
 
             -- Create Sympton duration obs
             INSERT INTO tmp_obs (
@@ -191,8 +169,10 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 s.source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '1731') as concept_uuid, -- Sign/Symptom duration
                 s.duration
-            from hivmigration_exam_symptoms s  
-            where s.symptom is not null and s.duration is not null and s.duration_unit is not null;
+            from hivmigration_exam_symptoms s, hivmigration_encounters e   
+            where s.symptom is not null and s.duration is not null and s.duration_unit is not null 
+                and s.source_encounter_id = e.source_encounter_id 
+                and e.form_version=3 and e.source_encounter_type='intake';
 
             -- Create Sympton duration units obs
             INSERT INTO tmp_obs (
@@ -211,8 +191,10 @@ class ExamSymptomsMigrator extends ObsMigrator{
                     when (s.duration_unit = 'days') then concept_uuid_from_mapping('CIEL', '1072')                     
                     else null 
                 end as value_coded_uuid
-            from hivmigration_exam_symptoms s  
-            where s.symptom is not null and s.duration is not null and s.duration_unit is not null; 
+            from hivmigration_exam_symptoms s, hivmigration_encounters e  
+            where s.symptom is not null and s.duration is not null and s.duration_unit is not null 
+                and s.source_encounter_id = e.source_encounter_id 
+                and e.form_version=3 and e.source_encounter_type='intake'; 
 
         ''')
 
