@@ -515,15 +515,14 @@ class TreatmentObsMigrator extends ObsMigrator {
         executeMysql("Migrate all other TB Other treatments into TB Other box", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text)
             SELECT
-                ho.source_encounter_id,
+                source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'Anti TB free text'),
                 value
-            FROM hivmigration_observations ho
-            LEFT JOIN tmp_obs t
-                ON ho.source_encounter_id = t.source_encounter_id
-                       AND concept_uuid = concept_uuid_from_mapping('CIEL', '1111')
+            FROM hivmigration_observations
             WHERE observation = 'current_tx.tb_other'
-            AND t.obs_id IS NULL;
+                AND value NOT IN ('Premier 2HZRE+4HR', '2HZRE+4HR', '4RH', '4HR', '4 hr', '+ 4HR',
+                                  '2HZRE + 4 HR.', 'RHEZ', '2HRZE + 4HR', '2HZRE + 4 HR', ' 2 HZRE + 4 HR',
+                                  'Retraitement 2RHEZ/4RH');
         ''')
 
         migrate_tmp_obs()
