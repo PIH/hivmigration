@@ -738,8 +738,7 @@ class TreatmentObsMigrator extends ObsMigrator {
                     when (lower(trim(o.comments)) = 'other') then (
                         select r.comments from hivmigration_ordered_other r where r.source_encounter_id=o.source_encounter_id and r.ORDERED = 'change_arvs_other')
                     else trim(o.comments)
-                end as comments,
-                trim(o.comments) as comments_A
+                end as comments
             from hivmigration_ordered_other o
             where o.ORDERED = 'change_arvs' and o.comments is not null;    
         ''')
