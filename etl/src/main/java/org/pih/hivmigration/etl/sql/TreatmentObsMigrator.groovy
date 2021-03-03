@@ -363,6 +363,34 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE value_datetime = '0000-00-00';
         ''')
 
+        executeMysql("Migrate ART start date from the intake form", '''
+            INSERT INTO tmp_obs (
+                source_encounter_id, 
+                concept_uuid, 
+                value_datetime)
+            SELECT
+                source_encounter_id, 
+                concept_uuid_from_mapping('CIEL', '159599') as concept_uuid, 
+                try_to_fix_date(comments) as value_datetime
+            FROM hivmigration_ordered_other 
+            WHERE ordered = 'arv_start_date' and comments is not null;                        
+        ''')
+
+        executeMysql("Migrate ARV_TREATMENT_REASON observation", '''
+            INSERT INTO tmp_obs (
+                source_encounter_id, 
+                concept_uuid, 
+                value_coded_uuid,
+                comments)
+            SELECT
+                source_encounter_id,  
+                concept_uuid_from_mapping('CIEL', '162225') as concept_uuid, -- Eligible for ARV reason
+                concept_uuid_from_mapping('CIEL', '5622') as value_coded_uuid, -- Other non-coded
+                value as comments
+            FROM hivmigration_observations 
+            WHERE observation='arv_treatment_reason' and value is not null;                        
+        ''')
+
         migrate_tmp_obs()
     }
 
