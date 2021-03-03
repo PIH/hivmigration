@@ -136,7 +136,32 @@ class PcrTestsMigrator extends SqlMigrator {
                     r.comments,
                     uuid() as uuid
             from hivmigration_pcr_tests r, hivmigration_infants i 
-            where r.source_infant_id = i.source_infant_id;                      
+            where r.source_infant_id = i.source_infant_id;
+            
+            -- Add sample ID obs
+            INSERT INTO obs (
+                    person_id, 
+                    encounter_id, 
+                    obs_datetime, 
+                    location_id, 
+                    concept_id,
+                    value_text, 
+                    creator, 
+                    date_created, 
+                    uuid)
+            select 
+                    i.person_id, 
+                    r.encounter_id, 
+                    r.source_encounter_date as obsDatetime, 
+                    1 as locationId, 
+                    concept_from_mapping('CIEL', '162086'),
+                    r.sample_id,
+                    1 as creator, 
+                    r.result_entry_date as dateCreated, 
+                    uuid() as uuid
+            from hivmigration_pcr_tests r, hivmigration_infants i 
+            where r.source_infant_id = i.source_infant_id
+              and r.sample_id is not null;
         ''')
     }
 
