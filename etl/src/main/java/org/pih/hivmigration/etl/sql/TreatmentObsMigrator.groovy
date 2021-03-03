@@ -391,6 +391,38 @@ class TreatmentObsMigrator extends ObsMigrator {
             WHERE observation='arv_treatment_reason' and value is not null;                        
         ''')
 
+        executeMysql("Migrate arvs_for_ptme observations", '''
+            INSERT INTO tmp_obs (
+                source_encounter_id, 
+                concept_uuid, 
+                value_coded_uuid)
+            SELECT
+                source_encounter_id,  
+                concept_uuid_from_mapping('CIEL', '1147') as concept_uuid, -- ARV during pregnancy
+                case 
+                    when (value = 't') then concept_uuid_from_mapping('CIEL', '1065')  
+                    when (value = 'f') then concept_uuid_from_mapping('CIEL', '1066')                       
+                    else null 
+                end as value_coded_uuid               
+            FROM hivmigration_observations 
+            WHERE observation='arvs_for_ptme' and value is not null;                        
+        ''')
+
+        executeMysql("Migrate arvs_for_accident observations", '''
+            INSERT INTO tmp_obs (
+                source_encounter_id, 
+                concept_uuid, 
+                value_coded_uuid,
+                comments)
+            SELECT
+                source_encounter_id,  
+                concept_uuid_from_mapping('CIEL', '162225') as concept_uuid, -- Reason for ARV
+                concept_uuid_from_mapping('CIEL', '1691') as value_coded_uuid, -- Post-exposure prophylaxis
+                value as comments               
+            FROM hivmigration_observations 
+            WHERE observation ='arvs_for_accident' and value is not null and value != 'no';                        
+        ''')
+
         migrate_tmp_obs()
     }
 
