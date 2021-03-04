@@ -68,6 +68,14 @@ class LocationMigrator extends SqlMigrator {
             # Promotion Objectif Zerosida (POZ)
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
               select 40, location_id from location where uuid='c488ed05-f259-4f7b-a9d4-8f56736da691'; 
+              
+             # TODO Maissade -- this shows as null in HIV Legacy system as March 4, 2021 , so we are mapping to Unknown location
+            insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
+              select 36, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              
+            # TODO Jean Denis (?) -- this shows as null in HIV Legacy system as March 4, 2021, so we are mapping to Unknown location
+            insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
+              select 122, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f';     
             
             ## TODO:
             ## Review all of the below and change to valid locations as appropriate in OpenMRS
@@ -88,10 +96,7 @@ class LocationMigrator extends SqlMigrator {
             # TODO Baptiste
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
               select 35, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
-            
-            # TODO Maissade
-            insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 36, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+                        
             
             # TODO Tilory
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
@@ -100,10 +105,7 @@ class LocationMigrator extends SqlMigrator {
             # TODO Dufailly
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
               select 39, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
-            
-            # TODO Jean Denis (?)
-            insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 122, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+                        
             
             # TODO Jean Denis
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
@@ -119,7 +121,7 @@ class LocationMigrator extends SqlMigrator {
             
             # TODO Cerca Cavarjal
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 163, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 163, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f';             
         ''')
     }
 
