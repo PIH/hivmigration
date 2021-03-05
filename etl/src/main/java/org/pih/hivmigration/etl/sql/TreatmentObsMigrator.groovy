@@ -398,7 +398,7 @@ class TreatmentObsMigrator extends ObsMigrator {
                 value_coded_uuid)
             SELECT
                 source_encounter_id,  
-                concept_uuid_from_mapping('CIEL', '1147') as concept_uuid, -- ARV during pregnancy
+                concept_uuid_from_mapping('CIEL', '5576') as concept_uuid, -- ARV for PMTCT
                 case 
                     when (value = 't') then concept_uuid_from_mapping('CIEL', '1065')  
                     when (value = 'f') then concept_uuid_from_mapping('CIEL', '1066')                       
