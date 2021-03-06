@@ -56,29 +56,31 @@ class SocioEconomicAssistanceMigrator extends ObsMigrator {
                      SELECT hoo.source_encounter_id,
                             CONCAT(
                                     CASE ordered
-                                        WHEN 'financial_aid' THEN 'Aide financière'
-                                        WHEN 'funeral_aid' THEN 'Aide pour funérailles'
-                                        WHEN 'house_assistance' THEN 'Aide au logement'
-                                        WHEN 'professional_training' THEN 'Formation professionnelle'
-                                        WHEN 'school_aid' THEN 'Aide scolaire'
+                                        WHEN 'financial_aid' THEN 'Aide financière\'
+                                        WHEN 'funeral_aid' THEN 'Aide pour funérailles\'
+                                        WHEN 'house_assistance' THEN 'Aide au logement\'
+                                        WHEN 'professional_training' THEN 'Formation professionnelle\'
+                                        WHEN 'school_aid' THEN 'Aide scolaire\'
                                         WHEN 'social_assistance_other' THEN comments
                                         END,
                                     IF(ordered = 'social_assistance_other' OR comments IS NULL, '',
                                        CONCAT(' (',
                                               CASE comments
-                                                 WHEN 'recommended' THEN 'Recommandé'
-                                                 WHEN 'already_receiving' THEN 'Reçu'
-                                                 ELSE comments
-                                                 END,
+                                                  WHEN 'recommended' THEN 'Recommandé\'
+                                                  WHEN 'already_receiving' THEN 'Reçu\'
+                                                  ELSE comments
+                                                  END,
                                               ')')
-                                       )
+                                        )
                                 ) AS value_text
                      FROM hivmigration_ordered_other hoo
-                     LEFT JOIN hivmigration_intake_forms hif on hoo.source_encounter_id = hif.source_encounter_id
-                     LEFT JOIN hivmigration_followup_forms hff on hoo.source_encounter_id = hff.source_encounter_id
+                              LEFT JOIN hivmigration_intake_forms hif on hoo.source_encounter_id = hif.source_encounter_id
+                              LEFT JOIN hivmigration_followup_forms hff on hoo.source_encounter_id = hff.source_encounter_id
                      WHERE ordered IN ('financial_aid', 'funeral_aid', 'house_assistance', 'professional_training', 'school_aid', 'social_assistance_other')
-                       AND hif.form_version != 3 OR hff.form_version != 3 OR (comments NOT LIKE 'no%' AND comments NOT LIKE 'aucun')) o  -- NOT LIKE implies IS NOT NULL
-            GROUP BY source_encounter_id;
+                         AND hif.form_version != 3 OR hff.form_version != 3 OR (comments NOT LIKE 'no%' AND comments NOT LIKE 'aucun')  -- NOT LIKE implies IS NOT NULL
+                ) o
+            GROUP BY source_encounter_id
+            HAVING max(value_text) IS NOT NULL;
         ''')
 
         migrate_tmp_obs()
