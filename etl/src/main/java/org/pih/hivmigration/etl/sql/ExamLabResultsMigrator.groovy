@@ -60,17 +60,118 @@ class ExamLabResultsMigrator extends ObsMigrator {
         migrate_tmp_obs()
     }
 
+    def void migrateRadiologyExams(){
+        create_tmp_obs_table()
+        setAutoIncrement("tmp_obs", "(select max(obs_id)+1 from hivmigration_exam_lab_results)")
+
+        executeMysql("Migrate Radiology orders", '''
+
+            -- Create PIH:Radiology report construct obs_group                                                                                           
+            INSERT INTO tmp_obs (
+                obs_id,                
+                source_encounter_id, 
+                concept_uuid)
+            SELECT 
+                obs_id,                
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Radiology report construct') as concept_uuid
+            from hivmigration_exam_lab_results  
+            where lab_test in ('abdominal_ultrasound', 'cxr0', 'cxr1', 'cxr2', 'other_radiology') and result is not null; 
+            
+            -- Add Radiology procedure performed obs                                                                                           
+            INSERT INTO tmp_obs (
+                obs_group_id,                
+                source_encounter_id, 
+                concept_uuid,
+                value_coded_uuid)
+            SELECT 
+                obs_id,                
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Radiology procedure performed') as concept_uuid,
+                case 
+                    when (lab_test = 'abdominal_ultrasound') then concept_uuid_from_mapping('CIEL', '845') -- Abdominal (U/S)
+                    when (lab_test in ('cxr0', 'cxr1', 'cxr2')) then concept_uuid_from_mapping('CIEL', '165152') -- chestXRay
+                    else concept_uuid_from_mapping('PIH', 'OTHER NON-CODED')                                     
+                end as value_coded_uuid                
+            from hivmigration_exam_lab_results  
+            where lab_test in ('abdominal_ultrasound', 'cxr0', 'cxr1', 'cxr2', 'other_radiology') and result is not null; 
+            
+            -- Add Radiology chest xRay combined findings                                                                                           
+            INSERT INTO tmp_obs (
+                obs_group_id,                
+                source_encounter_id, 
+                concept_uuid,
+                value_text)
+            SELECT 
+                obs_id,                
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Radiology report comments') as concept_uuid,
+                group_concat(concat_ws(': ', lab_test, result, test_date) order by lab_test separator '; ' ) as value_text                 
+            from hivmigration_exam_lab_results  
+            where lab_test in ('cxr0', 'cxr1', 'cxr2') and result is not null 
+            group by source_encounter_id;
+            
+            -- Add Radiology report findings, except the chest xRay findings                                                                                           
+            INSERT INTO tmp_obs (
+                obs_group_id,                
+                source_encounter_id, 
+                concept_uuid,
+                value_text)
+            SELECT 
+                obs_id,                
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Radiology report comments') as concept_uuid,
+                result as value_text                 
+            from hivmigration_exam_lab_results  
+            where lab_test in ('abdominal_ultrasound', 'other_radiology') and result is not null;
+            
+            -- Add Radiology Date of test obs for chest xRay report                                                                                         
+            INSERT INTO tmp_obs (
+                obs_group_id,                
+                source_encounter_id, 
+                concept_uuid,
+                value_datetime)
+            SELECT 
+                obs_id,                
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '12847') as concept_uuid, -- Date of test
+                max(test_date) as value_datetime                 
+            from hivmigration_exam_lab_results  
+            where lab_test in ('cxr0', 'cxr1', 'cxr2') and result is not null and test_date is not null 
+            group by source_encounter_id;
+            
+            -- Add Radiology Date of test obs for all other radiology reports                                                                                         
+            INSERT INTO tmp_obs (
+                obs_group_id,                
+                source_encounter_id, 
+                concept_uuid,
+                value_datetime)
+            SELECT 
+                obs_id,                
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', '12847') as concept_uuid, -- Date of test
+                test_date as value_datetime                 
+            from hivmigration_exam_lab_results  
+            where lab_test in ('abdominal_ultrasound', 'other_radiology') and result is not null and test_date is not null;
+            
+        ''')
+
+        migrate_tmp_obs()
+    }
+
     @Override
     def void migrate() {
 
         executeMysql("Create hivmigration_exam_lab_results temp table", '''
             CREATE TABLE hivmigration_exam_lab_results (
+                obs_id int PRIMARY KEY AUTO_INCREMENT,
                 source_encounter_id INT,
                 lab_test varchar(80),
                 result varchar(255),
                 test_date date
             );
         ''')
+        setAutoIncrement("hivmigration_exam_lab_results", "(select max(obs_id)+1 from obs)")
 
         loadFromOracleToMySql('''
             INSERT INTO hivmigration_exam_lab_results (
@@ -82,6 +183,8 @@ class ExamLabResultsMigrator extends ObsMigrator {
             FROM HIV_EXAM_LAB_RESULTS r, hiv_encounters e, hiv_demographics_real d 
             WHERE r.encounter_id = e.encounter_id and e.patient_id = d.patient_id and (result is not null or test_date is not null)
         ''')
+
+        migrateRadiologyExams()
 
         migrateLab("cd4",
                 "concept_uuid_from_mapping('CIEL', '5497')",
@@ -148,7 +251,6 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 "NULL",
                 "result is not null and is_number(extract_number(result))"
         )
-
     }
 
     @Override
