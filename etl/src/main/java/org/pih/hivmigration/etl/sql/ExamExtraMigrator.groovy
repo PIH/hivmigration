@@ -350,7 +350,7 @@ class ExamExtraMigrator extends ObsMigrator {
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', '13170') as concept_uuid
             FROM hivmigration_transfer_out_to
-            WHERE transfer_out_to is not null;    
+            WHERE hiv_institution_id is not null;    
 
             -- Create HUM Disposition categories obs
             INSERT INTO tmp_obs (
@@ -364,7 +364,7 @@ class ExamExtraMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', 'HUM Disposition categories') as concept_uuid,
                 concept_uuid_from_mapping('PIH', 'PATIENT TRANSFERRED OUT') as value_coded_uuid
             FROM hivmigration_transfer_out_to
-            WHERE transfer_out_to is not null; 
+            WHERE hiv_institution_id is not null;  
             
             -- External transfers                        
             INSERT INTO tmp_obs (
@@ -392,7 +392,7 @@ class ExamExtraMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', 'Transfer out location') as concept_uuid,
                 concept_uuid_from_mapping('PIH', 'ZL-supported site') as value_coded_uuid
             FROM hivmigration_transfer_out_to
-            WHERE transfer_out_to != 'Autre (non-ZL)';
+            WHERE transfer_out_to != 'Autre (non-ZL)' or transfer_out_to is null;
             
             -- ZL-supported site name            
             INSERT INTO tmp_obs (
@@ -408,7 +408,7 @@ class ExamExtraMigrator extends ObsMigrator {
                 c.openmrs_id as value_text,
                 'org.openmrs.Location'
             FROM hivmigration_transfer_out_to t, hivmigration_health_center c 
-            WHERE t.transfer_out_to != 'Autre (non-ZL)' and t.hiv_institution_id = c.hiv_emr_id;
+            WHERE (t.transfer_out_to != 'Autre (non-ZL)' or transfer_out_to is null) and t.hiv_institution_id = c.hiv_emr_id;
                    
         ''')
 
