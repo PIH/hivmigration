@@ -3,6 +3,8 @@ package org.pih.hivmigration.etl.sql
 class StagingTablesMigrator extends SqlMigrator {
     @Override
     def void migrate() {
+        migrateTable("HIV_LAB_TRACKING")
+        migrateTable("HIV_PCR_TRACKING")
         migrateTable("HIV_TB_STATUS")
         migrateTable("HIV_INTAKE_FORMS")
         migrateTable("HIV_FOLLOWUP_FORMS")
@@ -66,6 +68,9 @@ class StagingTablesMigrator extends SqlMigrator {
         revertTable("HIV_FOLLOWUP_FORMS")
         revertTable("HIV_INTAKE_FORMS")
         revertTable("HIV_TB_STATUS")
+        revertTable("HIV_PCR_TRACKING")
+        revertTable("HIV_LAB_TRACKING")
+
     }
     
     def static void revertTable(String tableName) {
