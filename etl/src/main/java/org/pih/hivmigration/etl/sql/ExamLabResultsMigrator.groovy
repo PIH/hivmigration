@@ -187,10 +187,10 @@ class ExamLabResultsMigrator extends ObsMigrator {
         migrateRadiologyExams()
 
         migrateLab("cd4",
-                "concept_uuid_from_mapping('CIEL', '5497')",
+                "concept_uuid_from_mapping('CIEL', '159375')",
                 "extract_number(result)",
                 "NULL",
-                "is_number(result) OR result REGEXP '[0-9]+cell.*'"  // e.g. '500 cell/mm3'
+                "(is_number(result) OR result REGEXP '[0-9]+cell.*') and (he.source_encounter_type in ('intake', 'followup'))"  // e.g. '500 cell/mm3'
         )
 
         migrateLab("hematocrite",
@@ -251,6 +251,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 "NULL",
                 "result is not null and is_number(extract_number(result))"
         )
+
     }
 
     @Override
