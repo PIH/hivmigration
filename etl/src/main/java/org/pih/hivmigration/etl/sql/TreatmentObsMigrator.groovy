@@ -334,8 +334,14 @@ class TreatmentObsMigrator extends ObsMigrator {
         ''')
 
         executeMysql("Create ARV regimen status obs group ", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, obs_id)
-            SELECT source_encounter_id, concept_uuid_from_mapping('PIH', '13156'), obs_group_id
+            INSERT INTO tmp_obs (
+                obs_id,
+                source_encounter_id, 
+                concept_uuid)
+            SELECT 
+                obs_group_id,
+                source_encounter_id, 
+                concept_uuid_from_mapping('PIH', '13156')
             FROM hivmigration_tmp_arv_regimen;
         ''')
 
@@ -351,8 +357,13 @@ class TreatmentObsMigrator extends ObsMigrator {
         ''')
 
         executeMysql("Migrate ART start date from follow-up form", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime)
+            INSERT INTO tmp_obs (
+                obs_group_id,
+                source_encounter_id, 
+                concept_uuid, 
+                value_datetime)
             SELECT
+                obs_group_id,
                 source_encounter_id,
                 concept_uuid_from_mapping('CIEL', '159599'),
                 try_to_fix_date(value)
@@ -491,8 +502,14 @@ class TreatmentObsMigrator extends ObsMigrator {
         ''')
 
         executeMysql("Create ARV regimen obs group", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, obs_id)
-            SELECT source_encounter_id, concept_uuid_from_mapping('PIH', '6116'), obs_group_id
+            INSERT INTO tmp_obs (
+                obs_id,
+                source_encounter_id, 
+                concept_uuid)
+            SELECT 
+                obs_group_id,
+                source_encounter_id, 
+                concept_uuid_from_mapping('PIH', '6116')
             FROM hivmigration_tmp_arv_regimen;
         ''')
 
