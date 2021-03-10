@@ -90,17 +90,31 @@ class InfantMigrator extends SqlMigrator {
         executeMysql("Add UUIDs", "update hivmigration_infants set person_uuid = uuid();")
 
         executeMysql("Load to person table", '''
-            insert into person
-              (person_id, uuid, gender, birthdate, creator, date_created)
+
+            SET @UNKNOWN_CAUSE_OF_DEATH_ID = (SELECT concept_id FROM concept WHERE uuid='3cd6fac4-26fe-102b-80cb-0017a47871b2');
+            
+            insert into person( 
+                person_id, 
+                uuid, 
+                gender, 
+                birthdate, 
+                creator, 
+                date_created,
+                dead, 
+                death_date, 
+                cause_of_death)
             select
-              i.person_id,
-              i.person_uuid,
-              COALESCE(i.gender, 'U'),  # most of the data is missing gender -- default to U
-              i.birthdate,
-              1,
-              date_format(curdate(), '%Y-%m-%d %T')
+                i.person_id,
+                i.person_uuid,
+                COALESCE(i.gender, 'U'),  # most of the data is missing gender -- default to U
+                i.birthdate,
+                1,
+                date_format(curdate(), '%Y-%m-%d %T') as date_created, 
+                case when (i.vital_status ='dead') then (1) else 0 end as dead,
+                case when (i.vital_status ='dead') then (i.vital_status_date) else null end as death_date,
+                case when (i.vital_status ='dead') then @UNKNOWN_CAUSE_OF_DEATH_ID else null end as cause_of_death                 
             from
-              hivmigration_infants i 
+                hivmigration_infants i 
             order by i.source_infant_id;
         ''')
 
