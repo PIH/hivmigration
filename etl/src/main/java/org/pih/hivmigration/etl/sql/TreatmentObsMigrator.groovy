@@ -380,13 +380,11 @@ class TreatmentObsMigrator extends ObsMigrator {
             INSERT INTO tmp_obs (
                 source_encounter_id, 
                 concept_uuid, 
-                value_coded_uuid,
-                comments)
+                value_text)
             SELECT
                 source_encounter_id,  
-                concept_uuid_from_mapping('CIEL', '162225') as concept_uuid, -- Eligible for ARV reason
-                concept_uuid_from_mapping('CIEL', '5622') as value_coded_uuid, -- Other non-coded
-                value as comments
+                concept_uuid_from_mapping('PIH', 'ARV treatment reason non-coded'),
+                value
             FROM hivmigration_observations 
             WHERE observation='arv_treatment_reason' and value is not null;                        
         ''')
