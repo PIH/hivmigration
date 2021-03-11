@@ -269,7 +269,19 @@ class HivExamOisMigrator extends ObsMigrator {
                 and (m.openmrs_concept_source = '' or m.openmrs_concept_code = ''); 
                                              
             -- Set migrated=TRUE for all obs with form_version=3
-            UPDATE hivmigration_hiv_exam_ois SET migrated=TRUE where oi is not null and form_version='3';                        
+            UPDATE hivmigration_hiv_exam_ois SET migrated=TRUE where oi is not null and form_version='3';    
+            
+            -- Create PIH:CLINICAL IMPRESSION COMMENTS obs for encounter's comments(UHM-5296)
+            INSERT INTO tmp_obs (                                 
+                source_encounter_id, 
+                concept_uuid,
+                value_text)
+            SELECT                 
+                e.source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'CLINICAL IMPRESSION COMMENTS') as concept_uuid,
+                e.comments
+            from hivmigration_encounters e 
+            where e.comments is not null and e.source_encounter_type in ('intake', 'followup');                     
         ''')
 
         migrate_tmp_obs()
