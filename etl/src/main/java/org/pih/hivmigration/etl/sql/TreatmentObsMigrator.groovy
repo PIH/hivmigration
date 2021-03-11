@@ -345,6 +345,24 @@ class TreatmentObsMigrator extends ObsMigrator {
             FROM hivmigration_tmp_arv_regimen;
         ''')
 
+        executeMysql("Migrate ART start date from follow-up form", '''
+            INSERT INTO tmp_obs (
+                obs_group_id,
+                source_encounter_id, 
+                concept_uuid, 
+                value_datetime)
+            SELECT
+                a.obs_group_id,
+                o.source_encounter_id,
+                concept_uuid_from_mapping('CIEL', '159599'),
+                try_to_fix_date(o.value)
+            FROM hivmigration_observations o, hivmigration_tmp_arv_regimen a 
+            WHERE o.source_encounter_id = a.source_encounter_id  and o.observation = 'current_tx.art_start_date' and o.value is not null;
+            
+            DELETE FROM tmp_obs
+            WHERE value_datetime = '0000-00-00';
+        ''')
+
         migrateArvsFromHivmigrationArvRegimenTableToTmpObs()
 
         executeMysql("Migrate ART treatment status", '''
@@ -356,23 +374,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             FROM hivmigration_tmp_arv_regimen;
         ''')
 
-        executeMysql("Migrate ART start date from follow-up form", '''
-            INSERT INTO tmp_obs (
-                obs_group_id,
-                source_encounter_id, 
-                concept_uuid, 
-                value_datetime)
-            SELECT
-                obs_group_id,
-                source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '159599'),
-                try_to_fix_date(value)
-            FROM hivmigration_observations
-            WHERE observation = 'current_tx.art_start_date';
-            
-            DELETE FROM tmp_obs
-            WHERE value_datetime = '0000-00-00';
-        ''')
+
 
 
         executeMysql("Migrate ARV_TREATMENT_REASON observation", '''
