@@ -61,7 +61,7 @@ class HivStatusMigrator extends ObsMigrator {
               derived_intake_date date,
               derived_intake_id int,
               derived_first_v2_followup date,
-              derived_migrate_row boolean
+              derived_target_encounter_id int
             );
             CREATE INDEX source_encounter_id_idx ON hivmigration_hiv_status (`source_encounter_id`);
             CREATE INDEX source_patient_id_idx ON hivmigration_hiv_status (`source_patient_id`);
@@ -133,7 +133,7 @@ class HivStatusMigrator extends ObsMigrator {
         executeMysql("Link intake encounter if found in the encounter table", '''
             update              hivmigration_hiv_status s
             inner join          hivmigration_encounters e
-            on                  s.source_patient_id = e.source_patient_id and s.derived_intake_date = e.encounter_date
+            on                  s.source_patient_id = e.source_patient_id and s.derived_intake_date = e.encounter_date and e.source_encounter_type = 'intake'
             set                 s.derived_intake_id = e.source_encounter_id
             ;
         ''')
@@ -154,6 +154,7 @@ class HivStatusMigrator extends ObsMigrator {
 
         // If the patient has no v2 follow-up forms in their history, then identify the latest entered status
         // If the patient does have v2 follow-up forms, identify the latest entered status prior to the first v2 followup
+        // Indicate the row that should be migrated by populating the derived_target_encounter_id on it
 
         executeMysql("Use the latest for a patient if they have no v2 followups", '''
             update              hivmigration_hiv_status s
@@ -163,7 +164,7 @@ class HivStatusMigrator extends ObsMigrator {
                                   group by  source_patient_id
                                 ) m 
             on                  s.hiv_status_id = m.max_status_id 
-            set                 s.derived_migrate_row = true
+            set                 s.derived_target_encounter_id = ifnull(s.source_encounter_id, s.derived_intake_id)
             ;
         ''')
 
@@ -174,9 +175,9 @@ class HivStatusMigrator extends ObsMigrator {
             SET @test_date_question = concept_uuid_from_mapping('CIEL', '164400'); -- HIV test date
                         
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_datetime)
-            SELECT  source_patient_id, source_encounter_id, @test_date_question, status_date
+            SELECT  source_patient_id, derived_target_encounter_id, @test_date_question, status_date
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true;
+            WHERE   derived_target_encounter_id is not null;
             
         ''')
 
@@ -188,21 +189,21 @@ class HivStatusMigrator extends ObsMigrator {
             SET @unknownValue = concept_uuid_from_mapping('CIEL', '1138'); -- Indeterminate
                         
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_result_question, @trueValue
+            SELECT  source_patient_id, derived_target_encounter_id, @test_result_question, @trueValue
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     hiv_positive_p = 't';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_result_question, @falseValue
+            SELECT  source_patient_id, derived_target_encounter_id, @test_result_question, @falseValue
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     hiv_positive_p = 'f';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_result_question, @unknownValue
+            SELECT  source_patient_id, derived_target_encounter_id, @test_result_question, @unknownValue
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     hiv_positive_p = '?';
             
         ''')
@@ -222,63 +223,63 @@ class HivStatusMigrator extends ObsMigrator {
             SET @other = concept_uuid_from_mapping('CIEL', '5622'); -- other
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @vct_clinic
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @vct_clinic
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     test_location = 'vct_clinic';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @womens_health_clinic
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @womens_health_clinic
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     test_location = 'womens_health_clinic';
 
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @primary_care_clinic
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @primary_care_clinic
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     test_location = 'primary_care_clinic';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @mobile_clinic
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @mobile_clinic
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     test_location = 'mobile_clinic';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @family_planning_clinic
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @family_planning_clinic
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     test_location = 'family_planning_clinic';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @maternity_ward
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @maternity_ward
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     test_location = 'maternity_ward';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @surgical_ward
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @surgical_ward
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     test_location = 'surgical_ward';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @medicine_ward
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @medicine_ward
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     test_location = 'medicine_ward';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @pediatric_ward
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @pediatric_ward
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     test_location = 'pediatric_ward';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid, comments)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @other, test_location_other
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @other, test_location_other
             FROM    hivmigration_hiv_status
-            WHERE   derived_migrate_row = true
+            WHERE   derived_target_encounter_id is not null
             AND     test_location = 'other';                                                                                    
         ''')
 
@@ -289,6 +290,18 @@ class HivStatusMigrator extends ObsMigrator {
 
     @Override
     def void revert() {
+        executeMysql('''
+            SET @test_date_question = concept_from_mapping('CIEL', '164400'); -- HIV test date
+            SET @test_result_question = concept_from_mapping('CIEL', '163722'); -- Rapid test for HIV
+            SET @test_location_question = concept_from_mapping('CIEL', '159936'); -- Point of HIV testing
+            
+            delete o.* 
+            from obs o 
+            inner join hivmigration_encounters e on o.encounter_id = e.encounter_id
+            and   e.source_encounter_type = 'intake'
+            where o.concept_id in (@test_date_question, @test_result_question, @test_location_question);
+        ''')
+
         executeMysql("drop table if exists hivmigration_hiv_status;");
     }
 }
