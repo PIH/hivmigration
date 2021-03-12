@@ -23,6 +23,7 @@ class StagingTablesMigrator extends SqlMigrator {
         migrateTable("HIV_DEMOGRAPHICS_AUD")
         migrateTable("HIV_CONTACTS")
         migrateTable("HIV_ORDERED_OTHER")
+        migrateTable("HIV_ENCOUNTERS_AUD")
 
         executeMysql("Add source_encounter_id index to some tables", '''
             ALTER TABLE hivmigration_ordered_other
@@ -39,6 +40,15 @@ class StagingTablesMigrator extends SqlMigrator {
             MODIFY source_encounter_id INT;
             CREATE INDEX source_encounter_id_idx
             ON hivmigration_followup_forms (`source_encounter_id`);
+            
+            CREATE INDEX source_patient_id_idx
+            ON hivmigration_encounters_aud (`source_patient_id`);
+            
+            CREATE INDEX encounter_date_idx
+            ON hivmigration_encounters_aud (`encounter_date`);
+            
+            CREATE INDEX modified_idx
+            ON hivmigration_encounters_aud (`modified`);
         ''')
     }
     
@@ -50,6 +60,7 @@ class StagingTablesMigrator extends SqlMigrator {
 
     @Override
     def void revert() {
+        revertTable("HIV_ENCOUNTERS_AUD")
         revertTable("HIV_ORDERED_OTHER")
         revertTable("HIV_CONTACTS")
         revertTable("HIV_DEMOGRAPHICS_AUD")

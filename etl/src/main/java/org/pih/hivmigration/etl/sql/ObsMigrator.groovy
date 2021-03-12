@@ -70,6 +70,9 @@ abstract class ObsMigrator extends SqlMigrator {
             if (batchesMigrated * batchSize < tmpObsCount) {
                 log.info("    Obs migrated: " + batchesMigrated * batchSize + " / " + tmpObsCount)
             }
+            else {
+                log.info("    Obs migrated: " + tmpObsCount + " / " + tmpObsCount)
+            }
         }
     }
 }
