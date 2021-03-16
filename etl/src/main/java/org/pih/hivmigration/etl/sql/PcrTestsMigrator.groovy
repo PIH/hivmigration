@@ -11,6 +11,7 @@ class PcrTestsMigrator extends SqlMigrator {
               source_encounter_date date,
               source_infant_id int,
               sample_id varchar(255),
+              pcr_test_id int,
               result varchar(32), 
               date_of_result date,   
               result_entry_date date,           
@@ -24,26 +25,32 @@ class PcrTestsMigrator extends SqlMigrator {
             INSERT INTO hivmigration_pcr_tests (                
                 source_infant_id,
                 sample_id,
+                pcr_test_id,
                 source_encounter_date,
                 result, 
                 date_of_result,
                 result_entry_date,
                 comments
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''',
                 '''
-            select  INFANT_ID, 
-                    SAMPLE_ID, 
+            select  p.INFANT_ID, 
+                    p.SAMPLE_ID, 
+                    p.PCR_TEST_ID,
                     case 
-                        when (SAMPLE_DATE is not null ) then to_char(SAMPLE_DATE, 'yyyy-mm-dd') 
-                        else to_char(RESULT_ENTRY_DATE, 'yyyy-mm-dd')  
+                        when (p.SAMPLE_DATE is not null ) then to_char(p.SAMPLE_DATE, 'yyyy-mm-dd') 
+                        else to_char(p.RESULT_ENTRY_DATE, 'yyyy-mm-dd')  
                     end as encounter_date,         
-                    lower(RESULT) as result,  
-                    to_char(DATE_RESULT_RECEIVED, 'yyyy-mm-dd') as date_of_result,                         
-                    to_char(RESULT_ENTRY_DATE, 'yyyy-mm-dd'),
-                    COMMENTS
-            from HIV_PCR_TRACKING_VIEW 
-            where result is not null
+                    lower(p.RESULT) as result,  
+                    to_char(t4.date_result_received, 'yyyy-mm-dd') as date_of_result,                         
+                    to_char(p.RESULT_ENTRY_DATE, 'yyyy-mm-dd') as result_entry_date,
+                    p.COMMENTS
+            from        hiv_pcr_tests p
+                left join   (select k.pcr_test_id, min(t.event_date) as date_sent_to_central_site from hiv_lab_tracking t, hiv_pcr_tracking k where t.lab_tracking_id = k.lab_tracking_id and t.event_type = 'sent_to_central_site' group by k.pcr_test_id) t1 on t1.pcr_test_id = p.pcr_test_id
+                left join   (select k.pcr_test_id, min(t.event_date) as date_received_at_central_site from hiv_lab_tracking t, hiv_pcr_tracking k where t.lab_tracking_id = k.lab_tracking_id and t.event_type = 'received_at_central_site' group by k.pcr_test_id) t2 on t2.pcr_test_id = p.pcr_test_id
+                left join   (select k.pcr_test_id, min(t.event_date) as date_sent_to_lab from hiv_lab_tracking t, hiv_pcr_tracking k where t.lab_tracking_id = k.lab_tracking_id and t.event_type = 'sent_to_lab' group by k.pcr_test_id) t3 on t3.pcr_test_id = p.pcr_test_id
+                left join   (select k.pcr_test_id, min(t.event_date) as date_result_received from hiv_lab_tracking t, hiv_pcr_tracking k where t.lab_tracking_id = k.lab_tracking_id and t.event_type = 'result_received' group by k.pcr_test_id) t4 on t4.pcr_test_id = p.pcr_test_id                                 
+            where p.result is not null;
         ''')
 
 

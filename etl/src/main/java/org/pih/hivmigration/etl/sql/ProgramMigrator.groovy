@@ -218,6 +218,42 @@ class ProgramMigrator extends SqlMigrator {
             ;
         ''')
 
+        executeMysql("Log warning if completion date is before enrollment date", '''
+            INSERT INTO hivmigration_data_warnings (
+                openmrs_patient_id, 
+                field_name, 
+                field_value, 
+                warning_type, 
+                warning_details, 
+                flag_for_review)
+            SELECT
+                p.person_id as openmrs_patient_id,
+                'enrollment_date' as field_name, 
+                h.enrollment_date as field_value, 
+                'Patient has program enrollment date after program completion date' as warning_type,                
+                CASE 
+                    WHEN  p.patient_created_date < h.outcome_date  THEN 'Setting enrollment date to patient_created_date' 
+                    ELSE 'Setting enrollment date to  completion date' 
+                    END as warning_details,
+                TRUE as flag_for_review
+            FROM hivmigration_programs h
+            JOIN hivmigration_patients p ON p.source_patient_id = h.source_patient_id
+            WHERE h.outcome_date < h.enrollment_date
+            GROUP BY p.person_id;
+        ''')
+
+        executeMysql("Adjust patient program enrollment date if it is after the program completion date", '''
+            UPDATE  hivmigration_programs h,  
+                ( SELECT outcome, outcome_date, patient_created_date, person_id, source_patient_id  
+                from hivmigration_patients ) p
+            SET h.enrollment_date = CASE 
+            WHEN  p.patient_created_date < h.outcome_date  THEN p.patient_created_date 
+                    ELSE h.outcome_date 
+                    END
+            WHERE h.source_patient_id = p.source_patient_id 
+                and h.outcome_date < h.enrollment_date;
+        ''')
+        
         executeMysql("Load to patient_program table", '''
             SET @hiv_program = (SELECT program_id FROM program WHERE uuid = "b1cb1fc1-5190-4f7a-af08-48870975dafc");
             
