@@ -17,8 +17,7 @@ class HivStatusMigrator extends ObsMigrator {
             Each of these represents an insert into hiv_hiv_status, which means that we have the full audit trail of this data and these changes
 
             #3 is populated in response to the question:  HIV/TB Status, with values "HIV Only", "TB Only", "HIV/TB Co-infected".
-            This is different from the way it is used for #1 and #2, which ask further questions around Test Date, Test Result, Test Location, etc.
-            So this is really different data that was incorrectly put into this table from the v2 followup.
+            This is different from the way it phrased/collected for #1 and #2, which ask further questions around Test Date, Test Result, Test Location, etc.
 
             However, since all patients within this system (particularly those with a Follow-up Form entered) are HIV positive,
             this is also unnecessary data to retain.  An observation that says that a patient is HIV positive as of the entry date
@@ -181,27 +180,29 @@ class HivStatusMigrator extends ObsMigrator {
             
         ''')
 
+        // We choose CIEL:1169 as the question to migrate the HIV Status into, as the v1 intake also collects HIV Rapid Test result
+
         executeMysql("Load test result observations", ''' 
 
-            SET @test_result_question = concept_uuid_from_mapping('CIEL', '163722'); -- Rapid test for HIV
+            SET @status_question = concept_uuid_from_mapping('CIEL', '1169'); -- HIV INFECTED
             SET @trueValue = concept_uuid_from_mapping('CIEL', '703'); -- Positive
             SET @falseValue = concept_uuid_from_mapping('CIEL', '664'); -- Negative
             SET @unknownValue = concept_uuid_from_mapping('CIEL', '1138'); -- Indeterminate
                         
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, derived_target_encounter_id, @test_result_question, @trueValue
+            SELECT  source_patient_id, derived_target_encounter_id, @status_question, @trueValue
             FROM    hivmigration_hiv_status
             WHERE   derived_target_encounter_id is not null
             AND     hiv_positive_p = 't';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, derived_target_encounter_id, @test_result_question, @falseValue
+            SELECT  source_patient_id, derived_target_encounter_id, @status_question, @falseValue
             FROM    hivmigration_hiv_status
             WHERE   derived_target_encounter_id is not null
             AND     hiv_positive_p = 'f';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, derived_target_encounter_id, @test_result_question, @unknownValue
+            SELECT  source_patient_id, derived_target_encounter_id, @status_question, @unknownValue
             FROM    hivmigration_hiv_status
             WHERE   derived_target_encounter_id is not null
             AND     hiv_positive_p = '?';
@@ -292,14 +293,14 @@ class HivStatusMigrator extends ObsMigrator {
     def void revert() {
         executeMysql('''
             SET @test_date_question = concept_from_mapping('CIEL', '164400'); -- HIV test date
-            SET @test_result_question = concept_from_mapping('CIEL', '163722'); -- Rapid test for HIV
+            SET @status_question = concept_from_mapping('CIEL', '1169'); -- HIV INFECTED
             SET @test_location_question = concept_from_mapping('CIEL', '159936'); -- Point of HIV testing
             
             delete o.* 
             from obs o 
             inner join hivmigration_encounters e on o.encounter_id = e.encounter_id
             and   e.source_encounter_type = 'intake'
-            where o.concept_id in (@test_date_question, @test_result_question, @test_location_question);
+            where o.concept_id in (@status_question, @test_result_question, @test_location_question);
         ''')
 
         executeMysql("drop table if exists hivmigration_hiv_status;");
