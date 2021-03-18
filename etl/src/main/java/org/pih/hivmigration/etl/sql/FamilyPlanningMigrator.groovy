@@ -174,7 +174,7 @@ class FamilyPlanningMigrator extends ObsMigrator {
                 value_coded_uuid
                 )
             SELECT
-                obs_group_id as obs_id,
+                obs_group_id as obs_group_id,
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'METHOD OF FAMILY PLANNING') as concept_uuid,
                 case method 
@@ -185,13 +185,26 @@ class FamilyPlanningMigrator extends ObsMigrator {
                     when 'norplant' then concept_uuid_from_mapping('PIH', 'NORPLANT') 
                     when 'tubal_ligation' then concept_uuid_from_mapping('PIH', 'TUBAL LIGATION') 
                     when 'vasectomy' then concept_uuid_from_mapping('PIH', 'VASECTOMY') 
-                    when 'no_family_planning' then concept_uuid_from_mapping('PIH', 'NONE') 
-                    else concept_uuid_from_mapping('PIH', 'OTHER')                     
+                    when 'no_family_planning' then concept_uuid_from_mapping('PIH', 'NONE')                                          
                 end as value_coded_uuid    
             FROM hivmigration_tmp_planification 
             WHERE method in ('abstinence', 'oral_contraceptive', 'depo_provera',
-            'condom','norplant', 'tubal_ligation', 'vasectomy', 'no_family_planning',
-             'family_planning', 'family_planning_other1', 'family_planning_other2');   
+            'condom','norplant', 'tubal_ligation', 'vasectomy', 'no_family_planning');   
+             
+             -- Create Family Planning Other methods obs
+             INSERT INTO tmp_obs(   
+                obs_group_id,             
+                source_encounter_id,
+                concept_uuid,
+                value_coded_uuid)
+            SELECT   
+                obs_group_id as obs_group_id,
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'METHOD OF FAMILY PLANNING') as concept_uuid,
+                concept_uuid_from_mapping('PIH', 'OTHER') as  value_coded_uuid
+            FROM hivmigration_tmp_planification 
+            WHERE method in ( 'family_planning', 'family_planning_other1', 'family_planning_other2') 
+            group by source_encounter_id;      
              
              -- Create Family Planning Comments obs
              INSERT INTO tmp_obs(                
