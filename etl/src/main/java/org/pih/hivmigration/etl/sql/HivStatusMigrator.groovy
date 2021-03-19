@@ -176,7 +176,8 @@ class HivStatusMigrator extends ObsMigrator {
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_datetime)
             SELECT  source_patient_id, derived_target_encounter_id, @test_date_question, status_date
             FROM    hivmigration_hiv_status
-            WHERE   derived_target_encounter_id is not null;
+            WHERE   derived_target_encounter_id is not null
+            AND     status_date is not null;
             
         ''')
 
