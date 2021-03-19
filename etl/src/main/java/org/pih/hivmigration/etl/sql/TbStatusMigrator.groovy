@@ -10,11 +10,14 @@ class TbStatusMigrator extends ObsMigrator {
         /*
             The TB status table contains observations about a patient's TB status as recorded on an encounter form
             In most cases, this table keys directly on encounter, and in these cases, we can update directly
-            In other cases, this table does not store encounter id, and in these cases we try to derive the encounter
-            that created it via comparing the hiv_encounters_aud.modified and hiv_encounters.date_created with hiv_tb_status.entered_date
+            However, on many of the older intake forms, this did not reference encounter, only patient
+            And on some of the follow-up forms (notably the v2), the table was updated with the results of a
+            question that did not necessarily denote history at intake, and also did not link to the encounter id.
+            When we can't tie a patient's status directly to the intake encounter by foreign key, we
+            fall back to looking at overall observations for this patient, and using those as a proxy for the patient's TB history at intake.
 
             This migrator migrates in the hiv_tb_status table.
-            It depends on data migrated in within the StagingTablesMigrator and EncounterMigrator
+            It depends on data migrated in within the EncounterMigrator
         */
 
 
