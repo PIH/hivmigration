@@ -132,6 +132,8 @@ class TbStatusMigrator extends ObsMigrator {
             
         ''')
 
+        // Only migrate in the 't' values, as the default for the column is 'f', making entries unreliable
+
         executeMysql("Load tb active history observations", ''' 
 
             SET @test_result_question = concept_uuid_from_mapping('CIEL', '1389'); -- History of Tuberculosis
@@ -143,17 +145,7 @@ class TbStatusMigrator extends ObsMigrator {
             SELECT  source_patient_id, source_encounter_id, @test_result_question, @trueValue
             FROM    hivmigration_tb_status_intake
             WHERE   tb_active_p = 't';
-            
-            INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_result_question, @falseValue
-            FROM    hivmigration_tb_status_intake
-            WHERE   tb_active_p = 'f';
-            
-            INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_result_question, @unknownValue
-            FROM    hivmigration_tb_status_intake
-            WHERE   tb_active_p = '?';
-            
+
         ''')
 
         executeMysql("Load site of tb disease observations", ''' 
