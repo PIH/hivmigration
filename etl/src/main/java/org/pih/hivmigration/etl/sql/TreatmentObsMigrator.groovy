@@ -322,14 +322,14 @@ class TreatmentObsMigrator extends ObsMigrator {
             INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, coded, other)
             SELECT hoo1.source_encounter_id, trim(hoo1.value), trim(hoo2.value)
             FROM hivmigration_observations hoo1
-                     LEFT JOIN hivmigration_observations hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.observation = 'current_tx.art_other'
+            LEFT JOIN hivmigration_observations hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.observation = 'current_tx.art_other'
             WHERE hoo1.observation = 'current_tx.art' AND length(trim(hoo2.value)) > 0;
             
             -- get the instances where there is a current_tx.art_other entry but no current_tx.art
             INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, other)
             SELECT hoo1.source_encounter_id, trim(hoo1.value)
             FROM hivmigration_observations hoo1
-                     LEFT JOIN hivmigration_observations hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.observation = 'current_tx.art'
+            LEFT JOIN hivmigration_observations hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.observation = 'current_tx.art'
             WHERE hoo1.observation = 'current_tx.art_other' AND hoo2.source_encounter_id IS NULL AND length(trim(hoo1.value)) > 0;
         ''')
 
@@ -373,9 +373,6 @@ class TreatmentObsMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('CIEL', '1065')
             FROM hivmigration_tmp_arv_regimen;
         ''')
-
-
-
 
         executeMysql("Migrate ARV_TREATMENT_REASON observation", '''
             INSERT INTO tmp_obs (
@@ -753,6 +750,7 @@ class TreatmentObsMigrator extends ObsMigrator {
                             obs_group_id
                      FROM hivmigration_tmp_arv_regimen) arv
             LEFT JOIN tmp_obs o ON o.obs_group_id = arv.obs_group_id
+                AND o.concept_uuid = concept_uuid_from_mapping('PIH', '1282')
             WHERE value_uuid IS NOT NULL AND o.obs_id IS NULL;
         ''')
 
