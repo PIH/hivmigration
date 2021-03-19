@@ -2,6 +2,8 @@ package org.pih.hivmigration.etl.sql
 
 class TbStatusMigrator extends ObsMigrator {
 
+    SqlMigrator hivTbStatusMigrator = new TableStager("HIV_TB_STATUS");
+
     @Override
     def void migrate() {
 
@@ -15,155 +17,100 @@ class TbStatusMigrator extends ObsMigrator {
             It depends on data migrated in within the StagingTablesMigrator and EncounterMigrator
         */
 
-        // Load the entire source table from Oracle, and retain it for posterity
 
-        executeMysql("Create staging table for HIV_TB_STATUS", '''
-            create table hivmigration_tb_status (
-              tb_status_id int,
-              source_encounter_id int,
+        // Load the entire source table from Oracle, and retain it for posterity
+        hivTbStatusMigrator.migrate()
+
+        executeMysql("Create stating table containing INTAKE data to migrate", '''
+            create table hivmigration_tb_status_intake (
               source_patient_id int,
-              source_encounter_type varchar(20),
+              source_encounter_id int,
+              intake_date date,
+              intake_entry_date date,
+              status_on_encounter boolean,
               status_date date,
               entered_date date,
               entered_by int,
-              type varchar(10),
               ppd_positive_p char(1),
               tb_active_p char(1),
               extrapulmonary_p char(1),
               pulmonary_p char(1),
               drug_resistant_p char(1),
-              drug_resistant_comment varchar(1000),
-
-              derived_followup_id int,
-              derived_intake_date date,
-              derived_intake_id int,
-              derived_first_v2_followup date,
-              derived_target_encounter_id int,
-              derived_status_date date,
-              derived_extrapulmonary_p char(1),
-              derived_drug_resistant_p char(1)
+              drug_resistant_comment varchar(1000)
             );
-            CREATE INDEX source_encounter_id_idx ON hivmigration_tb_status (`source_encounter_id`);
-            CREATE INDEX source_patient_id_idx ON hivmigration_tb_status (`source_patient_id`);
-            CREATE INDEX status_date_idx ON hivmigration_tb_status (`status_date`);
+            CREATE INDEX source_patient_id_idx ON hivmigration_tb_status_intake (`source_patient_id`);
+            CREATE INDEX source_encounter_id_idx ON hivmigration_tb_status_intake (`source_encounter_id`);
+            CREATE INDEX intake_date_idx ON hivmigration_tb_status_intake (`intake_date`);
+            CREATE INDEX status_date_idx ON hivmigration_tb_status_intake (`status_date`);
         ''')
 
-        loadFromOracleToMySql('''
-            insert into hivmigration_tb_status (
-              tb_status_id,
-              source_encounter_id,
-              source_patient_id,
-              source_encounter_type,
-              status_date,
-              entered_date,
-              entered_by,
-              type,
-              ppd_positive_p,
-              tb_active_p,
-              extrapulmonary_p,
-              pulmonary_p,
-              drug_resistant_p,
-              drug_resistant_comment
-            )
-            values(?,?,?,?,?,?,?,?,?,?,?,?,?,?) 
-            ''', '''
-            select 
-                s.TB_STATUS_ID,
-                s.ENCOUNTER_ID,
-                s.PATIENT_ID,
-                e.TYPE,
-                s.STATUS_DATE,
-                s.ENTERED_DATE,
-                s.ENTERED_BY,
-                s.TYPE,
-                s.PPD_POSITIVE_P,
-                s.TB_ACTIVE_P,
-                s.EXTRAPULMONARY_P,
-                s.PULMONARY_P,
-                s.DRUG_RESISTANT_P,
-                s.DRUG_RESISTANT_COMMENT
-            from 
-                HIV_TB_STATUS s, HIV_DEMOGRAPHICS_REAL d, HIV_ENCOUNTERS e
-            where 
-                s.PATIENT_ID = d.PATIENT_ID
-            and s.ENCOUNTER_ID = e.ENCOUNTER_ID(+);
-        ''')
+        // Initialize a row for all patient intake encounters
 
-        // NOTE:  THIS IS THE SAME APPROACH TAKEN IN THE HivStatusMigrator.  WE'LL WANT TO CONSIDER BOTH WHEN MAKING CHANGES.
-
-        // Query the hiv encounters audit table to see if any of these correspond to follow-up entries, and update derived table if so
-
-        executeMysql("Link follow-up encounter by entry date if found in the encounter table", '''
-            update              hivmigration_tb_status s
-            inner join          hivmigration_encounters e 
-            on                  s.source_patient_id = e.source_patient_id and date(s.entered_date) = date(e.date_created) and e.source_encounter_type = 'followup' 
-            set                 s.derived_followup_id = e.source_encounter_id
+        executeMysql("Add empty status row for all patient intakes", '''
+            insert into hivmigration_tb_status_intake (source_patient_id, source_encounter_id, intake_date, intake_entry_date, status_on_encounter)
+            select  source_patient_id, source_encounter_id, encounter_date, date_created, false
+            from    hivmigration_encounters
+            where   source_encounter_type = 'intake'
             ;
         ''')
 
-        executeMysql("Link follow-up encounter by entry date if found in the audit table", '''
-            update              hivmigration_tb_status s
-            inner join          hivmigration_encounters_aud e 
-            on                  s.source_patient_id = e.source_patient_id and date(s.entered_date) = date(e.modified) and e.type = 'followup' 
-            set                 s.derived_followup_id = e.source_encounter_id
+        // Populate row for any patients who have a directly referenced intake encounter
+
+        executeMysql("Load status rows that are directly linked to intake encounters", '''
+            update      hivmigration_tb_status_intake i
+            inner join  hivmigration_tb_status s on i.source_encounter_id = s.source_encounter_id
+            set         i.STATUS_ON_ENCOUNTER = true,
+                        i.STATUS_DATE = s.STATUS_DATE, 
+                        i.ENTERED_DATE = s.ENTERED_DATE, 
+                        i.ENTERED_BY = s.ENTERED_BY,
+                        i.PPD_POSITIVE_P = s.PPD_POSITIVE_P, 
+                        i.TB_ACTIVE_P = s.TB_ACTIVE_P, 
+                        i.EXTRAPULMONARY_P = s.EXTRAPULMONARY_P, 
+                        i.PULMONARY_P = s.PULMONARY_P, 
+                        i.DRUG_RESISTANT_P = s.DRUG_RESISTANT_P, 
+                        i.DRUG_RESISTANT_COMMENT = s.DRUG_RESISTANT_COMMENT
+        ''')
+
+        // For the remaining patients, iterate over statuses that are not linked to an encounter, and use to populate
+
+        executeMysql("Add aggregate information to intake where multiple patient-level rows exist", '''
+            update        hivmigration_tb_status_intake i
+            inner join    (
+                            select    s.source_patient_id,
+                                      min(s.status_date) as first_status_date,
+                                      sum(if(s.ppd_positive_p = 't', 1, 0)) as num_ppd_positive,
+                                      sum(if(s.tb_active_p = 't', 1, 0)) as num_tb_active,
+                                      sum(if(s.extrapulmonary_p = 't', 1, 0)) as num_extrapulmonary,
+                                      sum(if(s.pulmonary_p = 't', 1, 0)) as num_pulmonary,
+                                      sum(if(s.drug_resistant_p = 't', 1, 0)) as num_drug_resistant,
+                                      group_concat(s.drug_resistant_comment, ' , ') as all_drug_resistant_comment
+                            from      hivmigration_tb_status s
+                            where     s.source_encounter_id is null
+                            group by  s.source_patient_id
+                          ) s on i.source_patient_id = s.source_patient_id
+            set           i.STATUS_DATE = s.first_status_date, 
+                          i.PPD_POSITIVE_P = if(num_ppd_positive > 0, 't', 'f'), 
+                          i.TB_ACTIVE_P = if(num_tb_active > 0, 't', 'f'), 
+                          i.EXTRAPULMONARY_P = if(num_extrapulmonary > 0, 't', 'f'), 
+                          i.PULMONARY_P = if(num_pulmonary > 0, 't', 'f'), 
+                          i.DRUG_RESISTANT_P = if(num_drug_resistant > 0, 't', 'f'), 
+                          i.DRUG_RESISTANT_COMMENT = s.all_drug_resistant_comment
+            where         i.status_on_encounter = false
             ;
         ''')
 
-        // Identify the earliest intake encounter associated with each status row (by patient)
-
-        executeMysql("Link intake encounter if found in the encounter table", '''
-            update              hivmigration_tb_status s
-            inner join          (select source_patient_id, min(encounter_date) as earliest_intake_date from hivmigration_encounters where source_encounter_type = 'intake' group by source_patient_id) m
-            on                  s.source_patient_id = m.source_patient_id
-            set                 s.derived_intake_date = m.earliest_intake_date
-            ;
-        ''')
-
-        executeMysql("Link intake encounter if found in the encounter table", '''
-            update              hivmigration_tb_status s
-            inner join          hivmigration_encounters e
-            on                  s.source_patient_id = e.source_patient_id and s.derived_intake_date = e.encounter_date and e.source_encounter_type = 'intake'
-            set                 s.derived_intake_id = e.source_encounter_id
-            ;
-        ''')
-
-        executeMysql("Identify the first entry date of a v2 follow-up form for each patient", '''
-            update hivmigration_tb_status set derived_first_v2_followup = null;
-            
-            update              hivmigration_tb_status s
-            inner join          ( select        min(date_created) as min_date, source_patient_id 
-                                  from          hivmigration_encounters 
-                                  where         source_encounter_type = 'followup' and form_version = '2' 
-                                  group by      source_patient_id
-                                ) e
-            on                  s.source_patient_id = e.source_patient_id
-            set                 s.derived_first_v2_followup = e.min_date
-            ;
-        ''')
-
-        // If the patient has no v2 follow-up forms in their history, then identify the latest entered status
-        // If the patient does have v2 follow-up forms, identify the latest entered status prior to the first v2 followup
-        // Indicate the row that should be migrated by populating the derived_target_encounter_id on it
-
-        executeMysql("Use the latest for a patient if they have no v2 followups", '''
-            update              hivmigration_tb_status s
-            inner join          ( select    max(tb_status_id) as max_status_id, source_patient_id
-                                  from      hivmigration_tb_status 
-                                  where     (derived_first_v2_followup is null or entered_date < derived_first_v2_followup)
-                                  group by  source_patient_id
-                                ) m 
-            on                  s.tb_status_id = m.max_status_id 
-            set                 s.derived_target_encounter_id = if(s.source_encounter_id is null or s.source_encounter_type = 'hop_abstraction', s.derived_intake_id, s.source_encounter_id)
-            ;
-        ''')
+        // Update rows based on values entered by hop_abstraction encounters
 
         executeMysql("Set derived observation values based on hop abstraction if it exists", '''
-            update              hivmigration_tb_status s
-            left join           (select source_patient_id, status_date, extrapulmonary_p, drug_resistant_p from hivmigration_tb_status s2 group by source_patient_id) hop
-            on                  s.source_patient_id = hop.source_patient_id
-            set                 s.derived_status_date = ifnull(hop.status_date, s.status_date),
-                                s.derived_extrapulmonary_p = ifnull(hop.extrapulmonary_p, s.extrapulmonary_p),
-                                s.derived_drug_resistant_p = ifnull(hop.drug_resistant_p, s.drug_resistant_p)
+            update              hivmigration_tb_status_intake i
+            inner join          (
+                                    select  source_patient_id, status_date, extrapulmonary_p, drug_resistant_p 
+                                    from    hivmigration_tb_status
+                                    where   source_encounter_id in (277018, 277029, 287844, 341199)
+                                ) s on i.source_patient_id = s.source_patient_id
+            set                 i.status_date = s.status_date,
+                                i.extrapulmonary_p = s.extrapulmonary_p,
+                                i.drug_resistant_p = s.drug_resistant_p
             ;
         ''')
 
@@ -176,10 +123,9 @@ class TbStatusMigrator extends ObsMigrator {
             SET @test_date_question = concept_uuid_from_mapping('PIH', '11526'); -- Date of tuberculosis test
                         
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_datetime)
-            SELECT  source_patient_id, derived_target_encounter_id, @test_date_question, derived_status_date
-            FROM    hivmigration_tb_status
-            WHERE   derived_target_encounter_id is not null
-            AND     derived_status_date is not null;
+            SELECT  source_patient_id, source_encounter_id, @test_date_question, status_date
+            FROM    hivmigration_tb_status_intake
+            WHERE   status_date is not null;
             
         ''')
 
@@ -191,22 +137,19 @@ class TbStatusMigrator extends ObsMigrator {
             SET @unknownValue = concept_uuid_from_mapping('CIEL', '1067'); -- Unknown
                         
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, derived_target_encounter_id, @test_result_question, @trueValue
-            FROM    hivmigration_tb_status
-            WHERE   derived_target_encounter_id is not null
-            AND     tb_active_p = 't';
+            SELECT  source_patient_id, source_encounter_id, @test_result_question, @trueValue
+            FROM    hivmigration_tb_status_intake
+            WHERE   tb_active_p = 't';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, derived_target_encounter_id, @test_result_question, @falseValue
-            FROM    hivmigration_tb_status
-            WHERE   derived_target_encounter_id is not null
-            AND     tb_active_p = 'f';
+            SELECT  source_patient_id, source_encounter_id, @test_result_question, @falseValue
+            FROM    hivmigration_tb_status_intake
+            WHERE   tb_active_p = 'f';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, derived_target_encounter_id, @test_result_question, @unknownValue
-            FROM    hivmigration_tb_status
-            WHERE   derived_target_encounter_id is not null
-            AND     tb_active_p = '?';
+            SELECT  source_patient_id, source_encounter_id, @test_result_question, @unknownValue
+            FROM    hivmigration_tb_status_intake
+            WHERE   tb_active_p = '?';
             
         ''')
 
@@ -217,16 +160,14 @@ class TbStatusMigrator extends ObsMigrator {
             SET @extrapulmonary = concept_uuid_from_mapping('CIEL', '5042'); -- Extra-pulmonary tuberculosis
                         
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, derived_target_encounter_id, @tb_location, @pulmonary
-            FROM    hivmigration_tb_status
-            WHERE   derived_target_encounter_id is not null
-            AND     pulmonary_p = 't';
+            SELECT  source_patient_id, source_encounter_id, @tb_location, @pulmonary
+            FROM    hivmigration_tb_status_intake
+            WHERE   pulmonary_p = 't';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, derived_target_encounter_id, @tb_location, @extrapulmonary
-            FROM    hivmigration_tb_status
-            WHERE   derived_target_encounter_id is not null
-            AND     derived_extrapulmonary_p = 't';
+            SELECT  source_patient_id, source_encounter_id, @tb_location, @extrapulmonary
+            FROM    hivmigration_tb_status_intake
+            WHERE   extrapulmonary_p = 't';
             
         ''')
 
@@ -237,16 +178,14 @@ class TbStatusMigrator extends ObsMigrator {
             SET @trueValue = concept_uuid_from_mapping('CIEL', '1065'); -- True
                         
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, derived_target_encounter_id, @dst_complete, @trueValue
-            FROM    hivmigration_tb_status
-            WHERE   derived_target_encounter_id is not null
-            AND     derived_drug_resistant_p = 't';
+            SELECT  source_patient_id, source_encounter_id, @dst_complete, @trueValue
+            FROM    hivmigration_tb_status_intake
+            WHERE   drug_resistant_p = 't';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_text)
-            SELECT  source_patient_id, derived_target_encounter_id, @dst_results, drug_resistant_comment
-            FROM    hivmigration_tb_status
-            WHERE   derived_target_encounter_id is not null
-            AND     drug_resistant_comment is not null;
+            SELECT  source_patient_id, source_encounter_id, @dst_results, drug_resistant_comment
+            FROM    hivmigration_tb_status_intake
+            WHERE   drug_resistant_comment is not null and drug_resistant_comment != '';
             
         ''')
 
@@ -256,10 +195,9 @@ class TbStatusMigrator extends ObsMigrator {
             SET @positive = concept_uuid_from_mapping('CIEL', '703'); -- Positive
                         
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, derived_target_encounter_id, @ppd_result, @positive
-            FROM    hivmigration_tb_status
-            WHERE   derived_target_encounter_id is not null
-            AND     ppd_positive_p = 't';
+            SELECT  source_patient_id, source_encounter_id, @ppd_result, @positive
+            FROM    hivmigration_tb_status_intake
+            WHERE   ppd_positive_p = 't';
             
         ''')
 
@@ -271,7 +209,7 @@ class TbStatusMigrator extends ObsMigrator {
         executeMysql('''
             SET @status_date = concept_from_mapping('PIH', '11526'); -- Date of tuberculosis test
             SET @tb_active = concept_from_mapping('CIEL', '1389'); -- History of Tuberculosis
-            SET @tb_pulm_extra = concept_from_mapping('CIEL', '160040'); -- Location of TB disease
+            SET @tb_location = concept_from_mapping('CIEL', '160040'); -- Location of TB disease
             SET @dst_complete = concept_from_mapping('PIH', '3039'); -- Drug sensitivity test complete
             SET @dst_results = concept_from_mapping('CIEL', '159391 '); -- Tuberculosis drug sensitivity testing (text)
             SET @ppd_result = concept_from_mapping('PIH', '1435'); -- PPD, qualitative
@@ -279,10 +217,12 @@ class TbStatusMigrator extends ObsMigrator {
             delete o.* 
             from obs o 
             inner join hivmigration_encounters e on o.encounter_id = e.encounter_id
-            inner join hivmigration_tb_status s on e.source_encounter_id = s.derived_target_encounter_id
-            where o.concept_id in (@status_date, @tb_active, @tb_pulm_extra, @dst_complete, @dst_results, @ppd_result);
+            inner join hivmigration_tb_status_intake s on e.source_encounter_id = s.source_encounter_id
+            where o.concept_id in (@status_date, @tb_active, @tb_location, @dst_complete, @dst_results, @ppd_result);
         ''')
 
-        executeMysql("drop table if exists hivmigration_tb_status;")
+        executeMysql("drop table if exists hivmigration_tb_status_intake")
+
+        hivTbStatusMigrator.revert()
     }
 }
