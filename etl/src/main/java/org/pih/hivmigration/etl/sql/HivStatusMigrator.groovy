@@ -2,8 +2,6 @@ package org.pih.hivmigration.etl.sql
 
 class HivStatusMigrator extends ObsMigrator {
 
-    SqlMigrator hivStatusMigrator = new TableStager("HIV_HIV_STATUS")
-
     @Override
     def void migrate() {
 
@@ -28,147 +26,144 @@ class HivStatusMigrator extends ObsMigrator {
             Because of this, and because of the fact that every patient is expected to have a single answer to this question,
             which is captured only on their intake form, this migration will do the following:
 
-            1. Look at all intake encounters
-            2. If a given intake encounter has a foreign keyed status linked to it, migrate this status row onto the intake as-is
-            3. If a given intake encounter does _not_ have a status linked to it, try to determine if there are status obs that should be recorded on it
-              - There are 4 data points:  status_date, hiv_positive_p, test_location, test_location_other
-              - test_location and test_location_other:
-                 - These are _only_ ever recorded on intake forms.
-                 - So if we find any of these for a patient, record the most recently entered value for each on their intake
-              - hiv_positive_p and status_date
-                 - These can be recorded either on intake encounters or follow-up encounters.
-                 - To determine the appropriate value _at intake_ we do the following:
-                    - Find the earliest status date (using entry date if null) for a patient where hiv_positive_p = 't'
-                    - If this date is on or before the intake encounter date, use this status_date and hiv_positive_p = 't' for the patient
-                    - Find the earliest status date (using entry date if null) for a patient where hiv_positive_p = 'f'
-                    - If this date is on or before the intake encounter date _and_ they didn't already have hiv_positive_p = 't' recorded, use this status_date and hiv_positive_p = 'f' for the patient
-                    - Find the earliest status date (using entry date if null) for a patient where hiv_positive_p = '?'
-                    - If this date is on or before the intake encounter date _and_ they didn't already have hiv_positive_p = 't' or 'f' recorded, use this status_date and hiv_positive_p = '?' for the patient
-
-            Ultimately, the goal is to associate the best status row representing the hiv status at the time of intake for each patient.
+            1. Attempt to exclude all entries from the hiv_hiv_status table that were recorded as a result of follow-up data entry.
+               This will ensure that follow-up form entry dates are not interpreted as the hiv diagnosis date for a patient
+            2. Re-calculate the "current" value from this table based on the entry date, to get the "latest" value for each patient
+               This will attempt to get the most recently entered value, in order to account for corrections, treating most recent as most accurate.
+               If a follow-up v2 encounter is detected, then treat the latest value prior ot this as the most recent
+            3. Migrate obs for each patient based on this most recently entered value
+            4. Create data warnings as useful
 
             Dependencies and mappings:
 
             This migrator migrates in the hiv_hiv_status table.
-            It depends on data within hiv_encounters (EncounterMigrator)
+            It depends on data within hiv_encounters (EncounterMigrator) and hiv_encounters_aud (StagingTablesMigrator)
         */
 
         // Load the entire source table from Oracle, and retain it for posterity
-        hivStatusMigrator.migrate()
 
-        executeMysql("Create stating table containing INTAKE data to migrate", '''
-            create table hivmigration_hiv_status_intake (
-              source_patient_id int,
+        executeMysql("Create staging table for HIV_STATUS", '''
+            create table hivmigration_hiv_status (
+              hiv_status_id int,
               source_encounter_id int,
-              intake_date date,
-              intake_entry_date date,
-              status_on_encounter boolean,
+              source_patient_id int,
               status_date date,
+              date_unknown_p char(1),
               entered_date date,
               entered_by int,
+              type varchar(10),
               hiv_positive_p char(1),
               test_location varchar(200),
-              test_location_other varchar(200)
+              test_location_other varchar(200),
+              
+              derived_followup_id int,
+              derived_intake_date date,
+              derived_intake_id int,
+              derived_first_v2_followup date,
+              derived_target_encounter_id int
             );
-            CREATE INDEX source_encounter_id_idx ON hivmigration_hiv_status_intake (`source_encounter_id`);
-            CREATE INDEX source_patient_id_idx ON hivmigration_hiv_status_intake (`source_patient_id`);
-            CREATE INDEX intake_date_idx ON hivmigration_hiv_status_intake (`intake_date`);
-            CREATE INDEX status_date_idx ON hivmigration_hiv_status_intake (`status_date`);
+            CREATE INDEX source_encounter_id_idx ON hivmigration_hiv_status (`source_encounter_id`);
+            CREATE INDEX source_patient_id_idx ON hivmigration_hiv_status (`source_patient_id`);
+            CREATE INDEX status_date_idx ON hivmigration_hiv_status (`status_date`);
         ''')
 
-        // Initialize a row for all patient intake encounters
+        loadFromOracleToMySql('''
+            insert into hivmigration_hiv_status (
+              hiv_status_id,
+              source_encounter_id,
+              source_patient_id,
+              status_date,
+              date_unknown_p,
+              entered_date,
+              entered_by,
+              type,
+              hiv_positive_p,
+              test_location,
+              test_location_other
+            )
+            values(?,?,?,?,?,?,?,?,?,?,?) 
+            ''', '''
+            select 
+                s.HIV_STATUS_ID,
+                s.ENCOUNTER_ID,
+                s.PATIENT_ID,
+                s.STATUS_DATE,
+                s.DATE_UNKNOWN_P,
+                s.ENTERED_DATE,
+                s.ENTERED_BY,
+                s.TYPE,
+                s.HIV_POSITIVE_P,
+                s.TEST_LOCATION,
+                s.TEST_LOCATION_OTHER
+            from 
+                HIV_HIV_STATUS s, HIV_DEMOGRAPHICS_REAL d  
+            where 
+                s.PATIENT_ID = d.PATIENT_ID;
+        ''')
 
-        executeMysql("Add empty status row for all patient intakes", '''
-            insert into hivmigration_hiv_status_intake (source_patient_id, source_encounter_id, intake_date, intake_entry_date, status_on_encounter)
-            select  source_patient_id, source_encounter_id, encounter_date, date_created, false
-            from    hivmigration_encounters
-            where   source_encounter_type = 'intake'
+        // Query the hiv encounters audit table to see if any of these correspond to follow-up entries, and update derived table if so
+
+        executeMysql("Link follow-up encounter by entry date if found in the encounter table", '''
+            update              hivmigration_hiv_status s
+            inner join          hivmigration_encounters e 
+            on                  s.source_patient_id = e.source_patient_id and date(s.entered_date) = date(e.date_created) and e.source_encounter_type = 'followup' 
+            set                 s.derived_followup_id = e.source_encounter_id
             ;
         ''')
 
-        // Populate row for any patients who have a directly referenced intake encounter
-
-        executeMysql("Load status rows that are directly linked to intake encounters", '''
-            update      hivmigration_hiv_status_intake i
-            inner join  hivmigration_hiv_status s on i.source_encounter_id = s.source_encounter_id
-            set         i.STATUS_ON_ENCOUNTER = true,
-                        i.STATUS_DATE = s.STATUS_DATE, 
-                        i.ENTERED_DATE = s.ENTERED_DATE, 
-                        i.ENTERED_BY = s.ENTERED_BY,
-                        i.HIV_POSITIVE_P = s.HIV_POSITIVE_P, 
-                        i.TEST_LOCATION = s.TEST_LOCATION, 
-                        i.TEST_LOCATION_OTHER = s.TEST_LOCATION_OTHER
-        ''')
-
-        // Test location / test location other are only ever collected on intake forms
-        // Add those to the intake row for a patient if they are found at all not associated with an encounter
-
-        executeMysql("Add test location and test location other obs to any patients without populated encounter data", '''
-            update        hivmigration_hiv_status_intake i
-            inner join    (
-                            select    source_patient_id,
-                                      test_location,
-                                      test_location_other
-                            from      hivmigration_hiv_status
-                            where     test_location is not null or test_location_other is not null
-                            and       source_encounter_id is null
-                            order by  entered_date asc
-                          )
-                          s on i.source_patient_id = s.source_patient_id
-            set           i.test_location = s.test_location,
-                          i.test_location_other = s.test_location_other
-            where         i.status_on_encounter = false       
+        executeMysql("Link follow-up encounter by entry date if found in the audit table", '''
+            update              hivmigration_hiv_status s
+            inner join          hivmigration_encounters_aud e 
+            on                  s.source_patient_id = e.source_patient_id and date(s.entered_date) = date(e.modified) and e.type = 'followup' 
+            set                 s.derived_followup_id = e.source_encounter_id
             ;
         ''')
 
-        // If a positive status is indicated prior to intake, record that
+        // Identify the earliest intake encounter associated with each status row (by patient)
 
-        executeMysql("Set hiv_positive_p and hiv_status_date with the earliest positive value prior to intake", '''
-            update        hivmigration_hiv_status_intake i
-            inner join    (
-                            select    source_patient_id, date(min(ifnull(status_date, entered_date))) as earliest_hiv_date
-                            from      hivmigration_hiv_status
-                            where     hiv_positive_p = 't'
-                            group by  source_patient_id
-                          )
-                          s on i.source_patient_id = s.source_patient_id
-            set           i.hiv_positive_p = 't', i.status_date = s.earliest_hiv_date
-            where         i.status_on_encounter = false
-            and           s.earliest_hiv_date <= i.intake_date
+        executeMysql("Link intake encounter if found in the encounter table", '''
+            update              hivmigration_hiv_status s
+            inner join          (select source_patient_id, min(encounter_date) as earliest_intake_date from hivmigration_encounters where source_encounter_type = 'intake' group by source_patient_id) m
+            on                  s.source_patient_id = m.source_patient_id
+            set                 s.derived_intake_date = m.earliest_intake_date
             ;
         ''')
 
-        // If no positive status was indicated prior to intake, but a negative status was, record that
-
-        executeMysql("If hiv_positive_p and status date are null, look at negative values", '''
-            update        hivmigration_hiv_status_intake i
-            inner join    (
-                            select    source_patient_id, date(min(ifnull(status_date, entered_date))) as earliest_non_hiv_date
-                            from      hivmigration_hiv_status
-                            where     hiv_positive_p in ('f')
-                            group by  source_patient_id
-                          ) s on i.source_patient_id = s.source_patient_id
-            set           i.hiv_positive_p = 'f', i.status_date = s.earliest_non_hiv_date
-            where         i.status_on_encounter = false
-            and           i.hiv_positive_p is null
-            and           s.earliest_non_hiv_date <= i.intake_date
+        executeMysql("Link intake encounter if found in the encounter table", '''
+            update              hivmigration_hiv_status s
+            inner join          hivmigration_encounters e
+            on                  s.source_patient_id = e.source_patient_id and s.derived_intake_date = e.encounter_date and e.source_encounter_type = 'intake'
+            set                 s.derived_intake_id = e.source_encounter_id
             ;
         ''')
 
-        // If no positive or negative status was indicated prior to intake, but an unknown status was, record that
+        executeMysql("Identify the first entry date of a v2 follow-up form for each patient", '''
+            update hivmigration_hiv_status set derived_first_v2_followup = null;
+            
+            update              hivmigration_hiv_status s
+            inner join          ( select        min(date_created) as min_date, source_patient_id 
+                                  from          hivmigration_encounters 
+                                  where         source_encounter_type = 'followup' and form_version = '2' 
+                                  group by      source_patient_id
+                                ) e
+            on                  s.source_patient_id = e.source_patient_id
+            set                 s.derived_first_v2_followup = e.min_date
+            ;
+        ''')
 
-        executeMysql("If hiv_positive_p and status date are null, look at negative values", '''
-            update        hivmigration_hiv_status_intake i
-            inner join    (
-                            select    source_patient_id, date(min(ifnull(status_date, entered_date))) as earliest_unknown_hiv_date
-                            from      hivmigration_hiv_status
-                            where     hiv_positive_p in ('?')
-                            group by  source_patient_id
-                          ) s on i.source_patient_id = s.source_patient_id
-            set           i.hiv_positive_p = '?', i.status_date = s.earliest_unknown_hiv_date
-            where         i.status_on_encounter = false
-            and           i.hiv_positive_p is null
-            and           s.earliest_unknown_hiv_date <= i.intake_date
+        // If the patient has no v2 follow-up forms in their history, then identify the latest entered status
+        // If the patient does have v2 follow-up forms, identify the latest entered status prior to the first v2 followup
+        // Indicate the row that should be migrated by populating the derived_target_encounter_id on it
+
+        executeMysql("Use the latest for a patient if they have no v2 followups", '''
+            update              hivmigration_hiv_status s
+            inner join          ( select    max(hiv_status_id) as max_status_id, source_patient_id
+                                  from      hivmigration_hiv_status 
+                                  where     (derived_first_v2_followup is null or entered_date < derived_first_v2_followup)
+                                  group by  source_patient_id
+                                ) m 
+            on                  s.hiv_status_id = m.max_status_id 
+            set                 s.derived_target_encounter_id = ifnull(s.source_encounter_id, s.derived_intake_id)
             ;
         ''')
 
@@ -179,9 +174,10 @@ class HivStatusMigrator extends ObsMigrator {
             SET @test_date_question = concept_uuid_from_mapping('CIEL', '164400'); -- HIV test date
                         
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_datetime)
-            SELECT  source_patient_id, source_encounter_id, @test_date_question, status_date
-            FROM    hivmigration_hiv_status_intake
-            WHERE   status_date is not null;
+            SELECT  source_patient_id, derived_target_encounter_id, @test_date_question, status_date
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     status_date is not null;
             
         ''')
 
@@ -195,19 +191,22 @@ class HivStatusMigrator extends ObsMigrator {
             SET @unknownValue = concept_uuid_from_mapping('CIEL', '1138'); -- Indeterminate
                         
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @status_question, @trueValue
-            FROM    hivmigration_hiv_status_intake
-            WHERE   hiv_positive_p = 't';
+            SELECT  source_patient_id, derived_target_encounter_id, @status_question, @trueValue
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     hiv_positive_p = 't';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @status_question, @falseValue
-            FROM    hivmigration_hiv_status_intake
-            WHERE   hiv_positive_p = 'f';
+            SELECT  source_patient_id, derived_target_encounter_id, @status_question, @falseValue
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     hiv_positive_p = 'f';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @status_question, @unknownValue
-            FROM    hivmigration_hiv_status_intake
-            WHERE   hiv_positive_p = '?';
+            SELECT  source_patient_id, derived_target_encounter_id, @status_question, @unknownValue
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     hiv_positive_p = '?';
             
         ''')
 
@@ -226,57 +225,67 @@ class HivStatusMigrator extends ObsMigrator {
             SET @other = concept_uuid_from_mapping('CIEL', '5622'); -- other
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @vct_clinic
-            FROM    hivmigration_hiv_status_intake
-            WHERE   test_location = 'vct_clinic';
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @vct_clinic
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     test_location = 'vct_clinic';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @womens_health_clinic
-            FROM    hivmigration_hiv_status_intake
-            WHERE   test_location = 'womens_health_clinic';
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @womens_health_clinic
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     test_location = 'womens_health_clinic';
 
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @primary_care_clinic
-            FROM    hivmigration_hiv_status_intake
-            WHERE   test_location = 'primary_care_clinic';
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @primary_care_clinic
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     test_location = 'primary_care_clinic';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @mobile_clinic
-            FROM    hivmigration_hiv_status_intake
-            WHERE   test_location = 'mobile_clinic';
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @mobile_clinic
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     test_location = 'mobile_clinic';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @family_planning_clinic
-            FROM    hivmigration_hiv_status_intake
-            WHERE   test_location = 'family_planning_clinic';
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @family_planning_clinic
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     test_location = 'family_planning_clinic';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @maternity_ward
-            FROM    hivmigration_hiv_status_intake
-            WHERE   test_location = 'maternity_ward';
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @maternity_ward
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     test_location = 'maternity_ward';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @surgical_ward
-            FROM    hivmigration_hiv_status_intake
-            WHERE   test_location = 'surgical_ward';
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @surgical_ward
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     test_location = 'surgical_ward';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @medicine_ward
-            FROM    hivmigration_hiv_status_intake
-            WHERE   test_location = 'medicine_ward';
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @medicine_ward
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     test_location = 'medicine_ward';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @pediatric_ward
-            FROM    hivmigration_hiv_status_intake
-            WHERE   test_location = 'pediatric_ward';
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @pediatric_ward
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     test_location = 'pediatric_ward';
             
             INSERT INTO tmp_obs (source_patient_id, source_encounter_id, concept_uuid, value_coded_uuid, comments)
-            SELECT  source_patient_id, source_encounter_id, @test_location_question, @other, test_location_other
-            FROM    hivmigration_hiv_status_intake
-            WHERE   (test_location = 'other' or test_location_other is not null);                                                                                    
+            SELECT  source_patient_id, derived_target_encounter_id, @test_location_question, @other, test_location_other
+            FROM    hivmigration_hiv_status
+            WHERE   derived_target_encounter_id is not null
+            AND     test_location = 'other';                                                                                    
         ''')
 
-        // NOTE: We are not currently migrating date_unknown_p.  There are 73 of these in the system (as of 3/11/21)
+        // TODO: We are not currently migrating date_unknown_p.  There are 73 of these in the source system (as of 3/11/21)
 
         migrate_tmp_obs()
     }
@@ -287,16 +296,14 @@ class HivStatusMigrator extends ObsMigrator {
             SET @test_date_question = concept_from_mapping('CIEL', '164400'); -- HIV test date
             SET @status_question = concept_from_mapping('CIEL', '1169'); -- HIV INFECTED
             SET @test_location_question = concept_from_mapping('CIEL', '159936'); -- Point of HIV testing
-
+            
             delete o.* 
             from obs o 
             inner join hivmigration_encounters e on o.encounter_id = e.encounter_id
-            inner join hivmigration_hiv_status_intake s on e.source_encounter_id = s.source_encounter_id
+            and   e.source_encounter_type = 'intake'
             where o.concept_id in (@status_question, @test_result_question, @test_location_question);
         ''')
 
-        executeMysql("drop table if exists hivmigration_hiv_status_intake")
-
-        hivStatusMigrator.revert()
+        executeMysql("drop table if exists hivmigration_hiv_status;");
     }
 }
