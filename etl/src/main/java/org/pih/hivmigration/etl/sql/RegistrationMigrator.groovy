@@ -534,7 +534,7 @@ class RegistrationMigrator extends ObsMigrator {
                         else concept_from_mapping('PIH', 'MAIN ACTIVITY, NON-CODED')
                     end as value_coded,  
                     case 
-                        when (m.openmrs_concept_code is null) then s.primary_activity -- there is no mapping to this entry, so we are going to migrate it to comments column
+                        when (m.openmrs_concept_code is null or m.openmrs_concept_code='MAIN ACTIVITY, NON-CODED') then s.primary_activity -- there is no mapping to this entry, so we are going to migrate it to comments column
                         else null
                     end as comments,  
                     r.creator, r.encounter_date as dateCreated, uuid() as uuid  
