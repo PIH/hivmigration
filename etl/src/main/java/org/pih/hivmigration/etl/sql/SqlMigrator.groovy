@@ -306,6 +306,17 @@ abstract class SqlMigrator {
         return count == 1;
     }
 
+    public boolean columnExists(String tableName, String columnName) throws Exception {
+
+        String select = "select count(*) from information_schema.columns " +
+                "where table_schema='" + (getMigrationProperties().get("mysql.database") != null ? getMigrationProperties().get("mysql.database") : "openmrs") + "' " +
+                "and table_name = '" + tableName + "' and column_name = '" + columnName + "';";
+
+        Long count = (Long) selectMysql(select,  new ScalarHandler());
+
+        return count == 1;
+    }
+
     public void clearTable(String tableName) throws SQLException {
         executeMysql("Deleting entries from table '" + tableName + "'",
                 "SET FOREIGN_KEY_CHECKS = 0;\n TRUNCATE TABLE " + tableName + ";\n SET FOREIGN_KEY_CHECKS = 1;");
