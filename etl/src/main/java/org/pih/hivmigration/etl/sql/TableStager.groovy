@@ -13,6 +13,12 @@ class TableStager extends SqlMigrator {
         this.oracleTableName = oracleTableName
         this.mysqlTableName = "hivmigration_" + oracleTableName.replace("HIV_", "").toLowerCase()
     }
+
+    TableStager(String oracleTableName, String mysqlTableName) {
+        this.oracleTableName = oracleTableName;
+        this.mysqlTableName = mysqlTableName;
+    }
+
     @Override
     void migrate() {
         def columnNameMap = [PATIENT_ID: "source_patient_id", ENCOUNTER_ID: "source_encounter_id"]
