@@ -2,7 +2,7 @@ package org.pih.hivmigration.etl.sql
 
 class HivStatusMigrator extends ObsMigrator {
 
-    SqlMigrator hivStatusMigrator = new TableStager("HIV_HIV_STATUS")
+    SqlMigrator hivStatusMigrator = new TableStager("HIV_HIV_STATUS", "hivmigration_hiv_status")
 
     @Override
     def void migrate() {
@@ -283,19 +283,21 @@ class HivStatusMigrator extends ObsMigrator {
 
     @Override
     def void revert() {
-        executeMysql('''
-            SET @test_date_question = concept_from_mapping('CIEL', '164400'); -- HIV test date
-            SET @status_question = concept_from_mapping('CIEL', '1169'); -- HIV INFECTED
-            SET @test_location_question = concept_from_mapping('CIEL', '159936'); -- Point of HIV testing
+        if (tableExists("hivmigration_hiv_status_intake")) {
+            executeMysql('''
+                SET @test_date_question = concept_from_mapping('CIEL', '164400'); -- HIV test date
+                SET @status_question = concept_from_mapping('CIEL', '1169'); -- HIV INFECTED
+                SET @test_location_question = concept_from_mapping('CIEL', '159936'); -- Point of HIV testing
+    
+                delete o.* 
+                from obs o 
+                inner join hivmigration_encounters e on o.encounter_id = e.encounter_id
+                inner join hivmigration_hiv_status_intake s on e.source_encounter_id = s.source_encounter_id
+                where o.concept_id in (@status_question, @test_result_question, @test_location_question);
+            ''')
 
-            delete o.* 
-            from obs o 
-            inner join hivmigration_encounters e on o.encounter_id = e.encounter_id
-            inner join hivmigration_hiv_status_intake s on e.source_encounter_id = s.source_encounter_id
-            where o.concept_id in (@status_question, @test_result_question, @test_location_question);
-        ''')
-
-        executeMysql("drop table if exists hivmigration_hiv_status_intake")
+            executeMysql("drop table if exists hivmigration_hiv_status_intake")
+        }
 
         hivStatusMigrator.revert()
     }
