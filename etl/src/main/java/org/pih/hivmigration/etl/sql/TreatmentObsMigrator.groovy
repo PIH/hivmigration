@@ -11,14 +11,14 @@ class TreatmentObsMigrator extends ObsMigrator {
         // the hivmigration_observations table gets created by ObsLoadingMigrator
         // the hivmigration_ordered_other table gets created by StagingTablesMigrator
 
-        migrateProphylaxesState()
-        migrateProphylaxesPlan()
+//        migrateProphylaxesState()
+//        migrateProphylaxesPlan()
         migrateArtStatus()
-        migrateArtPlan()
-        migrateTbState()
-        migrateTbPlan()
-        migrateCurrentOtherMeds()
-        migrateARTChangeReason()
+//        migrateArtPlan()
+//        migrateTbState()
+//        migrateTbPlan()
+//        migrateCurrentOtherMeds()
+//        migrateARTChangeReason()
     }
 
     def void migrateProphylaxesState() {
@@ -331,6 +331,13 @@ class TreatmentObsMigrator extends ObsMigrator {
             FROM hivmigration_observations hoo1
             LEFT JOIN hivmigration_observations hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.observation = 'current_tx.art'
             WHERE hoo1.observation = 'current_tx.art_other' AND hoo2.source_encounter_id IS NULL AND length(trim(hoo1.value)) > 0;
+            
+            -- ensure that an obs group gets created if only current_tx.art_start_date is present
+            INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id)
+            SELECT hoo1.source_encounter_id
+            FROM hivmigration_observations hoo1
+            LEFT JOIN hivmigration_observations hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.observation IN ('current_tx.art', 'current_tx.art_other')
+            WHERE hoo1.observation = 'current_tx.art_start_date' AND hoo2.source_encounter_id IS NULL AND hoo1.value IS NOT NULL;
         ''')
 
         executeMysql("Create ARV regimen status obs group ", '''
