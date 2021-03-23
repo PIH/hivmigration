@@ -505,7 +505,22 @@ class RegistrationMigrator extends ObsMigrator {
                 ('personnel de confiance', 'personnel de confiance', 'PIH', 'Personal assistant'),
                 ('conte maitre', 'contre-maitre', 'PIH', 'Foreman'),
                 ('ko donye', 'coordonnier', 'PIH', 'Shoemaker'),
-                ('koud soulye', 'coordonnier', 'PIH', 'Shoemaker');       
+                ('koud soulye', 'coordonnier', 'PIH', 'Shoemaker'),
+                ('manager', 'gestionnaire', 'PIH', 'Manager'),
+                ('porteur', 'manutentionnaire', 'PIH', 'Warehouse worker'),
+                ('debardeur', 'manutentionnaire', 'PIH', 'Warehouse worker'),
+                ('electonicien', 'electronicien', 'PIH', 'Electronics technician'),
+                ('electronic', 'electronicien', 'PIH', 'Electronics technician'),
+                ('electronique', 'electronicien', 'PIH', 'Electronics technician'),
+                ('elevage', 'eleveur', 'PIH', 'Animal breeder'),
+                ('footballeur', 'joueur de football', 'PIH', 'Football player'),
+                ('footbooleur', 'joueur de football', 'PIH', 'Football player'),
+                ('gestionnaire', 'gestionnaire', 'PIH', 'Manager'),
+                ('informaticien', 'informaticien', 'PIH', 'Informatician'),
+                ('ingenieur electrique', 'ingénieur électrique', 'PIH', 'Electrical engineer'),
+                ('journaliste', 'journaliste', 'PIH', 'Journalist'),
+                ('jwe boul', 'joueur de football', 'PIH', 'Football player'),
+                ('managãˆre', 'gestionnaire', 'PIH', 'Manager');       
             ''')
 
         executeMysql("Add OCCUPATION obs", '''
