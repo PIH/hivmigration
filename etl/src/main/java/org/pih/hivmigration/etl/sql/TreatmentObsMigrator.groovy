@@ -11,14 +11,14 @@ class TreatmentObsMigrator extends ObsMigrator {
         // the hivmigration_observations table gets created by ObsLoadingMigrator
         // the hivmigration_ordered_other table gets created by StagingTablesMigrator
 
-        migrateProphylaxesState()
+//        migrateProphylaxesState()
         migrateProphylaxesPlan()
-        migrateArtStatus()
-        migrateArtPlan()
-        migrateTbState()
-        migrateTbPlan()
-        migrateCurrentOtherMeds()
-        migrateARTChangeReason()
+//        migrateArtStatus()
+//        migrateArtPlan()
+//        migrateTbState()
+//        migrateTbPlan()
+//        migrateCurrentOtherMeds()
+//        migrateARTChangeReason()
     }
 
     def void migrateProphylaxesState() {
@@ -136,10 +136,11 @@ class TreatmentObsMigrator extends ObsMigrator {
     }
 
     def void migrateProphylaxesPlan() {
+        // This is actually historical information.
+        // But it's in the Plan section on the OpenMRS Intake form for some reason.
 
         create_tmp_obs_table()
 
-        // doesn't appear in the OpenMRS UI but is meaningful data
         executeMysql("Add Prophylaxis Not Indicated to tmp obs table", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid)
             SELECT
@@ -168,12 +169,16 @@ class TreatmentObsMigrator extends ObsMigrator {
 
         executeMysql("Create intermediate table for prophylaxis rows", '''
             DROP TABLE IF EXISTS hivmigration_prophylaxis;
-            CREATE TABLE hivmigration_prophylaxis (
+            CREATE TABLE hivmigration_prophylaxis
+            (
                 obs_group_id int primary key auto_increment,
                 name varchar(80),
-                start_date datetime,
+                started boolean,
                 cont boolean,
                 stopped boolean,
+                dosage varchar(40),
+                num_per_day varchar(20),
+                reason varchar(80),
                 other_value varchar(80),
                 source_encounter_id int,
                 encounter_date date
@@ -188,25 +193,40 @@ class TreatmentObsMigrator extends ObsMigrator {
             CREATE PROCEDURE load_prophylaxis(_txName varchar(80))
             BEGIN
                 INSERT INTO hivmigration_prophylaxis
-                    (name, start_date, cont, stopped, other_value, source_encounter_id, encounter_date)
+                (name, started, cont, stopped, dosage, num_per_day, reason, other_value, source_encounter_id, encounter_date)
                 SELECT
-                   CASE  -- normalize to the names used in the follow-up form
-                       WHEN _txName = 'tmp_smx_prophylaxis' THEN 'CTX'
-                       WHEN _txName = 'inh_prophylaxis' THEN 'Isoniazid'
-                       WHEN _txName LIKE 'fluconazole%' THEN 'Fluconazole'
-                       WHEN _txName = 'other_prophylaxis' THEN 'other'
-                       END,
-                    IF(MAX(base.ordered = _txName), he.encounter_date, NULL) AS start_date,  -- use current date if Initée is checked
+                    CASE  -- normalize to the names used in the follow-up form
+                        WHEN _txName = 'tmp_smx_prophylaxis' THEN 'CTX'
+                        WHEN _txName = 'inh_prophylaxis' THEN 'Isoniazid'
+                        WHEN _txName LIKE 'fluconazole%' THEN 'Fluconazole'
+                        WHEN _txName = 'mosquito_net' THEN 'Mosquito net'
+                        WHEN _txName = 'other_prophylaxis' THEN 'other'
+                        END,
+                    IF(MAX(base.ordered = _txName), TRUE, FALSE) AS started,
                     IF(MAX(base.ordered = CONCAT(_txName, '_continue')), TRUE, FALSE) AS cont,
                     IF(MAX(base.ordered = CONCAT(_txName, '_stopped')), TRUE, FALSE) AS stopped,
-                    other.comments AS other_value,
+                    dose.comments,
+                    num_per_day.comments,
+                    reason.comments,
+                    base.comments,
                     base.source_encounter_id,
                     he.encounter_date
                 FROM hivmigration_ordered_other base
                 LEFT JOIN (
                     SELECT source_encounter_id, comments
                     FROM hivmigration_ordered_other
-                    WHERE ordered = 'other_prophylaxis') other ON base.source_encounter_id = other.source_encounter_id
+                    WHERE ordered = CONCAT(_txName, '_dose')
+                ) dose ON base.source_encounter_id = dose.source_encounter_id
+                LEFT JOIN (
+                    SELECT source_encounter_id, comments
+                    FROM hivmigration_ordered_other
+                    WHERE ordered = CONCAT(_txName, '_num_per_day')
+                ) num_per_day ON base.source_encounter_id = num_per_day.source_encounter_id
+                LEFT JOIN (
+                    SELECT source_encounter_id, comments
+                    FROM hivmigration_ordered_other
+                    WHERE ordered = CONCAT(_txName, '_reason')
+                ) reason ON base.source_encounter_id = reason.source_encounter_id
                 JOIN hivmigration_encounters he ON base.source_encounter_id = he.source_encounter_id
                 WHERE base.ordered IN (_txName, CONCAT(_txName, '_continue'))
                 GROUP BY base.source_encounter_id;
@@ -226,12 +246,12 @@ class TreatmentObsMigrator extends ObsMigrator {
 
         executeMysql("Create obsgroups for prophylaxis prescriptions", '''
             INSERT INTO tmp_obs (obs_id, concept_uuid, source_encounter_id)
-            SELECT obs_group_id, concept_uuid_from_mapping('PIH', '10742'), source_encounter_id
+            SELECT obs_group_id, concept_uuid_from_mapping('PIH', 'Prescription construct'), source_encounter_id
             FROM hivmigration_prophylaxis;
         ''')
 
-        executeMysql("Add prophylaxis value (check the checkbox)", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
+        executeMysql("Add prophylaxis value (check the checkbox), add other value", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, comments, obs_group_id)
             SELECT
                    source_encounter_id,
                    concept_uuid_from_mapping('CIEL', '1282'),
@@ -239,64 +259,75 @@ class TreatmentObsMigrator extends ObsMigrator {
                        WHEN 'CTX' THEN concept_uuid_from_mapping('CIEL', '105281')
                        WHEN 'Isoniazid' THEN concept_uuid_from_mapping('CIEL', '78280')
                        WHEN 'Fluconazole' THEN concept_uuid_from_mapping('CIEL', '76488')
+                       WHEN 'Mosquito net' THEN concept_uuid_from_mapping('PIH', 'MOSQUITO NET')
+                       WHEN 'other' THEN concept_uuid_from_mapping('PIH', '3120')
                        END,
+                   other_value,
                    obs_group_id
-            FROM hivmigration_prophylaxis
-            WHERE name IN ('CTX', 'Isoniazid', 'Fluconazole');
+            FROM hivmigration_prophylaxis;
         ''')
 
-        executeMysql("Add prophylaxis other value", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, comments, obs_group_id)
-            SELECT
-                source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '1282'),
-                concept_uuid_from_mapping('PIH', '3120'),
-                other_value,
-                obs_group_id
-            FROM hivmigration_prophylaxis
-            WHERE name = 'other';
-        ''')
-
-        // Right now this is just mosquito_net
-        executeMysql("Add old prophylaxes", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, comments, obs_group_id)
-            SELECT
-                source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '1282'),
-                concept_uuid_from_mapping('PIH', '3120'),
-                name,
-                obs_group_id
-            FROM hivmigration_prophylaxis
-            WHERE name NOT IN ('CTX', 'Isoniazid', 'Fluconazole', 'other');
-        ''')
-
-        executeMysql("Add prophylaxis started date", '''
-            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_datetime, obs_group_id)
-            SELECT
-                source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '163526'),
-                start_date,
-                obs_group_id
-            FROM hivmigration_prophylaxis
-            WHERE start_date IS NOT NULL;
-        ''')
-        // TODO: populate start date for the same prophylaxis on subsequent forms?
-
-        // TODO: End date?
-
-        // Mark any prophylaxes with Inite or Continue as "Current Use"
-        executeMysql("Add prophylaxis Current Use", '''
+        executeMysql("Check the Started, Continued, and Stopped boxes", '''
             INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
             SELECT
                 source_encounter_id,
-                concept_uuid_from_mapping('CIEL', '159367'),
+                concept_uuid_from_mapping('PIH', 'PROPHYLAXIS STARTED'),
                 concept_uuid_from_mapping('CIEL', '1065'),
                 obs_group_id
             FROM hivmigration_prophylaxis
-            WHERE start_date IS NOT NULL OR cont = 1;
+            WHERE started;
+            
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Prophylaxis should continue'),
+                concept_uuid_from_mapping('CIEL', '1065'),
+                obs_group_id
+            FROM hivmigration_prophylaxis
+            WHERE cont;
+            
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_coded_uuid, obs_group_id)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Stop Rx'),
+                concept_uuid_from_mapping('CIEL', '1065'),
+                obs_group_id
+            FROM hivmigration_prophylaxis
+            WHERE stopped;
         ''')
 
-        // TODO: migrate reason stopped
+        executeMysql("Migrate dosage", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text, obs_group_id)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Prescription instructions non-coded'),
+                dosage,
+                obs_group_id
+            FROM hivmigration_prophylaxis
+            WHERE dosage IS NOT NULL;
+        ''')
+
+        executeMysql("Migrate number per day", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text, obs_group_id)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Number per day non coded'),
+                num_per_day,
+                obs_group_id
+            FROM hivmigration_prophylaxis
+            WHERE num_per_day IS NOT NULL;
+        ''')
+
+        executeMysql("Migrate reason stopped", '''
+            INSERT INTO tmp_obs (source_encounter_id, concept_uuid, value_text, obs_group_id)
+            SELECT
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'REASON TREATMENT STOPPED COMMENT'),
+                reason,
+                obs_group_id
+            FROM hivmigration_prophylaxis
+            WHERE reason IS NOT NULL;
+        ''')
 
         // END prophylaxis plan group
         //
