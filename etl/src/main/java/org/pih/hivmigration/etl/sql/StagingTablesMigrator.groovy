@@ -23,6 +23,8 @@ class StagingTablesMigrator extends SqlMigrator {
         migrateTable("HIV_CONTACTS")
         migrateTable("HIV_ORDERED_OTHER")
         migrateTable("HIV_ENCOUNTERS_AUD")
+        migrateTable("HIV_PREGNANCY")
+        migrateTable("HIV_PREGNANCY_EXAM")
 
         executeMysql("Add source_encounter_id index to some tables", '''
             ALTER TABLE hivmigration_ordered_other
@@ -59,6 +61,8 @@ class StagingTablesMigrator extends SqlMigrator {
 
     @Override
     def void revert() {
+        revertTable("HIV_PREGNANCY_EXAM")
+        revertTable("HIV_PREGNANCY")
         revertTable("HIV_ENCOUNTERS_AUD")
         revertTable("HIV_ORDERED_OTHER")
         revertTable("HIV_CONTACTS")
