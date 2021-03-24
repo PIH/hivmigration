@@ -136,8 +136,6 @@ class TreatmentObsMigrator extends ObsMigrator {
     }
 
     def void migrateProphylaxesPlan() {
-        // This is actually historical information.
-        // But it's in the Plan section on the OpenMRS Intake form for some reason.
 
         create_tmp_obs_table()
 
