@@ -49,8 +49,7 @@ class PcrTestsMigrator extends SqlMigrator {
                 left join   (select k.pcr_test_id, min(t.event_date) as date_sent_to_central_site from hiv_lab_tracking t, hiv_pcr_tracking k where t.lab_tracking_id = k.lab_tracking_id and t.event_type = 'sent_to_central_site' group by k.pcr_test_id) t1 on t1.pcr_test_id = p.pcr_test_id
                 left join   (select k.pcr_test_id, min(t.event_date) as date_received_at_central_site from hiv_lab_tracking t, hiv_pcr_tracking k where t.lab_tracking_id = k.lab_tracking_id and t.event_type = 'received_at_central_site' group by k.pcr_test_id) t2 on t2.pcr_test_id = p.pcr_test_id
                 left join   (select k.pcr_test_id, min(t.event_date) as date_sent_to_lab from hiv_lab_tracking t, hiv_pcr_tracking k where t.lab_tracking_id = k.lab_tracking_id and t.event_type = 'sent_to_lab' group by k.pcr_test_id) t3 on t3.pcr_test_id = p.pcr_test_id
-                left join   (select k.pcr_test_id, min(t.event_date) as date_result_received from hiv_lab_tracking t, hiv_pcr_tracking k where t.lab_tracking_id = k.lab_tracking_id and t.event_type = 'result_received' group by k.pcr_test_id) t4 on t4.pcr_test_id = p.pcr_test_id                                 
-            where p.result is not null;
+                left join   (select k.pcr_test_id, min(t.event_date) as date_result_received from hiv_lab_tracking t, hiv_pcr_tracking k where t.lab_tracking_id = k.lab_tracking_id and t.event_type = 'result_received' group by k.pcr_test_id) t4 on t4.pcr_test_id = p.pcr_test_id;
         ''')
 
 
@@ -80,7 +79,7 @@ class PcrTestsMigrator extends SqlMigrator {
                     1,
                     1    
             from hivmigration_pcr_tests r, hivmigration_infants i 
-            where r.source_infant_id = i.source_infant_id;                                                                                      
+            where r.source_infant_id = i.source_infant_id and r.result is not null;                                                                                      
         ''')
 
         executeMysql("Create PCR results obs",'''
@@ -109,7 +108,7 @@ class PcrTestsMigrator extends SqlMigrator {
                     r.result_entry_date as dateCreated, 
                     uuid() as uuid
             from hivmigration_pcr_tests r, hivmigration_infants i 
-            where (r.date_of_result is not null) and (r.source_infant_id = i.source_infant_id);  
+            where (r.date_of_result is not null) and (r.source_infant_id = i.source_infant_id) and r.result is not null;  
             
             -- Add PCR Results
             SET @pcr_test_results = (concept_from_mapping('CIEL', '1030'));
@@ -143,7 +142,7 @@ class PcrTestsMigrator extends SqlMigrator {
                     r.comments,
                     uuid() as uuid
             from hivmigration_pcr_tests r, hivmigration_infants i 
-            where r.source_infant_id = i.source_infant_id;
+            where r.source_infant_id = i.source_infant_id and r.result is not null;
             
             -- Add sample ID obs
             INSERT INTO obs (
@@ -168,7 +167,7 @@ class PcrTestsMigrator extends SqlMigrator {
                     uuid() as uuid
             from hivmigration_pcr_tests r, hivmigration_infants i 
             where r.source_infant_id = i.source_infant_id
-              and r.sample_id is not null;
+              and r.sample_id is not null and r.result is not null;
         ''')
     }
 
