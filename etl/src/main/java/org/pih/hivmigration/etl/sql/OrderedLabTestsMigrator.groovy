@@ -132,34 +132,18 @@ class OrderedLabTestsMigrator extends ObsMigrator{
             order by t.source_patient_id;            
         ''')
 
-        executeMysql("Load Radiology Order obs construct", '''
-        
-            -- Create Radiology report construct obs_group                                                                                           
-            INSERT INTO tmp_obs (
-                obs_id,
-                source_patient_id, 
-                source_encounter_id, 
-                concept_uuid)
-            SELECT 
-                t.obs_id,
-                t.source_patient_id,
-                t.source_encounter_id,
-                concept_uuid_from_mapping('PIH', 'Radiology report construct') as concept_uuid
-            from hivmigration_ordered_lab_tests t 
-            where t.test in ('abdominal_ultrasound', 'chest_xray', 'cxr'); 
+        executeMysql("Load Radiology Order obs", '''
             
-            -- Create Radiology procedure performed obs
+            -- Create PIH:Radiology image ordered Obs
             INSERT INTO tmp_obs (
-                obs_group_id,
                 source_patient_id, 
                 source_encounter_id, 
                 concept_uuid,
                 value_coded_uuid)
             SELECT 
-                t.obs_id,
                 t.source_patient_id,
                 t.source_encounter_id,
-                concept_uuid_from_mapping('PIH', 'Radiology procedure performed') as concept_uuid,
+                concept_uuid_from_mapping('PIH', 'Radiology image ordered') as concept_uuid,
                 concept_uuid_from_mapping(m.openmrs_concept_source, m.openmrs_concept_code) as value_coded_uuid
             from hivmigration_ordered_lab_tests t, hivmigration_ordered_lab_tests_mapping m 
             where t.test in ('abdominal_ultrasound', 'chest_xray', 'cxr') 
