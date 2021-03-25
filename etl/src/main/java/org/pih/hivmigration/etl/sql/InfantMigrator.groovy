@@ -1,6 +1,6 @@
 package org.pih.hivmigration.etl.sql
 
-class InfantMigrator extends SqlMigrator {
+class InfantMigrator extends ObsMigrator {
 
     @Override
     def void migrate() {
@@ -87,7 +87,7 @@ class InfantMigrator extends SqlMigrator {
                 where i.patient_id is not null; 
         ''')
 
-        executeMysql("Add UUIDs", "update hivmigration_infants set person_uuid = uuid();")
+        executeMysql("Add UUIDs", "update hivmigration_infants set person_uuid = uuid_hash(concat('infant', person_id));")
 
         executeMysql("Load to person table", '''
 
@@ -220,6 +220,102 @@ class InfantMigrator extends SqlMigrator {
             LEFT JOIN hivmigration_health_center hhc ON i.health_center = hhc.hiv_emr_id;
         ''')
 
+        executeMysql("Create intake form encounter for each infant with HIV status or non_emr_mother", '''
+            insert into encounter
+            (
+                encounter_type,
+                patient_id,
+                location_id,
+                form_id,
+                encounter_datetime,
+                creator,
+                date_created,
+                voided,
+                uuid
+            )
+            select
+                encounter_type('OVC Intake'),
+                person_id,
+                ifnull(hhc.openmrs_id, 1),
+                (SELECT form_id FROM form WHERE name = 'OVC Intake'),
+                IFNULL(birthdate, now()),
+                1,
+                now(),
+                0,
+                uuid()
+            from hivmigration_infants i
+            left join hivmigration_health_center hhc on i.health_center = hhc.hiv_emr_id
+            where i.hiv_status is not null or i.non_emr_mother is not null;
+        ''')
+
+        create_tmp_obs_table()
+
+        executeMysql("Add HIV Status", '''
+            insert into tmp_obs
+                (encounter_id, concept_uuid, value_coded_uuid)
+            select
+                e.encounter_id,
+                concept_uuid_from_mapping('CIEL', '1169'),
+                case hi.hiv_status
+                    when 'positive' then concept_uuid_from_mapping('PIH', 'POSITIVE')
+                    when 'negative' then concept_uuid_from_mapping('PIH', 'NEGATIVE')
+                    when 'undetermined' then concept_uuid_from_mapping('PIH', 'unknown')
+                    end
+            from hivmigration_infants hi
+            join encounter e on e.patient_id = hi.person_id and e.encounter_type = encounter_type('OVC Intake')
+            where hi.hiv_status is not null;
+        ''')
+
+        executeMysql("Create obsgroup table for non-emr mother", '''
+            drop table if exists hivmigration_tmp_infant_contact;
+            create table hivmigration_tmp_infant_contact (
+                obs_group_id int primary key auto_increment,
+                encounter_id int,
+                first_name varchar(80)
+            );
+        ''')
+
+        setAutoIncrement("hivmigration_tmp_infant_contact", "select max(obs_id)+1 from tmp_obs")
+
+        executeMysql("Load obsgroup table for non-emr mother", '''
+            insert into hivmigration_tmp_infant_contact
+                (encounter_id, first_name)
+            select encounter_id, non_emr_mother
+            from hivmigration_infants hi
+            join encounter e on e.patient_id = hi.person_id and e.encounter_type = encounter_type('OVC Intake')
+            where non_emr_mother is not null;
+        ''')
+
+        executeMysql("Load tmp_obs table from obsgroup table", '''
+            insert into tmp_obs
+                (obs_id, encounter_id, concept_uuid)
+            select obs_group_id, encounter_id, concept_uuid_from_mapping('PIH', 'Contact construct')
+            from hivmigration_tmp_infant_contact;
+
+            insert into tmp_obs
+                (obs_group_id, encounter_id, concept_uuid, value_text)
+            select obs_group_id, encounter_id, concept_uuid_from_mapping('PIH', 'FIRST NAME'), first_name
+            from hivmigration_tmp_infant_contact;
+
+            insert into tmp_obs
+            (obs_group_id, encounter_id, concept_uuid, value_coded_uuid)
+            select obs_group_id,
+                   encounter_id,
+                   concept_uuid_from_mapping('PIH', 'Gender'),
+                   concept_uuid_from_mapping('PIH', 'FEMALE')
+            from hivmigration_tmp_infant_contact;
+
+            insert into tmp_obs
+            (obs_group_id, encounter_id, concept_uuid, value_coded_uuid)
+            select obs_group_id,
+                   encounter_id,
+                   concept_uuid_from_mapping('PIH', 'RELATIONSHIP OF RELATIVE TO PATIENT'),
+                   concept_uuid_from_mapping('PIH', 'MOTHER')
+            from hivmigration_tmp_infant_contact;
+        ''')
+
+        migrate_tmp_obs()
+
         executeMysql("Load ZL IDs", '''
             insert into patient_identifier (
               patient_id, uuid, identifier_type, location_id, identifier, preferred, creator, date_created
@@ -330,6 +426,8 @@ class InfantMigrator extends SqlMigrator {
             delete from patient_identifier where patient_id in (select person_id from hivmigration_infants);
             delete from test_order where order_id in (select order_id from orders where patient_id in (select person_id from hivmigration_infants));
             delete from orders where patient_id in (select person_id from hivmigration_infants);
+            delete from obs where person_id in (select person_id from hivmigration_infants) and obs_group_id is not null;
+            delete from obs where person_id in (select person_id from hivmigration_infants);
             delete from encounter_provider where encounter_id in (select encounter_id from encounter where patient_id in (select person_id from hivmigration_infants));
             delete from encounter where patient_id in (select person_id from hivmigration_infants);  
             delete from patient_program where patient_id in (select person_id from hivmigration_infants);
@@ -341,12 +439,14 @@ class InfantMigrator extends SqlMigrator {
         ''');
         }
 
+
         setAutoIncrement("relationship", "select (max(relationship_id)+1) from relationship")
         setAutoIncrement("patient_identifier", "select (max(patient_identifier_id)+1) from patient_identifier")
         setAutoIncrement("person_name", "select (max(person_name_id)+1) from person_name")
         setAutoIncrement("person", "select (max(person_id)+1) from person")
         setAutoIncrement("patient", "select (max(patient_id)+1) from patient")
 
+        executeMysql("drop table if exists hivmigration_tmp_infant_contact;")
         executeMysql("drop table if exists hivmigration_infants;");
     }
 }
