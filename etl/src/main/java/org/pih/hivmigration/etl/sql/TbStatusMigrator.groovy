@@ -201,22 +201,24 @@ class TbStatusMigrator extends ObsMigrator {
 
     @Override
     def void revert() {
-        executeMysql('''
-            SET @status_date = concept_from_mapping('PIH', '11526'); -- Date of tuberculosis test
-            SET @tb_active = concept_from_mapping('CIEL', '1389'); -- History of Tuberculosis
-            SET @tb_location = concept_from_mapping('CIEL', '160040'); -- Location of TB disease
-            SET @dst_complete = concept_from_mapping('PIH', '3039'); -- Drug sensitivity test complete
-            SET @dst_results = concept_from_mapping('CIEL', '159391 '); -- Tuberculosis drug sensitivity testing (text)
-            SET @ppd_result = concept_from_mapping('PIH', '1435'); -- PPD, qualitative
-            
-            delete o.* 
-            from obs o 
-            inner join hivmigration_encounters e on o.encounter_id = e.encounter_id
-            inner join hivmigration_tb_status_intake s on e.source_encounter_id = s.source_encounter_id
-            where o.concept_id in (@status_date, @tb_active, @tb_location, @dst_complete, @dst_results, @ppd_result);
-        ''')
+        if (tableExists("hivmigration_tb_status_intake")) {
+            executeMysql('''
+                SET @status_date = concept_from_mapping('PIH', '11526'); -- Date of tuberculosis test
+                SET @tb_active = concept_from_mapping('CIEL', '1389'); -- History of Tuberculosis
+                SET @tb_location = concept_from_mapping('CIEL', '160040'); -- Location of TB disease
+                SET @dst_complete = concept_from_mapping('PIH', '3039'); -- Drug sensitivity test complete
+                SET @dst_results = concept_from_mapping('CIEL', '159391 '); -- Tuberculosis drug sensitivity testing (text)
+                SET @ppd_result = concept_from_mapping('PIH', '1435'); -- PPD, qualitative
+                
+                delete o.* 
+                from obs o 
+                inner join hivmigration_encounters e on o.encounter_id = e.encounter_id
+                inner join hivmigration_tb_status_intake s on e.source_encounter_id = s.source_encounter_id
+                where o.concept_id in (@status_date, @tb_active, @tb_location, @dst_complete, @dst_results, @ppd_result);
+            ''')
 
-        executeMysql("drop table if exists hivmigration_tb_status_intake")
+            executeMysql("drop table hivmigration_tb_status_intake")
+        }
 
         hivTbStatusMigrator.revert()
     }
