@@ -127,6 +127,12 @@ class PatientMigrator extends SqlMigrator {
             update hivmigration_patients set birthdate_estimated = 0 where birthdate is null
         ''')
 
+        // fix strange case of the patient with a birthdate but no birthdate estimated flag
+        executeMysql("Set Birthdate Estimate to 1 for patient 28537",
+                '''
+            update hivmigration_patients set birthdate_estimated = 1 where source_patient_id=28537
+        ''')
+
         executeMysql("Insert Patients into Person Table",
         '''
             insert into person (person_id, uuid, gender, birthdate, birthdate_estimated, creator, date_created, dead, death_date, cause_of_death)
