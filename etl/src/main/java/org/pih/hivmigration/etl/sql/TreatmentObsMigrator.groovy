@@ -11,14 +11,14 @@ class TreatmentObsMigrator extends ObsMigrator {
         // the hivmigration_observations table gets created by ObsLoadingMigrator
         // the hivmigration_ordered_other table gets created by StagingTablesMigrator
 
-        migrateProphylaxesState()
+//        migrateProphylaxesState()
         migrateProphylaxesPlan()
-        migrateArtStatus()
-        migrateArtPlan()
-        migrateTbState()
-        migrateTbPlan()
-        migrateCurrentOtherMeds()
-        migrateARTChangeReason()
+//        migrateArtStatus()
+//        migrateArtPlan()
+//        migrateTbState()
+//        migrateTbPlan()
+//        migrateCurrentOtherMeds()
+//        migrateARTChangeReason()
     }
 
     def void migrateProphylaxesState() {
@@ -158,7 +158,8 @@ class TreatmentObsMigrator extends ObsMigrator {
             FROM hivmigration_ordered_other
             WHERE ordered IN (
                 'tmp_smx_prophylaxis', 'inh_prophylaxis', 'fluconazole', 'mosquito_net', 'other_prophylaxis',
-                'tmp_smx_prophylaxis_continue', 'inh_prophylaxis_continue', 'fluconazole_continue', 'mosquito_net_continue', 'other_prophylaxis_continue'
+                'tmp_smx_prophylaxis_continue', 'inh_prophylaxis_continue', 'fluconazole_continue', 'mosquito_net_continue', 'other_prophylaxis_continue',
+                'tmp_smx_prophylaxis_stopped', 'inh_prophylaxis_stopped', 'fluconazole_stopped', 'mosquito_net_stopped', 'other_prophylaxis_stopped'
             );
         ''')
 
@@ -226,7 +227,7 @@ class TreatmentObsMigrator extends ObsMigrator {
                     WHERE ordered = CONCAT(_txName, '_reason')
                 ) reason ON base.source_encounter_id = reason.source_encounter_id
                 JOIN hivmigration_encounters he ON base.source_encounter_id = he.source_encounter_id
-                WHERE base.ordered IN (_txName, CONCAT(_txName, '_continue'))
+                WHERE base.ordered IN (_txName, CONCAT(_txName, '_continue'), CONCAT(_txName, '_stopped'))
                 GROUP BY base.source_encounter_id;
             END $$
             DELIMITER ;
