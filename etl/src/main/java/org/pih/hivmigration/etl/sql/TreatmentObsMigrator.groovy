@@ -11,14 +11,14 @@ class TreatmentObsMigrator extends ObsMigrator {
         // the hivmigration_observations table gets created by ObsLoadingMigrator
         // the hivmigration_ordered_other table gets created by StagingTablesMigrator
 
-//        migrateProphylaxesState()
+        migrateProphylaxesState()
         migrateProphylaxesPlan()
-//        migrateArtStatus()
-//        migrateArtPlan()
-//        migrateTbState()
-//        migrateTbPlan()
-//        migrateCurrentOtherMeds()
-//        migrateARTChangeReason()
+        migrateArtStatus()
+        migrateArtPlan()
+        migrateTbState()
+        migrateTbPlan()
+        migrateCurrentOtherMeds()
+        migrateARTChangeReason()
     }
 
     def void migrateProphylaxesState() {
