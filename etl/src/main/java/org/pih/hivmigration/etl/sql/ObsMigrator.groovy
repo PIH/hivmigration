@@ -32,11 +32,15 @@ abstract class ObsMigrator extends SqlMigrator {
     }
 
     void migrate_tmp_obs() {
-        executeMysql("Prepare tmp_obs table for migration", '''
-            UPDATE tmp_obs
-                LEFT JOIN hivmigration_encounters he ON tmp_obs.source_encounter_id = he.source_encounter_id
-            SET tmp_obs.encounter_id = he.encounter_id
-            WHERE tmp_obs.encounter_id IS NULL;
+        if (tableExists("hivmigration_encounters")) {
+            executeMysql("Add encounter id from hivmigration_encounters", '''
+                UPDATE tmp_obs
+                    LEFT JOIN hivmigration_encounters he ON tmp_obs.source_encounter_id = he.source_encounter_id
+                SET tmp_obs.encounter_id = he.encounter_id
+                WHERE tmp_obs.encounter_id IS NULL;
+            ''')
+        }
+        executeMysql("Add encounter datetime if not present", '''
             
             UPDATE tmp_obs
                 LEFT JOIN encounter e on tmp_obs.encounter_id = e.encounter_id
