@@ -4,7 +4,7 @@ class VisitMigrator extends SqlMigrator {
 
     void migrate() {
 
-        executeMysql("Create visits from existing encounters", '''
+        executeMysql("Create visits from existing encounters and add them to the encounters", '''
             -- Get visit type "Clinic or Hospital Visit"
             SET @visit_type_id = (SELECT visit_type_id FROM visit_type WHERE uuid = 'f01c54cb-2225-471a-9cd5-d348552c337c');
             SET @registration_et = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Enregistrement de patient'); 
@@ -19,30 +19,30 @@ class VisitMigrator extends SqlMigrator {
                     SELECT patient_id,
                            Min(encounter_datetime) AS date_started,  -- encounter_datetime is always midnight
                            Addtime(Max(encounter_datetime), '23:59:59') AS date_stopped,
-                           Max(location_id) as location_id,  /* Avoid using 'Unknown Location' if there is another location available */
+                           Max(location_id) as location_id,  -- Avoid using 'Unknown Location' if there is another location available
                            creator
                     FROM   encounter
-                    WHERE  encounter_type not in (@registration_et, @drug_order_et)
+                    WHERE  encounter_type not in (@registration_et, @drug_order_et) AND visit_id IS NULL
                     GROUP  BY patient_id,
                               Date(encounter_datetime)
                               -- TODO: Group by location as well? see: https://pihemr.atlassian.net/browse/UHM-4834
                 ) AS e;
-            
-            -- Add visit IDs to their encounters
+
             UPDATE encounter e
                 INNER JOIN visit v
                 ON e.patient_id = v.patient_id
                     AND Date(e.encounter_datetime) = Date(v.date_started)
             SET    e.visit_id = v.visit_id
-            WHERE encounter_type  not in (@registration_et, @drug_order_et);
-            
-            -- If a encounter location is "Unknown" and it's Visit Location is *not* "Unknown", update encounter with that location
+            WHERE encounter_type  not in (@registration_et, @drug_order_et)
+              AND e.visit_id IS NULL;
+        ''')
+
+        executeMysql("If a encounter location is \"Unknown\" and it's Visit Location is *not* \"Unknown\", update encounter with that location", ''' 
             UPDATE encounter e
                 INNER JOIN visit v
                 ON e.visit_id = v.visit_id
             SET e.location_id = v.location_id
             WHERE e.location_id = @unknown_location_id and v.location_id != @unknown_location_id
-            
         ''')
 
         executeMysql("Log visits with encounters at multiple locations",
