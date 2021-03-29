@@ -79,7 +79,7 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 s.SYMPTOM_COMMENT  
             from HIV_EXAM_SYMPTOMS s, HIV_ENCOUNTERS e, hiv_demographics_real d 
             where (trim(s.symptom) is not null) and 
-                (s.SYMPTOM in ('confusion', 'convulsions', 'diarrhea', 'dysphagia', 'genital_discharge', 'genital_ulcers', 'headache', 'icterus', 'nausea', 'neurologic_deficit', 'paresthesia', 'prurigo_nodularis', 'rash', 'vision_problems', 'vomiting', 'other'))  
+                (s.SYMPTOM in ('sti', 'confusion', 'convulsions', 'diarrhea', 'dysphagia', 'genital_discharge', 'genital_ulcers', 'headache', 'icterus', 'nausea', 'neurologic_deficit', 'paresthesia', 'prurigo_nodularis', 'rash', 'vision_problems', 'vomiting', 'other'))  
                 and s.ENCOUNTER_ID = e.ENCOUNTER_ID and e.patient_id = d.patient_id;
         ''')
 
@@ -98,7 +98,7 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 s.source_encounter_id, 
                 concept_uuid_from_mapping('CIEL', '1727') as concept_uuid
             FROM hivmigration_exam_symptoms s, hivmigration_encounters e 
-            WHERE s.symptom is not null and s.source_encounter_id = e.source_encounter_id and e.form_version=3 and e.source_encounter_type='intake';
+            WHERE s.symptom is not null and s.symptom != 'sti' and s.source_encounter_id = e.source_encounter_id and e.form_version=3 and e.source_encounter_type='intake';
 
             -- Create Coded Symptom Name           
             INSERT INTO tmp_obs (
@@ -114,7 +114,7 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 concept_uuid_from_mapping(m.concept_source_map, m.openmrs_concept_code) as value_coded_uuid,
                 s.symptom_comment
             from hivmigration_exam_symptoms s, hivmigration_symptoms_map m, hivmigration_encounters e  
-            where s.symptom is not null and s.symptom = m.hiv_symptom 
+            where s.symptom is not null and s.symptom != 'sti' and s.symptom = m.hiv_symptom 
                 and m.concept_source_map != '' and m.openmrs_concept_code != '' and 
                 s.source_encounter_id = e.source_encounter_id and e.form_version=3 and e.source_encounter_type='intake'; 
 
@@ -155,7 +155,7 @@ class ExamSymptomsMigrator extends ObsMigrator{
                     else null 
                 end as value_coded_uuid
             from hivmigration_exam_symptoms s, hivmigration_encounters e    
-            where s.symptom is not null and s.symptom_present is not null and 
+            where s.symptom is not null and s.symptom != 'sti' and s.symptom_present is not null and 
                 s.source_encounter_id = e.source_encounter_id 
                 and e.form_version=3 and e.source_encounter_type='intake';
 
@@ -171,7 +171,7 @@ class ExamSymptomsMigrator extends ObsMigrator{
                 concept_uuid_from_mapping('CIEL', '1731') as concept_uuid, -- Sign/Symptom duration
                 s.duration
             from hivmigration_exam_symptoms s, hivmigration_encounters e   
-            where s.symptom is not null and s.duration is not null and s.duration_unit is not null 
+            where s.symptom is not null and s.symptom != 'sti' and s.duration is not null and s.duration_unit is not null 
                 and s.source_encounter_id = e.source_encounter_id 
                 and e.form_version=3 and e.source_encounter_type='intake';
 
@@ -193,10 +193,23 @@ class ExamSymptomsMigrator extends ObsMigrator{
                     else null 
                 end as value_coded_uuid
             from hivmigration_exam_symptoms s, hivmigration_encounters e  
-            where s.symptom is not null and s.duration is not null and s.duration_unit is not null 
+            where s.symptom is not null and s.symptom != 'sti' and s.duration is not null and s.duration_unit is not null 
                 and s.source_encounter_id = e.source_encounter_id 
                 and e.form_version=3 and e.source_encounter_type='intake'; 
-
+                
+            -- Create STI comments obs
+            INSERT INTO tmp_obs (                            
+                source_encounter_id, 
+                concept_uuid,
+                value_text)
+            SELECT                               
+                s.source_encounter_id,
+                concept_uuid_from_mapping('PIH', '1374') as concept_uuid, -- STI comments    
+                s.symptom_comment as value_text
+            from hivmigration_exam_symptoms s, hivmigration_encounters e  
+            where s.symptom ='sti' and s.symptom_comment is not null  
+                and s.source_encounter_id = e.source_encounter_id 
+                and e.form_version=3 and e.source_encounter_type='followup';     
         ''')
 
       migrate_tmp_obs()
