@@ -28,6 +28,25 @@ class Setup extends SqlMigrator {
             DELIMITER ;
         ''')
 
+        executeMysql("Create function uuid_hash", '''
+            -- A deterministic way to produce something UUID-ish (doesn't meet the full spec, but good enough for OpenMRS)
+            -- Make sure to pass it adequately unique input!
+            drop function if exists uuid_hash;
+            delimiter //
+            create function uuid_hash (_value text) returns char(36) deterministic
+            begin
+                SET @hash = (SELECT LOWER(MD5(_value)));
+                return LOWER(CONCAT(
+                        SUBSTR(@hash, 1, 8), '-',
+                        SUBSTR(@hash, 9, 4), '-',
+                        SUBSTR(@hash, 13, 4), '-',
+                        SUBSTR(@hash, 17, 4), '-',
+                        SUBSTR(@hash, 21)
+                    ));
+            end;
+            delimiter ;
+        ''')
+
         executeMysql("Create function is_number", '''
             -- Checks whether a string value represents a number. Allows surrounding whitespace.
             -- Allows an arbitrary number of decimal points or commas.
