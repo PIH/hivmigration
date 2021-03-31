@@ -156,11 +156,12 @@ class TreatmentObsMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', '2740'),
                 concept_uuid_from_mapping('CIEL', '1065')
             FROM hivmigration_ordered_other
-            WHERE ordered IN (
-                'tmp_smx_prophylaxis', 'inh_prophylaxis', 'fluconazole', 'mosquito_net', 'other_prophylaxis',
-                'tmp_smx_prophylaxis_continue', 'inh_prophylaxis_continue', 'fluconazole_continue', 'mosquito_net_continue', 'other_prophylaxis_continue',
-                'tmp_smx_prophylaxis_stopped', 'inh_prophylaxis_stopped', 'fluconazole_stopped', 'mosquito_net_stopped', 'other_prophylaxis_stopped'
-            );
+            WHERE ordered LIKE 'tmp_smx_prophylaxis%'
+               OR ordered LIKE 'inh_prophylaxis%'
+               OR ordered LIKE 'fluconazole%'
+               OR ordered LIKE 'mosquito_net%'
+               OR ordered LIKE 'other_prophylaxis%'
+            ;
         ''')
 
         //
@@ -227,7 +228,12 @@ class TreatmentObsMigrator extends ObsMigrator {
                     WHERE ordered = CONCAT(_txName, '_reason')
                 ) reason ON base.source_encounter_id = reason.source_encounter_id
                 JOIN hivmigration_encounters he ON base.source_encounter_id = he.source_encounter_id
-                WHERE base.ordered IN (_txName, CONCAT(_txName, '_continue'), CONCAT(_txName, '_stopped'))
+                WHERE base.ordered IN (_txName,
+                                       CONCAT(_txName, '_continue'),
+                                       CONCAT(_txName, '_stopped'),
+                                       CONCAT(_txName, '_dose'),
+                                       CONCAT(_txName, '_num_per_day'),
+                                       CONCAT(_txName, '_reason'))
                 GROUP BY base.source_encounter_id;
             END $$
             DELIMITER ;
