@@ -99,6 +99,7 @@ public class Migrator {
                 revert(new PcrTestsMigrator());
                 revert(new ExamLabResultsMigrator());
                 revert(new ExamSymptomsMigrator());
+                revert(new ExamSymptomsNotMigratedMigrator());
                 revert(new ExamExtraMigrator());
                 revert(new ExamSystemStatusMigrator());
                 revert(new OrderedLabTestsMigrator());
@@ -155,6 +156,7 @@ public class Migrator {
                 migrate(new ExamSystemStatusMigrator(), limit);
                 migrate(new ExamExtraMigrator(), limit);
                 migrate(new ExamSymptomsMigrator(), limit);
+                migrate(new ExamSymptomsNotMigratedMigrator(), limit);
                 migrate(new ExamLabResultsMigrator(), limit);
                 migrate(new PcrTestsMigrator(), limit);
                 migrate(new ObsLoadingMigrator(), limit);
