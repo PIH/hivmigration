@@ -804,7 +804,9 @@ class TreatmentObsMigrator extends ObsMigrator {
                    concept_uuid_from_mapping('CIEL', '5622'),
                    arv.obs_group_id
             FROM hivmigration_tmp_arv_regimen arv
-            WHERE coded_art_regimen(arv.coded) IS NULL AND coded_art_regimen(arv.other) IS NULL;
+            WHERE coded_art_regimen(arv.coded) IS NULL AND coded_art_regimen(arv.other) IS NULL
+              AND (arv.coded IS NOT NULL OR arv.other IS NOT NULL)
+              ;
         ''')
 
         executeMysql("Add the non-coded other value", '''
