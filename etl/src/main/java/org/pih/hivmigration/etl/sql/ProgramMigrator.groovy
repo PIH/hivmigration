@@ -20,7 +20,8 @@ class ProgramMigrator extends SqlMigrator {
                 # these columns are calculated afterward
                 enrollment_date date,
                 outcome_date date,
-                outcome varchar(255)
+                outcome varchar(255),
+                openmrs_treatment_status int
             );
         ''')
 
@@ -36,7 +37,8 @@ class ProgramMigrator extends SqlMigrator {
                 enrollment_date date,
                 art_start_date date,
                 outcome_date date,
-                outcome varchar(255)
+                outcome varchar(255),
+                treatment_status int
             );
         ''')
 
@@ -88,26 +90,55 @@ class ProgramMigrator extends SqlMigrator {
         ''')
 
         executeMysql("Add enrollment_date and outcome", '''
-            SET @outcome_died = (select concept_id from concept where uuid = '3cdd446a-26fe-102b-80cb-0017a47871b2');
-            SET @outcome_lost_to_followup = (select concept_id from concept where uuid = '3ceb0ed8-26fe-102b-80cb-0017a47871b2');
-            SET @outcome_transferred_out = (select concept_id from concept where uuid = '3cdd5c02-26fe-102b-80cb-0017a47871b2');
-            SET @outcome_treatment_stopped = (select concept_id from concept where uuid = '3cdc0d7a-26fe-102b-80cb-0017a47871b2');
-
+            SET @outcome_died = concept_from_mapping('PIH', 'PATIENT DIED'); 
+            SET @outcome_prev_undoc_txfer_conf = (select concept_id from concept where uuid = '0a5e870e-271c-4a0e-984c-78bd8529f7e9');
+            SET @outcome_prev_undoc_txfer_not_conf = (select concept_id from concept where uuid = '977db337-88e8-44f0-878c-7ac973ed0f9e');            
+            SET @outcome_moved_in_haiti_txfer_conf = (select concept_id from concept where uuid = '8c1b5627-5f93-4879-83e9-b591aa398148');
+            SET @outcome_moved_in_haiti_txfer_not_conf = (select concept_id from concept where uuid = '0ca1975b-d6cf-4ef3-8038-3aa5c4e3178a');
+            SET @outcome_moved_out_haiti_txfer_conf = (select concept_id from concept where uuid = 'c62ae7ac-e0de-42e6-a1d6-0a415e0ffdaa');
+            SET @outcome_moved_out_haiti_txfer_not_conf = (select concept_id from concept where uuid = '7c8aaf44-890b-43af-8e0e-776aef082998');
+            SET @outcome_transfer_to_another_ZL_site = (select concept_id from concept where uuid = '3c392f4d-9fdd-44ad-99db-d2bad176f974');
+                       
             UPDATE hivmigration_programs_raw
             SET
                 # Enrollment Date in program is earlier of minimum encounter and art start date
                 enrollment_date = LEAST (IFNULL(min_visit_date, art_start_date), IFNULL(art_start_date, min_visit_date)),                
                 outcome = CASE treatment_status
                     WHEN 'died' THEN @outcome_died
-                    WHEN 'lost' THEN @outcome_lost_to_followup
-                    WHEN 'abandoned' THEN @outcome_lost_to_followup
-                    WHEN 'transferred_out' THEN @outcome_transferred_out
-                    WHEN 'treatment_refused' THEN @outcome_treatment_stopped  # TODO: this might be its own outcome
-                    WHEN 'treatment_stopped' THEN @outcome_treatment_stopped
-                    WHEN 'treatment_stopped_side_effects' THEN @outcome_treatment_stopped
-                    WHEN 'treatment_stopped_other' THEN @outcome_treatment_stopped
-                    END
-            ;
+                    WHEN 'lost' THEN null
+                    WHEN 'abandoned' THEN null
+                    WHEN 'transferred_out' THEN @outcome_transfer_to_another_ZL_site
+                    WHEN 'treatment_refused' THEN null                      
+                    WHEN 'treatment_stopped_side_effects' THEN null
+                    WHEN 'treatment_stopped_other' THEN null 
+                    WHEN 'moved_in_haiti_txfer_conf' THEN @outcome_moved_in_haiti_txfer_conf 
+                    WHEN 'moved_in_haiti_txfer_not_conf' THEN @outcome_moved_in_haiti_txfer_not_conf
+                    WHEN 'moved_out_haiti_txfer_conf' THEN @outcome_moved_out_haiti_txfer_conf 
+                    WHEN 'moved_out_haiti_txfer_not_conf' THEN @outcome_moved_out_haiti_txfer_not_conf  
+                    WHEN 'prev_undoc_txfer_conf' THEN @outcome_prev_undoc_txfer_conf  
+                    WHEN 'prev_undoc_txfer_not_conf' THEN @outcome_prev_undoc_txfer_not_conf 
+                    WHEN 'refused_return_to_treatment' THEN null
+                    WHEN 'traced_not_found' THEN null
+                    ELSE null 
+                    END;
+
+            SET @status_lost_to_followup = concept_from_mapping('PIH', 'LOST TO FOLLOWUP');
+            SET @status_refused_treatment = concept_from_mapping('PIH', 'TREATMENT NEVER STARTED - PATIENT REFUSED');
+            SET @status_stopped_side_effects = concept_from_mapping('PIH', 'TREATMENT STOPPED - SIDE EFFECTS');
+            SET @status_stopped_others = concept_from_mapping('PIH', 'Other treatment stopped');                        
+                                                
+            UPDATE hivmigration_programs_raw
+            SET                                
+                openmrs_treatment_status = CASE treatment_status
+                    WHEN 'abandoned' THEN @status_lost_to_followup                    
+                    WHEN 'lost' THEN @status_lost_to_followup 
+                    WHEN 'treatment_refused' THEN @status_refused_treatment 
+                    WHEN 'treatment_stopped_other' THEN @status_stopped_others 
+                    WHEN 'treatment_stopped_side_effects' THEN @status_stopped_side_effects
+                    WHEN 'refused_return_to_treatment' THEN @status_refused_treatment
+                    WHEN 'traced_not_found' THEN @status_lost_to_followup                                                            
+                    ELSE null 
+                    END;                    
         ''')
 
         // In pseudocode, does something like:
@@ -179,18 +210,36 @@ class ProgramMigrator extends SqlMigrator {
         // If a starting_health_center is present, we create two enrollments, "initial" and "current."
 
         executeMysql("Load single enrollments to hivmigration_programs table", '''
-            INSERT INTO hivmigration_programs
-                (source_patient_id, location_id, enrollment_date, art_start_date, outcome_date, outcome)
-            SELECT source_patient_id, health_center, enrollment_date, art_start_date, outcome_date, outcome FROM hivmigration_programs_raw
-            WHERE starting_health_center IS NULL
-            ;
+            INSERT INTO hivmigration_programs(
+                source_patient_id, 
+                location_id, 
+                enrollment_date, 
+                art_start_date, 
+                outcome_date, 
+                outcome, 
+                treatment_status)
+            SELECT 
+                source_patient_id, 
+                health_center, 
+                enrollment_date, 
+                art_start_date, 
+                outcome_date, 
+                outcome,
+                openmrs_treatment_status  
+            FROM hivmigration_programs_raw
+            WHERE starting_health_center IS NULL;
         ''')
 
         executeMysql("Load initial enrollments into hivmigration_programs table", '''
             SET @outcome_transferred_out = (select concept_id from concept where uuid = '3cdd5c02-26fe-102b-80cb-0017a47871b2');
 
-            insert into hivmigration_programs
-                (source_patient_id, location_id, enrollment_date, art_start_date, outcome_date, outcome)
+            insert into hivmigration_programs(
+                source_patient_id, 
+                location_id, 
+                enrollment_date, 
+                art_start_date, 
+                outcome_date, 
+                outcome)
             SELECT
                 source_patient_id,
                 starting_health_center,
@@ -204,15 +253,22 @@ class ProgramMigrator extends SqlMigrator {
         ''')
 
         executeMysql("Load current enrollments into hivmigration_programs table", '''
-            insert into hivmigration_programs
-                (source_patient_id, location_id, enrollment_date, art_start_date, outcome_date, outcome)
+            insert into hivmigration_programs(
+                source_patient_id, 
+                location_id, 
+                enrollment_date, 
+                art_start_date, 
+                outcome_date, 
+                outcome,
+                treatment_status)
             SELECT
                 source_patient_id,
                 health_center,
                 health_center_transfer_date,
                 art_start_date,  # this will be before the transfer_date in cases where ART started at the first health center
                 outcome_date,
-                outcome
+                outcome,
+                openmrs_treatment_status
             FROM hivmigration_programs_raw
             WHERE starting_health_center IS NOT NULL
             ;
@@ -257,8 +313,17 @@ class ProgramMigrator extends SqlMigrator {
         executeMysql("Load to patient_program table", '''
             SET @hiv_program = (SELECT program_id FROM program WHERE uuid = "b1cb1fc1-5190-4f7a-af08-48870975dafc");
             
-            insert into patient_program
-                (patient_program_id, patient_id, program_id, date_enrolled, date_completed, location_id, outcome_concept_id, creator, date_created, uuid)
+            insert into patient_program(
+                patient_program_id, 
+                patient_id, 
+                program_id, 
+                date_enrolled, 
+                date_completed, 
+                location_id, 
+                outcome_concept_id, 
+                creator, 
+                date_created, 
+                uuid)
             select
                 h.patient_program_id, 
                 p.person_id,
@@ -275,8 +340,48 @@ class ProgramMigrator extends SqlMigrator {
             inner join 
                 hivmigration_patients p on h.source_patient_id = p.source_patient_id 
             left outer join
-                hivmigration_health_center hc on h.location_id = hc.hiv_emr_id
-            ; 
+                hivmigration_health_center hc on h.location_id = hc.hiv_emr_id;
+                
+                        
+            -- Add Treatment statuses as records to the PATIENT_STATE table
+            
+            SET @status_lost_to_followup = concept_from_mapping('PIH', 'LOST TO FOLLOWUP');
+            SET @status_refused_treatment = concept_from_mapping('PIH', 'TREATMENT NEVER STARTED - PATIENT REFUSED');
+            SET @status_stopped_side_effects = concept_from_mapping('PIH', 'TREATMENT STOPPED - SIDE EFFECTS');
+            SET @status_stopped_others = concept_from_mapping('PIH', 'Other treatment stopped');   
+            
+            set @hiv_workflow_id = (SELECT program_workflow_id FROM program_workflow WHERE uuid='aba55bfe-9490-4362-9841-0c476e379889'); -- HIV_TREATMENT_STATUS
+            set @ltfu_state = (select program_workflow_state_id from program_workflow_state where program_workflow_id = @hiv_workflow_id and concept_id = @status_lost_to_followup);
+            set @refused_treatment_state = (select program_workflow_state_id from program_workflow_state where program_workflow_id = @hiv_workflow_id and concept_id = @status_refused_treatment);
+            set @treatment_stopped_side_effects_state = (select program_workflow_state_id from program_workflow_state where program_workflow_id = @hiv_workflow_id and concept_id = @status_stopped_side_effects);
+            set @treatment_stopped_other_state = (select program_workflow_state_id from program_workflow_state where program_workflow_id = @hiv_workflow_id and concept_id = @status_stopped_others);
+                 
+            insert into patient_state(
+                patient_program_id,
+                state,
+                start_date,
+                end_date,
+                creator,
+                date_created,
+                voided,
+                uuid)
+            select 
+                h.patient_program_id,
+                case h.treatment_status
+                    when @status_lost_to_followup then @ltfu_state 
+                    when @status_refused_treatment then @refused_treatment_state 
+                    when @status_stopped_side_effects then @treatment_stopped_side_effects_state 
+                    when @status_stopped_others then @treatment_stopped_other_state
+                end as state,
+                h.enrollment_date,
+                h.outcome_date,  
+                1,
+                date_format(curdate(), '%Y-%m-%d %T'),
+                0,
+                uuid()
+            from 
+                hivmigration_programs h 
+            where h.treatment_status is not null;    
         ''')
 
     }
