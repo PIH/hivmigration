@@ -176,6 +176,22 @@ class EncounterMigrator extends SqlMigrator {
         ''')
         */
 
+        executeMysql("Log warnings about duplicate encounters (multiple of same type on the same day)", '''
+            INSERT INTO hivmigration_data_warnings
+            (openmrs_patient_id, openmrs_encounter_id, encounter_date, field_name, field_value, warning_type, warning_details)
+            SELECT hp.person_id,
+                   he.encounter_id,
+                   he.encounter_date,
+                   'duplicate count',
+                   count(1),
+                   'Multiple encounters with same type for same patient on same day',
+                   CONCAT('source encounter type: ', he.source_encounter_type)
+            FROM hivmigration_encounters he
+            JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
+            GROUP BY he.source_patient_id, he.source_encounter_type, he.encounter_date
+            HAVING count(1) > 1;
+        ''')
+
         executeMysql("Load encounter table from staging table", '''
             insert into encounter (encounter_id, uuid, encounter_datetime, date_created, encounter_type, form_id, patient_id, creator, location_id)
             select
