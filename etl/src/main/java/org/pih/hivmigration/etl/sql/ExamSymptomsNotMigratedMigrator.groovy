@@ -42,8 +42,7 @@ class ExamSymptomsNotMigratedMigrator extends SqlMigrator{
                 s.DURATION_UNIT, 
                 s.SYMPTOM_COMMENT  
             from HIV_EXAM_SYMPTOMS s, HIV_ENCOUNTERS e, hiv_demographics_real d 
-            where  (s.SYMPTOM not in ('sti', 'confusion', 'convulsions', 'diarrhea', 'dysphagia', 'genital_discharge', 'genital_ulcers', 'headache', 'icterus', 'nausea', 'neurologic_deficit', 'paresthesia', 'prurigo_nodularis', 'rash', 'vision_problems', 'vomiting', 'other'))  
-                and s.ENCOUNTER_ID = e.ENCOUNTER_ID and e.patient_id = d.patient_id;
+            where s.ENCOUNTER_ID = e.ENCOUNTER_ID and e.patient_id = d.patient_id;
         ''')
     }
 
