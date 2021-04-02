@@ -29,19 +29,20 @@ class Setup extends SqlMigrator {
         ''')
 
         executeMysql("Create function uuid_hash", '''
-            -- A deterministic way to produce something UUID-ish (doesn't meet the full spec, but good enough for OpenMRS)
+            -- Produce a v5 UUID (see https://stackoverflow.com/a/28776880/1464495)
             -- Make sure to pass it adequately unique input!
             drop function if exists uuid_hash;
             delimiter //
             create function uuid_hash (_value text) returns char(36) deterministic
             begin
-                SET @hash = (SELECT LOWER(MD5(_value)));
+                SET @hash = (SELECT LOWER(SHA1(CONCAT('c73ce727-afd7-40a4-9dd2-6b76842bbcbb', _value))));
                 return LOWER(CONCAT(
                         SUBSTR(@hash, 1, 8), '-',
-                        SUBSTR(@hash, 9, 4), '-',
-                        SUBSTR(@hash, 13, 4), '-',
-                        SUBSTR(@hash, 17, 4), '-',
-                        SUBSTR(@hash, 21)
+                        SUBSTR(@hash, 9, 4), '-5',  -- set 13th nibble to 5
+                        SUBSTR(@hash, 14, 3), '-',
+                        conv(mod(conv(SUBSTR(@hash, 17, 1), 16, 10), 4) + 8, 10, 16),  -- 17th nibble must be 8, 9, A, or B
+                        SUBSTR(@hash, 18, 3), '-',
+                        SUBSTR(@hash, 21, 12)
                     ));
             end;
             delimiter ;
