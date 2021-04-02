@@ -358,14 +358,20 @@ class TreatmentObsMigrator extends ObsMigrator {
             INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, coded, other)
             SELECT hoo1.source_encounter_id, trim(hoo1.value), trim(hoo2.value)
             FROM hivmigration_observations hoo1
-            LEFT JOIN hivmigration_observations hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.observation = 'current_tx.art_other'
-            WHERE hoo1.observation = 'current_tx.art' AND length(trim(hoo2.value)) > 0;
+            LEFT JOIN hivmigration_observations hoo2
+                ON hoo1.source_encounter_id = hoo2.source_encounter_id
+                AND hoo2.observation = 'current_tx.art_other'
+                AND length(trim(hoo2.value)) > 0
+            WHERE hoo1.observation = 'current_tx.art' AND length(trim(hoo1.value)) > 0;  
             
             -- get the instances where there is a current_tx.art_other entry but no current_tx.art
             INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, other)
             SELECT hoo1.source_encounter_id, trim(hoo1.value)
             FROM hivmigration_observations hoo1
-            LEFT JOIN hivmigration_observations hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.observation = 'current_tx.art'
+            LEFT JOIN hivmigration_observations hoo2
+                ON hoo1.source_encounter_id = hoo2.source_encounter_id
+                AND hoo2.observation = 'current_tx.art'
+                AND length(trim(hoo2.value)) > 0
             WHERE hoo1.observation = 'current_tx.art_other' AND hoo2.source_encounter_id IS NULL AND length(trim(hoo1.value)) > 0;
             
             -- ensure that an obs group gets created if only current_tx.art_start_date is present
@@ -373,7 +379,7 @@ class TreatmentObsMigrator extends ObsMigrator {
             SELECT hoo1.source_encounter_id
             FROM hivmigration_observations hoo1
             LEFT JOIN hivmigration_observations hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.observation IN ('current_tx.art', 'current_tx.art_other')
-            WHERE hoo1.observation = 'current_tx.art_start_date' AND hoo2.source_encounter_id IS NULL AND hoo1.value IS NOT NULL;
+            WHERE hoo1.observation = 'current_tx.art_start_date' AND hoo1.value IS NOT NULL AND hoo2.source_encounter_id IS NULL;
         ''')
 
         executeMysql("Create ARV regimen status obs group ", '''
@@ -518,15 +524,21 @@ class TreatmentObsMigrator extends ObsMigrator {
             INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, coded, other)
             SELECT hoo1.source_encounter_id, trim(hoo1.comments), trim(hoo2.comments)
             FROM hivmigration_ordered_other hoo1
-            LEFT JOIN hivmigration_ordered_other hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.ordered = 'arv_regimen_other'
-            WHERE hoo1.ordered = 'arv_regimen';
+            LEFT JOIN hivmigration_ordered_other hoo2
+                ON hoo1.source_encounter_id = hoo2.source_encounter_id
+                AND hoo2.ordered = 'arv_regimen_other'
+                AND length(trim(hoo2.comments)) > 0
+            WHERE hoo1.ordered = 'arv_regimen' and length(trim(hoo1.comments)) > 0;
             
             -- get the instances where there is an arv_regimen_other entry but no arv_regimen
             INSERT INTO hivmigration_tmp_arv_regimen (source_encounter_id, other)
             SELECT hoo1.source_encounter_id, trim(hoo1.comments)
             FROM hivmigration_ordered_other hoo1
-            LEFT JOIN hivmigration_ordered_other hoo2 ON hoo1.source_encounter_id = hoo2.source_encounter_id AND hoo2.ordered = 'arv_regimen'
-            WHERE hoo1.ordered = 'arv_regimen_other' AND hoo2.source_encounter_id IS NULL;
+            LEFT JOIN hivmigration_ordered_other hoo2
+                ON hoo1.source_encounter_id = hoo2.source_encounter_id
+                AND hoo2.ordered = 'arv_regimen'
+                AND length(trim(hoo2.comments)) > 0
+            WHERE hoo1.ordered = 'arv_regimen_other' AND length(trim(hoo1.comments)) > 0 AND hoo2.source_encounter_id IS NULL;
         ''')
 
         executeMysql("Create ARV regimen obs group", '''
