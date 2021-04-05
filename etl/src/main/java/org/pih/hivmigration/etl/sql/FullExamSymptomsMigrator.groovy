@@ -1,12 +1,13 @@
 package org.pih.hivmigration.etl.sql
 
-class ExamSymptomsNotMigratedMigrator extends SqlMigrator{
+class FullExamSymptomsMigrator extends SqlMigrator{
 
+    // just make sure we have a all the exam symptoms in a staging table
 
     @Override
     void migrate() {
-        executeMysql("Create staging table for migrating HIV_EXAM_SYMPTOMS_NOT_MIGRATED", '''
-            create table hivmigration_exam_symptoms_not_migrated (                                           
+        executeMysql("Create staging table for migrating HIV_EXAM_SYMPTOMS_FULL", '''
+            create table hivmigration_exam_symptoms_full (                                           
               source_encounter_id int,
               symptom VARCHAR(255),
               result BOOLEAN,
@@ -18,7 +19,7 @@ class ExamSymptomsNotMigratedMigrator extends SqlMigrator{
         ''')
 
         loadFromOracleToMySql('''
-            insert into hivmigration_exam_symptoms_not_migrated (
+            insert into hivmigration_exam_symptoms_full (
               source_encounter_id,
               symptom,
               result,
@@ -48,6 +49,6 @@ class ExamSymptomsNotMigratedMigrator extends SqlMigrator{
 
     @Override
     void revert() {
-        executeMysql("drop table if exists hivmigration_exam_symptoms_not_migrated")
+        executeMysql("drop table if exists hivmigration_exam_symptoms_full")
     }
 }
