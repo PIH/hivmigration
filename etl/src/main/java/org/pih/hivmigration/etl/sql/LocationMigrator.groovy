@@ -36,7 +36,7 @@ class LocationMigrator extends SqlMigrator {
             # Hôpital la Colline de Lascahobas
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
             select 8, location_id from location where uuid = '23e7bb0d-51f9-4d5f-b34b-2fbbfeea1960';
-            
+
             # Centre de Santé de Cerca la Source
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
             select 21, location_id from location where uuid = 'c741e25d-eb07-4efc-89e4-38ac73948ae1';
@@ -68,58 +68,54 @@ class LocationMigrator extends SqlMigrator {
             # Promotion Objectif Zerosida (POZ)
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
               select 40, location_id from location where uuid='c488ed05-f259-4f7b-a9d4-8f56736da691'; 
-            
-            ## TODO:
-            ## Review all of the below and change to valid locations as appropriate in OpenMRS
-            ## Also review which of these locations might be able to be deleted or merged in HIV EMR
-            
-            # TODO Cerca cavajal
+
+            # Cerca cavajal
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 31, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 31, location_id from location where uuid='83f215e4-9644-11eb-b8a1-0242ac110002'; 
             
-            # TODO Thomassique
+            # Thomassique
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 32, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 32, location_id from location where uuid='8b23098d-9644-11eb-b8a1-0242ac110002'; 
             
-            # TODO Savanette
+            # Savanette
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 34, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 34, location_id from location where uuid='90d32dc3-9644-11eb-b8a1-0242ac110002'; 
             
-            # TODO Baptiste
+            # Baptiste
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 35, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 35, location_id from location where uuid='93ad149f-9644-11eb-b8a1-0242ac110002'; 
+
+            # Maissade
+            insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
+              select 36, location_id from location where uuid='96f36fcb-9644-11eb-b8a1-0242ac110002'; 
             
-            # TODO Maissade
+            # Tilory
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 36, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 38, location_id from location where uuid='99fa069e-9644-11eb-b8a1-0242ac110002'; 
             
-            # TODO Tilory
+            # Dufailly
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 38, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 39, location_id from location where uuid='9c7bb4b3-9644-11eb-b8a1-0242ac110002'; 
             
-            # TODO Dufailly
+            # Jean Denis
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 39, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 122, location_id from location where uuid='9f960dcd-9644-11eb-b8a1-0242ac110002'; 
             
-            # TODO Jean Denis (?)
+            # Jean Denis
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 122, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 123, location_id from location where uuid='9f960dcd-9644-11eb-b8a1-0242ac110002'; 
             
-            # TODO Jean Denis
+            # Jean Denis
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 123, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 142, location_id from location where uuid='9f960dcd-9644-11eb-b8a1-0242ac110002';
             
-            # TODO Jean Denis
+            # Thomassique
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 142, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 162, location_id from location where uuid='8b23098d-9644-11eb-b8a1-0242ac110002'; 
             
-            # TODO Thomassique
+            # Cerca Cavarjal
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 162, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
-            
-            # TODO Cerca Cavarjal
-            insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-              select 163, location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f'; 
+              select 163, location_id from location where uuid='83f215e4-9644-11eb-b8a1-0242ac110002'; 
         ''')
     }
 
