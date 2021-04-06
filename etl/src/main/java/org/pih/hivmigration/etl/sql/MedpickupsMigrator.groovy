@@ -23,9 +23,9 @@ class MedpickupsMigrator extends ObsMigrator {
                 concept_uuid) 
             values
                 ('3TC 10 mg sp','Lamivudine (3TC), Oral solution, 10mg/mL, 240mL bottle','78f96684-dfbe-11e9-8a34-2a2ae2dbcce4','3cd24e3e-26fe-102b-80cb-0017a47871b2'),
-                ('ABC 20 mg','Abacavir sulfate (ABC), Oral solution, 20mg/mL, 240mL bottle','78f98308-dfbe-11e9-8a34-2a2ae2dbcce4','3cd466b0-26fe-102b-80cb-0017a47871b2'),
-                ('ABC 300 mg','Abacavir sulfate (ABC), 300mg tablet','78f981d2-dfbe-11e9-8a34-2a2ae2dbcce4','3cd466b0-26fe-102b-80cb-0017a47871b2'),
-                ('ABC 60 mg','Abacavir (ABC) sulfate, 60mg dispersible tablet','35c6041e-0af3-4bab-887d-9db682a02248','3cd466b0-26fe-102b-80cb-0017a47871b2'),
+                ('ABC 20 mg','Abacavir sulfate (ABC), Oral solution, 20mg/mL, 240mL bottle','78f98308-dfbe-11e9-8a34-2a2ae2dbcce4','70057AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
+                ('ABC 300 mg','Abacavir sulfate (ABC), 300mg tablet','78f981d2-dfbe-11e9-8a34-2a2ae2dbcce4','70057AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
+                ('ABC 60 mg','Abacavir (ABC) sulfate, 60mg dispersible tablet','35c6041e-0af3-4bab-887d-9db682a02248','70057AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('ABC/3TC 120/60 mg','Abacavir (ABC) sulfate 120mg + Lamivudine (3TC) 60mg, tablet for oral suspension','a6985b15-5fd6-4bdf-93f6-62930a438464','103166AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('ABC/3TC 300/300 mg','Abacavir sulfate (ABC) 300mg + Lamivudine (3TC) 300mg tablet','f2a2c2d9-16a6-4138-9074-6fdf3307e107','103166AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('ABC/3TC 60/30 mg','Abacavir sulfate (ABC) 60mg + Lamivudine (3TC) 30mg, tablet for oral suspension','78faa9b8-dfbe-11e9-8a34-2a2ae2dbcce4','103166AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
