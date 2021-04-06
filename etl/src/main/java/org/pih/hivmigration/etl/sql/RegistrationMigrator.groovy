@@ -425,11 +425,11 @@ class RegistrationMigrator extends ObsMigrator {
                 ('macon', 'maçon', 'PIH', 'Construction worker'),
                 ('main d\\'oeuvre', 'manufacturier/ère', 'PIH', 'FACTORY WORKER'),
                 ('mambo', 'leader communautaire (hougan/manbo/ pasteur)', 'PIH', 'Community leader'),
-                ('manual_labor', 'autres (à préciser)', 'PIH', 'MAIN ACTIVITY, NON-CODED'),
-                ('manual_work', 'autres (à préciser)', 'PIH', 'MAIN ACTIVITY, NON-CODED'),
-                ('maoganie', 'autres (à préciser)', 'PIH', 'MAIN ACTIVITY, NON-CODED'),
+                ('manual_labor', 'autres (à préciser)', 'PIH', 'OTHER'),
+                ('manual_work', 'autres (à préciser)', 'PIH', 'OTHER'),
+                ('maoganie', 'autres (à préciser)', 'PIH', 'OTHER'),
                 ('marcon', 'maçon', 'PIH', 'Construction worker'),
-                ('marine', 'autres (à préciser)', 'PIH', 'MAIN ACTIVITY, NON-CODED'),
+                ('marine', 'autres (à préciser)', 'PIH', 'OTHER'),
                 ('mason', 'maçon', 'PIH', 'Construction worker'),
                 ('masson', 'maçon', 'PIH', 'Construction worker'),
                 ('matron', 'matronne', 'PIH', 'Matron'),
@@ -444,12 +444,12 @@ class RegistrationMigrator extends ObsMigrator {
                 ('messager', 'messager', 'PIH', 'Messenger'),
                 ('motocycliste', 'chauffeur (taxi/moto/camion)', 'PIH', 'DRIVER'),
                 ('musicien', 'musicien', 'PIH', 'Musician'),
-                ('na', 'autres (à préciser)', 'PIH', 'MAIN ACTIVITY, NON-CODED'),
+                ('na', 'autres (à préciser)', 'PIH', 'OTHER'),
                 ('none', 'sans occupation/emploi', 'PIH', 'UNEMPLOYED'),
                 ('normale', 'educateur/trice/enseignant/professeur', 'PIH', 'Teacher'),
-                ('operateur', 'autres (à préciser)', 'PIH', 'MAIN ACTIVITY, NON-CODED'),
+                ('operateur', 'autres (à préciser)', 'PIH', 'OTHER'),
                 ('operatrice factory', 'manufacturier/ère', 'PIH', 'FACTORY WORKER'),
-                ('other', 'autres (à préciser)', 'PIH', 'MAIN ACTIVITY, NON-CODED'),
+                ('other', 'autres (à préciser)', 'PIH', 'OTHER'),
                 ('ougan', 'leader communautaire (hougan/manbo/ pasteur)', 'PIH', 'Community leader'),
                 ('ougant', 'leader communautaire (hougan/manbo/ pasteur)', 'PIH', 'Community leader'),
                 ('ouvrier', 'ouvrier', 'PIH', 'MANUAL LABORER '),
@@ -486,7 +486,7 @@ class RegistrationMigrator extends ObsMigrator {
                 ('stheticienne', 'esthéticien/ne', 'PIH', 'Beautician'),
                 ('student', 'elève/ etudiant', 'PIH', 'STUDENT'),
                 ('studio de beaute', 'esthéticien/ne', 'PIH', 'Beautician'),
-                ('superviseur centre d\\'alphabetisation', 'autres (à préciser)', 'PIH', 'MAIN ACTIVITY, NON-CODED'),
+                ('superviseur centre d\\'alphabetisation', 'autres (à préciser)', 'PIH', 'OTHER'),
                 ('tailleur', 'tailleur/couturière', 'PIH', 'Tailor'),
                 ('taxi', 'chauffeur (taxi/moto/camion)', 'PIH', 'DRIVER'),
                 ('taxi moto', 'chauffeur (taxi/moto/camion)', 'PIH', 'DRIVER'),
@@ -546,10 +546,10 @@ class RegistrationMigrator extends ObsMigrator {
                     @occupation_concept_id as concept_id, 
                     case 
                         when (m.openmrs_concept_code is not null) then concept_from_mapping(m.openmrs_concept_source, m.openmrs_concept_code)
-                        else concept_from_mapping('PIH', 'MAIN ACTIVITY, NON-CODED')
+                        else concept_from_mapping('PIH', 'OTHER')
                     end as value_coded,  
                     case 
-                        when (m.openmrs_concept_code is null or m.openmrs_concept_code='MAIN ACTIVITY, NON-CODED') then s.primary_activity -- there is no mapping to this entry, so we are going to migrate it to comments column
+                        when (m.openmrs_concept_code is null or m.openmrs_concept_code='OTHER') then s.primary_activity -- there is no mapping to this entry, so we are going to migrate it to comments column
                         else null
                     end as comments,  
                     r.creator, r.encounter_date as dateCreated, uuid() as uuid  
