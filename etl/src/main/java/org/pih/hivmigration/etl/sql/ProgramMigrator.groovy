@@ -115,8 +115,8 @@ class ProgramMigrator extends SqlMigrator {
                     WHEN 'moved_in_haiti_txfer_not_conf' THEN @outcome_moved_in_haiti_txfer_not_conf
                     WHEN 'moved_out_haiti_txfer_conf' THEN @outcome_moved_out_haiti_txfer_conf 
                     WHEN 'moved_out_haiti_txfer_not_conf' THEN @outcome_moved_out_haiti_txfer_not_conf  
-                    WHEN 'prev_undoc_txfer_conf' THEN @outcome_prev_undoc_txfer_conf  
-                    WHEN 'prev_undoc_txfer_not_conf' THEN @outcome_prev_undoc_txfer_not_conf 
+                    WHEN 'prev_undoc_txfer_conf' THEN @outcome_transfer_to_another_ZL_site  
+                    WHEN 'prev_undoc_txfer_not_conf' THEN @outcome_transfer_to_another_ZL_site 
                     WHEN 'refused_return_to_treatment' THEN null
                     WHEN 'traced_not_found' THEN null
                     ELSE null 
@@ -373,8 +373,8 @@ class ProgramMigrator extends SqlMigrator {
                     when @status_stopped_side_effects then @treatment_stopped_side_effects_state 
                     when @status_stopped_others then @treatment_stopped_other_state
                 end as state,
-                h.enrollment_date,
-                h.outcome_date,  
+                h.outcome_date,
+                null,  
                 1,
                 date_format(curdate(), '%Y-%m-%d %T'),
                 0,
