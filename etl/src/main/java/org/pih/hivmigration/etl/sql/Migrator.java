@@ -119,6 +119,7 @@ public class Migrator {
                 revert(new HivStatusMigrator());
                 revert(new RegimenCommentMigrator());
                 revert(new RegimenMigrator());
+                revert(new NoteMigrator());
                 revert(new EncounterMigrator());
                 revert(new InfantMigrator());
                 revert(new PatientMigrator());
@@ -135,6 +136,7 @@ public class Migrator {
                 migrate(new PatientMigrator(), limit);
                 migrate(new InfantMigrator(), limit);
                 migrate(new EncounterMigrator(), limit);
+                migrate(new NoteMigrator(), limit);
                 migrate(new RegimenMigrator(), limit);
                 migrate(new RegimenCommentMigrator(), limit);
                 migrate(new HivStatusMigrator(), limit);

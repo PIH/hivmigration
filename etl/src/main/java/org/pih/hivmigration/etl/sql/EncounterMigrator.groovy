@@ -1,5 +1,10 @@
 package org.pih.hivmigration.etl.sql
 
+/**
+ * Loads the HIV_ENCOUNTERS table into an intermediate table hivmigration_encounters.
+ * Creates encounters for all of the encounter types that are mapped below.
+ * Encounters of type 'note' are migrated by NoteMigrator.
+ */
 class EncounterMigrator extends SqlMigrator {
 
     void migrate() {
@@ -66,23 +71,17 @@ class EncounterMigrator extends SqlMigrator {
             UPDATE hivmigration_encounters SET encounter_uuid = uuid();
         ''')
 
-        executeMysql("Fill encounter types column", '''
-            SET @encounter_type_intake = (select encounter_type_id from encounter_type where uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33');
-            SET @encounter_type_followup = (select encounter_type_id from encounter_type where uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33');
-            SET @encounter_type_lab_results = (select encounter_type_id from encounter_type where uuid = '4d77916a-0620-11e5-a6c0-1697f925ec7b');
-            SET @encounter_type_drug_dispensing = (select encounter_type_id from encounter_type where uuid = 'cc1720c9-3e4c-4fa8-a7ec-40eeaad1958c');
-            SET @encounter_type_drug_order = (select encounter_type_id from encounter_type where uuid = '0b242b71-5b60-11eb-8f5a-0242ac110002');
-            
+        executeMysql("Fill encounter types column", '''            
             UPDATE hivmigration_encounters SET encounter_type_id = CASE
-                WHEN source_encounter_type = "intake" THEN @encounter_type_intake
-                WHEN source_encounter_type = "followup" THEN @encounter_type_followup
-                WHEN source_encounter_type = "lab_result" THEN @encounter_type_lab_results
-                WHEN source_encounter_type = "anlap_lab_result" THEN @encounter_type_lab_results
-                WHEN source_encounter_type = "accompagnateur" THEN @encounter_type_drug_dispensing
-                WHEN source_encounter_type = "regime" THEN @encounter_type_drug_order
+                WHEN source_encounter_type = "intake" THEN encounter_type('HIV Intake')
+                WHEN source_encounter_type = "followup" THEN encounter_type('HIV Followup')
+                WHEN source_encounter_type = "lab_result" THEN encounter_type('Laboratory Results')
+                WHEN source_encounter_type = "anlap_lab_result" THEN encounter_type('Laboratory Results')
+                WHEN source_encounter_type = "accompagnateur" THEN encounter_type('HIV drug dispensing')
+                WHEN source_encounter_type = "regime" THEN encounter_type('Drug Order Documentation')
                 END
         ''')
-        // TODO: Handle source_encounter_type "anlap_vital_signs", "patient_contact", "food_study", "note" (https://pihemr.atlassian.net/browse/UHM-3244)
+        // TODO: Handle source_encounter_type "anlap_vital_signs", "patient_contact", "food_study" (https://pihemr.atlassian.net/browse/UHM-3244)
 
         executeMysql("Fill form id column", '''
             SET @form_intake_v1 = (select form_id from form where uuid = '29a109f6-6dd3-4e98-af88-134cf7e7da1b');
@@ -210,7 +209,7 @@ class EncounterMigrator extends SqlMigrator {
                 hivmigration_patients p on e.source_patient_id = p.source_patient_id
                     left join
                 hivmigration_users hu on e.source_creator_id = hu.source_user_id
-            where e.encounter_type_id is not null  # TODO: still need to migrate 'note' https://pihemr.atlassian.net/browse/UHM-3244
+            where e.encounter_type_id is not null
             ;
         ''')
 
