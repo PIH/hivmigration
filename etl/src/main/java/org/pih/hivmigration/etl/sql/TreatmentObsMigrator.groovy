@@ -539,6 +539,15 @@ class TreatmentObsMigrator extends ObsMigrator {
                 AND hoo2.ordered = 'arv_regimen'
                 AND length(trim(hoo2.comments)) > 0
             WHERE hoo1.ordered = 'arv_regimen_other' AND length(trim(hoo1.comments)) > 0 AND hoo2.source_encounter_id IS NULL;
+            
+            -- ensure that an obs group gets created even if only arv_start_date is present
+            INSERT INTO hivmigration_tmp_arv_regimen_plan (source_encounter_id)
+            SELECT hoo1.source_encounter_id
+            FROM hivmigration_ordered_other hoo1
+            LEFT JOIN hivmigration_ordered_other hoo2
+                ON hoo1.source_encounter_id = hoo2.source_encounter_id
+                AND hoo2.ordered IN ('arv_regimen', 'arv_regimen_other')
+            WHERE hoo1.ordered = 'arv_start_date' AND hoo1.comments IS NOT NULL AND hoo2.source_encounter_id IS NULL;
         ''')
 
         executeMysql("Create ARV regimen obs group", '''
