@@ -231,7 +231,7 @@ class ProgramMigrator extends SqlMigrator {
         ''')
 
         executeMysql("Load initial enrollments into hivmigration_programs table", '''
-            SET @outcome_transferred_out = (select concept_id from concept where uuid = '3cdd5c02-26fe-102b-80cb-0017a47871b2');
+            SET @outcome_transfer_to_another_ZL_site = (select concept_id from concept where uuid = '3c392f4d-9fdd-44ad-99db-d2bad176f974');
 
             insert into hivmigration_programs(
                 source_patient_id, 
@@ -246,7 +246,7 @@ class ProgramMigrator extends SqlMigrator {
                 enrollment_date,
                 IF (art_start_date < health_center_transfer_date, art_start_date, NULL),
                 health_center_transfer_date,
-                @outcome_transferred_out
+                @outcome_transfer_to_another_ZL_site
             FROM hivmigration_programs_raw
             WHERE starting_health_center IS NOT NULL
             ;
@@ -309,7 +309,7 @@ class ProgramMigrator extends SqlMigrator {
             WHERE h.source_patient_id = p.source_patient_id 
                 and h.outcome_date < h.enrollment_date;
         ''')
-        
+
         executeMysql("Load to patient_program table", '''
             SET @hiv_program = (SELECT program_id FROM program WHERE uuid = "b1cb1fc1-5190-4f7a-af08-48870975dafc");
             
