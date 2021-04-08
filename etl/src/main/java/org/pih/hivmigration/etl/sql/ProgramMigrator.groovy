@@ -12,6 +12,7 @@ class ProgramMigrator extends SqlMigrator {
                 health_center_transfer_date date,
                 treatment_status varchar(30),
                 treatment_status_date date,
+                patient_state_start_date date,
                 art_start_date date,
                 regimen_outcome varchar(20),
                 regimen_outcome_date date,
@@ -37,6 +38,7 @@ class ProgramMigrator extends SqlMigrator {
                 enrollment_date date,
                 art_start_date date,
                 outcome_date date,
+                patient_state_start_date date,
                 outcome varchar(255),
                 treatment_status int
             );
@@ -163,6 +165,10 @@ class ProgramMigrator extends SqlMigrator {
             # If this results in a future outcome date, then just use the current date
             UPDATE hivmigration_programs_raw
                 SET outcome_date = CURDATE() WHERE outcome_date > CURDATE();
+            
+            # copy the outome_date into patient_state_start_date to be used in the patient_state 
+            UPDATE hivmigration_programs_raw
+                SET patient_state_start_date = outcome_date; 
                 
             # Now, make sure we aren't setting an outcome date if the patient does not have an outcome
             UPDATE hivmigration_programs_raw
@@ -216,6 +222,7 @@ class ProgramMigrator extends SqlMigrator {
                 enrollment_date, 
                 art_start_date, 
                 outcome_date, 
+                patient_state_start_date,
                 outcome, 
                 treatment_status)
             SELECT 
@@ -224,6 +231,7 @@ class ProgramMigrator extends SqlMigrator {
                 enrollment_date, 
                 art_start_date, 
                 outcome_date, 
+                patient_state_start_date,
                 outcome,
                 openmrs_treatment_status  
             FROM hivmigration_programs_raw
@@ -373,7 +381,7 @@ class ProgramMigrator extends SqlMigrator {
                     when @status_stopped_side_effects then @treatment_stopped_side_effects_state 
                     when @status_stopped_others then @treatment_stopped_other_state
                 end as state,
-                h.outcome_date,
+                h.patient_state_start_date,
                 null,  
                 1,
                 date_format(curdate(), '%Y-%m-%d %T'),
