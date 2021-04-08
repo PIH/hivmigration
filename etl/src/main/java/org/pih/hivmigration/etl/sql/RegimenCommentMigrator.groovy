@@ -115,7 +115,7 @@ class RegimenCommentMigrator extends SqlMigrator {
 
         assertMatch(
                 "There should be an Obs for each comment",
-                "select count(*) from hiv_regime_comments c, hiv_demographics_real d where c.patient_id = d.patient_id",
+                "select count(*) as num from hiv_regime_comments c, hiv_demographics_real d where c.patient_id = d.patient_id",
                 "select count(*) as num from obs where concept_id = concept_from_mapping('PIH', '10637')"
         )
 
