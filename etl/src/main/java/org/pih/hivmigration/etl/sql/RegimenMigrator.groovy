@@ -166,14 +166,15 @@ class RegimenMigrator extends SqlMigrator {
     void cleanInputDataAndRaiseDataWarnings() {
         executeMysql("Clean regimens that have close date prior to start date", '''           
             insert  into hivmigration_data_warnings (
-                        openmrs_patient_id, hiv_emr_encounter_id, field_name, field_value, warning_type, warning_details)
+                        openmrs_patient_id, hiv_emr_encounter_id, field_name, field_value, warning_type, warning_details, flag_for_review)
             select      p.person_id, o.source_encounter_opened_by, 'close_date', date_format(o.source_close_date, '%Y-%m-%d'),
                         'Drug Order Close Date is before Start Date.  Setting to equal Start Date.',
                         concat(
                             'Drug: ', o.source_product_name, 
                             '; Start Date: ', date_format(o.source_start_date, '%Y-%m-%d'), 
                             '; Close Date: ', date_format(o.source_close_date, '%Y-%m-%d')
-                        )
+                        ),
+                        1
             from        hivmigration_regimes o
             inner join  hivmigration_patients p on p.source_patient_id = o.source_patient_id
             where       o.source_close_date < o.source_start_date
@@ -185,14 +186,15 @@ class RegimenMigrator extends SqlMigrator {
 
         executeMysql("Clean regimens that close in the future", '''
             insert  into hivmigration_data_warnings (
-                        openmrs_patient_id, hiv_emr_encounter_id, field_name, field_value, warning_type, warning_details)
+                        openmrs_patient_id, hiv_emr_encounter_id, field_name, field_value, warning_type, warning_details, flag_for_review)
             select      p.person_id, o.source_encounter_opened_by, 'close_date', date_format(source_close_date, '%Y-%m-%d'),
                         'Drug Order Close Date is in the future.  Reclassifying this as Auto-Expire Date.',
                         concat(
                             'Drug: ', source_product_name, 
                             '; Start Date: ', date_format(o.source_start_date, '%Y-%m-%d'), 
                             '; Close Date: ', date_format(o.source_close_date, '%Y-%m-%d')
-                        )
+                        ),
+                        1
             from        hivmigration_regimes o
             inner join  hivmigration_patients p on p.source_patient_id = o.source_patient_id
             where       o.source_close_date > now()

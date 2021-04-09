@@ -139,12 +139,13 @@ class ContactsMigrator extends ObsMigrator {
     def void logWarning(String oracleField, String tmpSelector) {
         executeMysql("Log discrepancies in deduplicated data for " + oracleField, '''
             INSERT INTO hivmigration_data_warnings
-                (openmrs_patient_id, field_name, field_value, warning_type, warning_details)
+                (openmrs_patient_id, field_name, field_value, warning_type, warning_details, flag_for_review)
             SELECT hp.person_id,
                \'''' + oracleField + '''\',
                hc.agg,
                'Duplicate contact information with discrepancies',
-               CONCAT('For contact with name ', IFNULL(hc.contact_name, '\\'\\''), '. Migrated as ', ''' + tmpSelector + ''')
+               CONCAT('For contact with name ', IFNULL(hc.contact_name, '\\'\\''), '. Migrated as ', ''' + tmpSelector + '''),
+                1
             FROM (SELECT GROUP_CONCAT(''' + oracleField + ''' SEPARATOR ', ') as agg, _hc.*
                 FROM hivmigration_contacts _hc GROUP BY source_patient_id, contact_name HAVING count(distinct ''' + oracleField + ''') > 1
              ) hc

@@ -43,8 +43,8 @@ class AdherenceMigrator extends ObsMigrator {
 
         executeMysql("Warn about invalid data", '''
             INSERT INTO hivmigration_data_warnings
-                (hiv_emr_encounter_id, field_name, field_value, warning_type)
-            SELECT source_encounter_id, 'num_doses_missed_last_month', value, 'Not a valid number. Value not migrated.'
+                (hiv_emr_encounter_id, field_name, field_value, warning_type, flag_for_review)
+            SELECT source_encounter_id, 'num_doses_missed_last_month', value, 'Num of doses not a valid number. Value not migrated.', 1
             FROM hivmigration_observations
             WHERE observation = 'num_doses_missed_last_month' AND NOT is_number(trim(value));
         ''')

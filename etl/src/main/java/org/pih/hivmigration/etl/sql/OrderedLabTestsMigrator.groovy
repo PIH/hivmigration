@@ -152,29 +152,31 @@ class OrderedLabTestsMigrator extends ObsMigrator{
             
         ''')
 
-        executeMysql("Log warnings for the ordered lab that were not migrated because of missing mapping", ''' 
-                                                                                                       
+        // we haven't been able to migrate "smear" and "biochemistry", have flagged these as non-MVP
+        // will comment out this warning
+     /*   executeMysql("Log warnings for the ordered lab that were not migrated because of missing mapping", '''
+
             INSERT INTO hivmigration_data_warnings (
-                openmrs_patient_id, 
-                openmrs_encounter_id, 
-                encounter_date, 
-                field_name, 
-                field_value, 
-                warning_type, 
+                openmrs_patient_id,
+                openmrs_encounter_id,
+                encounter_date,
+                field_name,
+                field_value,
+                warning_type,
                 flag_for_review)
-            SELECT 
+            SELECT
                 p.person_id as patient_id,
                 e.encounter_id as encounter_id,
                 e.encounter_date as encounter_date,
                 'Ordered Lab Test' as field_name,
                 t.test as field_value,
                 'No OpenMRS mapping' as warning_type,
-                TRUE as flag_for_review
+                FALSE as flag_for_review
             from hivmigration_ordered_lab_tests t, hivmigration_ordered_lab_tests_mapping m, hivmigration_encounters e, hivmigration_patients p
-            where t.test is not null and t.test=m.test and t.source_encounter_id=e.source_encounter_id and e.source_patient_id=p.source_patient_id 
-            and ((m.openmrs_concept_code is null) or (m.openmrs_concept_code =''));            
+            where t.test is not null and t.test=m.test and t.source_encounter_id=e.source_encounter_id and e.source_patient_id=p.source_patient_id
+            and ((m.openmrs_concept_code is null) or (m.openmrs_concept_code =''));
         ''')
-
+*/
         migrate_tmp_obs()
     }
 

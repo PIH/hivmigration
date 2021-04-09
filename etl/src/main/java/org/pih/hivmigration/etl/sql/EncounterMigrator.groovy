@@ -187,6 +187,7 @@ class EncounterMigrator extends SqlMigrator {
                    CONCAT('source encounter type: ', he.source_encounter_type)
             FROM hivmigration_encounters he
             JOIN hivmigration_patients hp on he.source_patient_id = hp.source_patient_id
+            WHERE he.source_encounter_type='intake' or he.source_encounter_type='followup'
             GROUP BY he.source_patient_id, he.source_encounter_type, he.encounter_date
             HAVING count(1) > 1;
         ''')

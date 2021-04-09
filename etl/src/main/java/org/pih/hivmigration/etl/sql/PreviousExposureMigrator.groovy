@@ -369,12 +369,13 @@ class PreviousExposureMigrator extends ObsMigrator {
             WHERE other_value IS NOT NULL;
             
             INSERT INTO hivmigration_data_warnings
-                (openmrs_patient_id, field_name, field_value, warning_type, warning_details)
+                (openmrs_patient_id, field_name, field_value, warning_type, warning_details, flag_for_review)
             SELECT (SELECT person_id FROM hivmigration_patients hp WHERE hp.source_patient_id = hpe.source_patient_id),
                    'Previous exposure start and end date',
                    CONCAT(start_date, ' vs ', end_date),
                    'Previous exposure start date is after end date',
-                   CONCAT('inn: ', inn, '; treatment_other: ', treatment_other)
+                   CONCAT('inn: ', inn, '; treatment_other: ', treatment_other),
+                   1
             FROM hivmigration_previous_exposures hpe
             WHERE end_date < start_date;
             
