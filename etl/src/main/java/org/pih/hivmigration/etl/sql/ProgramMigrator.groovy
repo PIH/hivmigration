@@ -267,6 +267,7 @@ class ProgramMigrator extends SqlMigrator {
                 enrollment_date, 
                 art_start_date, 
                 outcome_date, 
+                patient_state_start_date,
                 outcome,
                 treatment_status)
             SELECT
@@ -275,6 +276,7 @@ class ProgramMigrator extends SqlMigrator {
                 health_center_transfer_date,
                 art_start_date,  # this will be before the transfer_date in cases where ART started at the first health center
                 outcome_date,
+                patient_state_start_date,
                 outcome,
                 openmrs_treatment_status
             FROM hivmigration_programs_raw
