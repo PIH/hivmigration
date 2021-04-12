@@ -49,6 +49,9 @@ class VisitMigrator extends SqlMigrator {
 
         executeMysql("Log visits with encounters at multiple locations",
                  '''
+
+               set @unknown_location = (select location_id from location where name='Unknown Location');
+                
                INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, encounter_date, field_name, field_value, warning_type, flag_for_review)  
                select
                     e.patient_id,
@@ -60,7 +63,9 @@ class VisitMigrator extends SqlMigrator {
                     TRUE as flag_for_review
                 from encounter e, visit v, location v_loc, location e_loc
                     where e.visit_id=v.visit_id
-                    and e.location_id != v.location_id
+                    and e.location_id != v.location_id 
+                    and e.location_id != @unknown_location 
+                    and v.location_id != @unknown_location 
                     and e.location_id = e_loc.location_id
                     and v.location_id = v_loc.location_id;
             ''')
