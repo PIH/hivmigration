@@ -221,6 +221,9 @@ class InfantMigrator extends ObsMigrator {
         ''')
 
         executeMysql("Create intake form encounter for each infant with HIV status or non_emr_mother", '''
+            set @infant_doc_encounter_type =  encounter_type('HIV Infant Documentation') ;
+            set @infant_doc_form_id = (SELECT form_id FROM form WHERE name = 'HIV Infant Documentation');
+
             insert into encounter
             (
                 encounter_type,
@@ -234,15 +237,15 @@ class InfantMigrator extends ObsMigrator {
                 uuid
             )
             select
-                encounter_type('OVC Intake'),
+                @infant_doc_encounter_type as encounter_type,
                 person_id,
-                ifnull(hhc.openmrs_id, 1),
-                (SELECT form_id FROM form WHERE name = 'OVC Intake'),
-                IFNULL(birthdate, now()),
+                ifnull(hhc.openmrs_id, 1) as location_id,
+                @infant_doc_form_id as form_id,
+                IFNULL(birthdate, now()) as encounter_datetime,
                 1,
-                now(),
+                now() as date_created,
                 0,
-                uuid()
+                uuid() as uuid
             from hivmigration_infants i
             left join hivmigration_health_center hhc on i.health_center = hhc.hiv_emr_id
             where i.hiv_status is not null or i.non_emr_mother is not null;
@@ -251,18 +254,20 @@ class InfantMigrator extends ObsMigrator {
         create_tmp_obs_table()
 
         executeMysql("Add HIV Status", '''
-            insert into tmp_obs
-                (encounter_id, concept_uuid, value_coded_uuid)
+            insert into tmp_obs(
+                encounter_id, 
+                concept_uuid, 
+                value_coded_uuid)
             select
                 e.encounter_id,
-                concept_uuid_from_mapping('CIEL', '1169'),
+                concept_uuid_from_mapping('CIEL', '1169') as concept_uuid,
                 case hi.hiv_status
                     when 'positive' then concept_uuid_from_mapping('PIH', 'POSITIVE')
                     when 'negative' then concept_uuid_from_mapping('PIH', 'NEGATIVE')
                     when 'undetermined' then concept_uuid_from_mapping('PIH', 'unknown')
-                    end
+                    end as value_coded_uuid
             from hivmigration_infants hi
-            join encounter e on e.patient_id = hi.person_id and e.encounter_type = encounter_type('OVC Intake')
+            join encounter e on e.patient_id = hi.person_id and e.encounter_type = encounter_type('HIV Infant Documentation')
             where hi.hiv_status is not null;
         ''')
 
@@ -278,39 +283,62 @@ class InfantMigrator extends ObsMigrator {
         setAutoIncrement("hivmigration_tmp_infant_contact", "select max(obs_id)+1 from tmp_obs")
 
         executeMysql("Load obsgroup table for non-emr mother", '''
-            insert into hivmigration_tmp_infant_contact
-                (encounter_id, first_name)
-            select encounter_id, non_emr_mother
+            insert into hivmigration_tmp_infant_contact(
+                encounter_id, 
+                first_name)
+            select 
+                encounter_id, 
+                non_emr_mother
             from hivmigration_infants hi
-            join encounter e on e.patient_id = hi.person_id and e.encounter_type = encounter_type('OVC Intake')
+            join encounter e on e.patient_id = hi.person_id and e.encounter_type = encounter_type('HIV Infant Documentation')
             where non_emr_mother is not null;
         ''')
 
         executeMysql("Load tmp_obs table from obsgroup table", '''
-            insert into tmp_obs
-                (obs_id, encounter_id, concept_uuid)
-            select obs_group_id, encounter_id, concept_uuid_from_mapping('PIH', 'Contact construct')
+            insert into tmp_obs(
+                obs_id, 
+                encounter_id, 
+                concept_uuid)
+            select 
+                obs_group_id, 
+                encounter_id, 
+                concept_uuid_from_mapping('PIH', 'Contact construct')
             from hivmigration_tmp_infant_contact;
 
-            insert into tmp_obs
-                (obs_group_id, encounter_id, concept_uuid, value_text)
-            select obs_group_id, encounter_id, concept_uuid_from_mapping('PIH', 'FIRST NAME'), first_name
+            insert into tmp_obs(
+                obs_group_id, 
+                encounter_id, 
+                concept_uuid, 
+                value_text)
+            select 
+                obs_group_id, 
+                encounter_id, 
+                concept_uuid_from_mapping('PIH', 'FIRST NAME'), 
+                first_name
             from hivmigration_tmp_infant_contact;
 
-            insert into tmp_obs
-            (obs_group_id, encounter_id, concept_uuid, value_coded_uuid)
-            select obs_group_id,
-                   encounter_id,
-                   concept_uuid_from_mapping('PIH', 'Gender'),
-                   concept_uuid_from_mapping('PIH', 'FEMALE')
+            insert into tmp_obs(
+                obs_group_id, 
+                encounter_id, 
+                concept_uuid, 
+                value_coded_uuid)
+            select 
+                obs_group_id,
+                encounter_id,
+                concept_uuid_from_mapping('PIH', 'Gender'),
+                concept_uuid_from_mapping('PIH', 'FEMALE')
             from hivmigration_tmp_infant_contact;
 
-            insert into tmp_obs
-            (obs_group_id, encounter_id, concept_uuid, value_coded_uuid)
-            select obs_group_id,
-                   encounter_id,
-                   concept_uuid_from_mapping('PIH', 'RELATIONSHIP OF RELATIVE TO PATIENT'),
-                   concept_uuid_from_mapping('PIH', 'MOTHER')
+            insert into tmp_obs(
+                obs_group_id, 
+                encounter_id, 
+                concept_uuid, 
+                value_coded_uuid)
+            select 
+                obs_group_id,
+                encounter_id,
+                concept_uuid_from_mapping('PIH', 'RELATIONSHIP OF RELATIVE TO PATIENT'),
+                concept_uuid_from_mapping('PIH', 'MOTHER')
             from hivmigration_tmp_infant_contact;
         ''')
 
