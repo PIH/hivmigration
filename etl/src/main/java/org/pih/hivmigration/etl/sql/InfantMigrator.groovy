@@ -394,6 +394,14 @@ class InfantMigrator extends ObsMigrator {
             join hivmigration_patients p on i.father_patient_id = p.source_patient_id;
         ''')
 
+        executeMysql("Log warning if relationships start in the future", '''
+                insert into hivmigration_data_warnings (                    
+                    openmrs_patient_id, field_name, field_value, warning_type, flag_for_review) 
+                select
+                	person_a, 'start_date', start_date, 'Relationship start date in the future', TRUE
+                	from relationship where start_date > now();
+        ''')
+
         executeMysql("Insert HIV EMR V1 Infant ID into Patient Identifier Table",
                 '''
             insert into patient_identifier(
