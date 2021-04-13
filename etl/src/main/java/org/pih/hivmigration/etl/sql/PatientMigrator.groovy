@@ -156,6 +156,14 @@ class PatientMigrator extends SqlMigrator {
                 order by p.source_patient_id;
         ''')
 
+        executeMysql("Note when death date is before birth date", '''
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, field_name, field_value, warning_type, flag_for_review)
+            select p.person_id, 'death_date', p.death_date, 'Death date before birth date', TRUE
+            from person p
+            where p.death_date is not null and p.birthdate is not null
+            and p.death_date < p.birthdate;
+        ''')
+
         executeMysql("Insert Patients into Person Name Table",
         '''
             insert into person_name(person_id, uuid, given_name, family_name, middle_name, preferred, creator, date_created)
