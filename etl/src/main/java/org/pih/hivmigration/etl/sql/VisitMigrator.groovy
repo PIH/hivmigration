@@ -70,6 +70,19 @@ class VisitMigrator extends SqlMigrator {
                     and v.location_id = v_loc.location_id;
             ''')
 
+        executeMysql("Log visits that start prior to patient birthdate",
+                '''
+                    INSERT INTO hivmigration_data_warnings (openmrs_patient_id, field_name, field_value, warning_type, warning_details, flag_for_review)
+                    select   p.person_id, 'date_started', v.date_started, 'Visit start date prior to birthdate',
+                             concat('Birthdate: ', p.birthdate, ', estimated: ', p.birthdate_estimated), TRUE
+                    from     visit v
+                    inner join person p on v.patient_id = p.person_id
+                    where
+                           (p.birthdate_estimated = 0 and p.birthdate > v.date_started)
+                    or     (p.birthdate_estimated = 1 and date_add(p.birthdate, INTERVAL least(-1, ceil(timestampdiff(YEAR, p.birthdate, ifnull(p.death_date, now())) * -0.5)) YEAR) > v.date_started)
+                    ;
+            ''')
+
     }
 
     void revert() {
