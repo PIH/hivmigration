@@ -38,7 +38,7 @@ class DataWarningsMigrator extends SqlMigrator {
         executeMysql("Add data warnings for obs with null values", '''
             INSERT INTO hivmigration_data_warnings
                         (openmrs_patient_id, openmrs_encounter_id, field_name, warning_type, flag_for_review)
-            SELECT      o.person_id, o.encounter_id, concept_name(o.concept_id, 'en'), 'Obs with null value', TRUE
+            SELECT      o.person_id, o.encounter_id, concept_name(o.concept_id, 'en'), 'Obs with null value', FALSE
             FROM        obs o
             INNER JOIN  (select o1.obs_id, count(o2.obs_group_id) as num_members
                          from obs o1
