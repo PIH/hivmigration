@@ -27,13 +27,14 @@ class ExamLabResultsMigrator extends ObsMigrator {
         )
 
         executeMysql("Log warning about invalid " + testName + " values", '''
-            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type)
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type, flag_for_review)
             SELECT
                 hp.person_id,
                 he.encounter_id,
                 \'HIV_EXAM_LAB_RESULTS ''' + testName + '''\',
                 result,
-                \'Invalid ''' + testName + ''' value. Not migrated.\'
+                \'Invalid ''' + testName + ''' value. Not migrated.\',
+                TRUE
             FROM hivmigration_exam_lab_results helr
             JOIN hivmigration_encounters he ON helr.source_encounter_id = he.source_encounter_id
             JOIN hivmigration_patients hp ON he.source_patient_id = hp.source_patient_id
