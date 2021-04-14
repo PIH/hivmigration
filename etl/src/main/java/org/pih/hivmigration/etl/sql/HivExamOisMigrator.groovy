@@ -231,7 +231,7 @@ class HivExamOisMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', 'Diagnosis or problem, non-coded') as concept_uuid,                
                 x.comments
             from hivmigration_hiv_exam_ois x 
-            where x.oi = 'other' and x.form_version='3'; 
+            where x.oi = 'other' and x.comments is not null and x.form_version='3'; 
             
              -- Create non-coded Diagnosis for candidiaris_other
             INSERT INTO tmp_obs (

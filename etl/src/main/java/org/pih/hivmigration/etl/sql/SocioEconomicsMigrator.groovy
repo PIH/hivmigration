@@ -226,11 +226,17 @@ class SocioEconomicsMigrator extends ObsMigrator {
             SELECT socioecon_encounter_id,
                    concept_uuid_from_mapping('PIH', 'CLINIC TRAVEL TIME'),
                    CASE IFNULL(time_of_transport, walking_time_to_clinic)
+                        WHEN 'Less than 30 minutes' THEN concept_uuid_from_mapping('PIH', 'LESS THAN 30 MINUTES')
                         WHEN 'under_30_min' THEN concept_uuid_from_mapping('PIH', 'LESS THAN 30 MINUTES')
+                        WHEN '30 minutes to 1 hour' THEN concept_uuid_from_mapping('PIH', '30 TO 60 MINUTES')
                         WHEN '30_min_to_1_hour' THEN concept_uuid_from_mapping('PIH', '30 TO 60 MINUTES')
+                        WHEN '1 to 2 hours' THEN concept_uuid_from_mapping('PIH', 'ONE TO TWO HOURS')
                         WHEN '1_to_2_hours' THEN concept_uuid_from_mapping('PIH', 'ONE TO TWO HOURS')
+                        WHEN '2 to 3 hours' THEN concept_uuid_from_mapping('PIH', '982')  -- 2-3 hours
                         WHEN '2_to_3_hours' THEN concept_uuid_from_mapping('PIH', '982')  -- 2-3 hours
+                        WHEN '3 to 6 hours' THEN concept_uuid_from_mapping('PIH', '3669')  -- >3 hours
                         WHEN '3_to_6_hours' THEN concept_uuid_from_mapping('PIH', '3669')  -- >3 hours
+                        WHEN 'More than 6 hours' THEN concept_uuid_from_mapping('PIH', '3669')  -- >3 hours
                         WHEN 'over_6_hours' THEN concept_uuid_from_mapping('PIH', '3669')  -- >3 hours
                         WHEN 'unknown' THEN concept_uuid_from_mapping('PIH', 'UNKNOWN')
                         END

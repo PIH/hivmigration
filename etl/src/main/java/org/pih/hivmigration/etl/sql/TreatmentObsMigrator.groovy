@@ -717,7 +717,8 @@ class TreatmentObsMigrator extends ObsMigrator {
                     WHEN '2S+HRZE_1HRZE_5HR+E' THEN concept_uuid_from_mapping('PIH', '2S+RHEZ / 1RHEZ / 5RH+E')
                 END
             FROM hivmigration_ordered_other
-            WHERE ordered = 'tb_treatment';
+            WHERE ordered = 'tb_treatment'
+            AND comments in ('2HRZE_4HR','2HRZ_4HR','mdr_tb_treatment','hrez','2S+HRZE_1HRZE_5HR+E');
         ''')
 
         executeMysql("Migrate TB reason changed or stopped", '''

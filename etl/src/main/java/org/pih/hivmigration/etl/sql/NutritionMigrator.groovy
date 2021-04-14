@@ -24,7 +24,7 @@ class NutritionMigrator extends ObsMigrator {
             SELECT source_encounter_id,
                    entry_date,
                    concept_uuid_from_mapping('PIH', 'SOCIO-ECONOMIC ASSISTANCE COMMENT'),
-                   CASE GROUP_CONCAT(observation ORDER BY observation)
+                   CASE GROUP_CONCAT(distinct(observation) ORDER BY observation)
                     WHEN 'receiving_nutritional_assistance_dry_ration'
                         THEN 'A reçu de la ration sèche.'
                     WHEN 'receiving_nutritional_assistance_financial_aid'
