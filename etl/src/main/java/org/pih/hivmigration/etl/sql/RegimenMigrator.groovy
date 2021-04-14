@@ -743,10 +743,11 @@ class RegimenMigrator extends SqlMigrator {
                 "select count(*) as num from orders where order_action = 'NEW'"
         )
 
-        assertMatch(
+        assertSetsMatch(
                 "There should be a discontinue order for all closed regimes where close date is not in the future",
-                "select count(*) as num from hiv_regimes_real r, hiv_demographics_real d where r.patient_id = d.patient_id and close_date is not null and close_date <= sysdate",
-                "select count(*) as num from orders where order_action = 'DISCONTINUE'"
+                "hivemr_id",
+                "select d.patient_id as hivemr_id from hiv_regimes_real r, hiv_demographics_real d where r.patient_id = d.patient_id and close_date is not null and close_date <= sysdate",
+                "select patient_identifier(patient_id, 'HIVEMR-V1') as hivemr_id from orders where order_action = 'DISCONTINUE'"
         )
 
         assertNoRows(
