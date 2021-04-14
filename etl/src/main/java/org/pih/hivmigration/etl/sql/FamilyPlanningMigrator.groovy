@@ -151,7 +151,7 @@ class FamilyPlanningMigrator extends ObsMigrator {
 
         executeMysql("Create family planning obs from the intake planification section", '''
      
-            -- Create Family planning construct obs_group
+            -- Create Family planning construct obs_group for defined methods
             INSERT INTO tmp_obs(
                 obs_id,
                 source_encounter_id,
@@ -162,10 +162,8 @@ class FamilyPlanningMigrator extends ObsMigrator {
                 concept_uuid_from_mapping('PIH', 'Family planning construct') as concept_uuid
             FROM hivmigration_tmp_planification 
             WHERE method in ('abstinence', 'oral_contraceptive', 'depo_provera',
-            'condom','norplant', 'tubal_ligation', 'vasectomy', 'no_family_planning',
-             'family_planning', 'family_planning_other1', 'family_planning_other2');  
-             
-             
+            'condom','norplant', 'tubal_ligation', 'vasectomy', 'no_family_planning');  
+
              -- Create Family planning method obs
             INSERT INTO tmp_obs(
                 obs_group_id,
@@ -190,6 +188,20 @@ class FamilyPlanningMigrator extends ObsMigrator {
             FROM hivmigration_tmp_planification 
             WHERE method in ('abstinence', 'oral_contraceptive', 'depo_provera',
             'condom','norplant', 'tubal_ligation', 'vasectomy', 'no_family_planning');   
+             
+             
+            -- Create Family planning construct obs_group for other method obs
+            INSERT INTO tmp_obs(
+                obs_id,
+                source_encounter_id,
+                concept_uuid)
+            SELECT
+                obs_group_id as obs_id,
+                source_encounter_id,
+                concept_uuid_from_mapping('PIH', 'Family planning construct') as concept_uuid
+            FROM hivmigration_tmp_planification 
+            WHERE method in ('family_planning', 'family_planning_other1', 'family_planning_other2')
+            GROUP BY source_encounter_id;
              
              -- Create Family Planning Other methods obs
              INSERT INTO tmp_obs(   
