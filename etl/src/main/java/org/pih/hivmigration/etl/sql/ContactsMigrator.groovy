@@ -71,8 +71,14 @@ class ContactsMigrator extends ObsMigrator {
         executeMysql("Create tmp_obs from contacts table", '''
             INSERT INTO tmp_obs
                 (obs_id, source_encounter_id, concept_uuid)
-            SELECT obs_group_id, source_encounter_id, concept_uuid_from_mapping('PIH', 'Contact construct')
-            FROM hivmigration_tmp_contacts;
+            SELECT  obs_group_id, source_encounter_id, concept_uuid_from_mapping('PIH', 'Contact construct')
+            FROM    hivmigration_tmp_contacts
+            WHERE   first_name is NOT NULL
+            OR      last_name is NOT NULL
+            OR      age is NOT NULL
+            OR      relationship_uuid is NOT NULL
+            OR      death_uuid is NOT NULL
+            OR      hiv_status_uuid is NOT NULL;
             
             INSERT INTO tmp_obs
                 (obs_group_id, source_encounter_id, concept_uuid, value_text)
