@@ -2,10 +2,10 @@ package org.pih.hivmigration.etl.sql
 
 class TbStatusMigrator extends ObsMigrator {
 
-    SqlMigrator hivTbStatusMigrator = new TableStager("HIV_TB_STATUS");
+    SqlMigrator hivTbStatusMigrator = new TableStager("HIV_TB_STATUS")
 
     @Override
-    def void migrate() {
+    void migrate() {
 
         /*
             The TB status table contains observations about a patient's TB status as recorded on an encounter form
@@ -16,13 +16,24 @@ class TbStatusMigrator extends ObsMigrator {
             When we can't tie a patient's status directly to the intake encounter by foreign key, we
             fall back to looking at overall observations for this patient, and using those as a proxy for the patient's TB history at intake.
 
+            This migrator also contains the logic for migrating tb screening result / date into observations
+            associated with v3 of the follow-up form, which was incorrectly stored in the hiv_tb_status table.
+
             This migrator migrates in the hiv_tb_status table.
             It depends on data migrated in within the EncounterMigrator
         */
 
+        loadStagingTable()
+        migrateTbHistoryAtIntake()
+        migrateTbScreeningAtFollowup()
+    }
 
+    void loadStagingTable() {
         // Load the entire source table from Oracle, and retain it for posterity
         hivTbStatusMigrator.migrate()
+    }
+
+    void migrateTbHistoryAtIntake() {
 
         executeMysql("Create stating table containing INTAKE data to migrate", '''
             create table hivmigration_tb_status_intake (
@@ -199,8 +210,31 @@ class TbStatusMigrator extends ObsMigrator {
         migrate_tmp_obs()
     }
 
+    void migrateTbScreeningAtFollowup() {
+        create_tmp_obs_table()
+
+        executeMysql("Load tb screening result obs", ''' 
+
+            SET @screening_result = concept_uuid_from_mapping('CIEL', '160108'); -- Screening test result, tuberculosis
+            SET @positive = concept_uuid_from_mapping('CIEL', '703'); -- Positive
+            SET @negative = concept_uuid_from_mapping('CIEL', '664'); -- Negative
+                        
+            INSERT INTO tmp_obs (source_patient_id, source_encounter_id, obs_datetime, concept_uuid, value_coded_uuid)
+            select      e.source_patient_id, e.source_encounter_id, s.status_date, @screening_result,
+                        CASE WHEN s.tb_active_p = 't' THEN @positive WHEN s.tb_active_p = 'f' THEN @negative END
+            from        hivmigration_encounters e
+            inner join  hivmigration_tb_status s on e.source_encounter_id = s.source_encounter_id
+            where       e.source_encounter_type = 'followup'
+            and         e.form_version = '3'
+            and         s.tb_active_p is not null
+            ;
+        ''')
+
+        migrate_tmp_obs()
+    }
+
     @Override
-    def void revert() {
+    void revert() {
         if (tableExists("hivmigration_tb_status_intake")) {
             executeMysql('''
                 SET @status_date = concept_from_mapping('PIH', '11526'); -- Date of tuberculosis test
@@ -215,6 +249,10 @@ class TbStatusMigrator extends ObsMigrator {
                 inner join hivmigration_encounters e on o.encounter_id = e.encounter_id
                 inner join hivmigration_tb_status_intake s on e.source_encounter_id = s.source_encounter_id
                 where o.concept_id in (@status_date, @tb_active, @tb_location, @dst_complete, @dst_results, @ppd_result);
+                
+                delete o.* 
+                from obs o 
+                where o.concept_id = concept_from_mapping('CIEL', '160108');
             ''')
 
             executeMysql("drop table hivmigration_tb_status_intake")
