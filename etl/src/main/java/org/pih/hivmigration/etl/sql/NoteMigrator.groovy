@@ -30,7 +30,11 @@ class NoteMigrator extends ObsMigrator {
             (source_encounter_id, concept_uuid, value_text)
             select source_encounter_id,
                    concept_uuid_from_mapping('PIH', 'CLINICAL IMPRESSION COMMENTS'),
-                   CONCAT(note_title, '\\n\\n', comments)
+                   CASE 
+                        WHEN note_title is null THEN comments
+                        WHEN comments is null THEN note_title
+                        ELSE concat(note_title, '\\n\\n', comments)
+                   END
             from hivmigration_encounters
             where source_encounter_type = 'note' and (note_title is not null or comments is not null);
         ''')

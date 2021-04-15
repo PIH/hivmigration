@@ -355,16 +355,19 @@ abstract class SqlMigrator {
 
     protected void assertMatch(String description, String oracleQuery, String mysqlQuery) throws Exception {
         log.info("Testing: " + description);
+        boolean failures = false;
         List<Map<String, Object>> oracleResults = (List<Map<String, Object>>) selectOracle(oracleQuery, new MapListHandler());
         List<Map<String, Object>> mysqlResults = (List<Map<String, Object>>) selectMysql(mysqlQuery, new MapListHandler());
         if (oracleResults.size() != mysqlResults.size()) {
-            fail("Oracle has " + oracleResults.size() + " rows, MySQL has: " + mysqlResults.size());
+            fail(description, "Oracle has " + oracleResults.size() + " rows, MySQL has: " + mysqlResults.size());
+            failures = true
         }
         for (int i=0; i<oracleResults.size(); i++) {
             Map<String, Object> oracleRow = oracleResults.get(i);
             Map<String, Object> mysqlRow = mysqlResults.get(i);
             if (oracleRow.size() != mysqlRow.size()) {
-                fail("Oracle has " + oracleRow.size() + " columns, MySQL has: " + mysqlRow.size());
+                fail(description, "Oracle has " + oracleRow.size() + " columns, MySQL has: " + mysqlRow.size());
+                failures = true
             }
             Set<String> allKeys = new HashSet<>();
             for (String key : oracleRow.keySet()) {
@@ -379,27 +382,72 @@ abstract class SqlMigrator {
                 if (oracleValue != null || mysqlValue != null) {
                     if (oracleValue == null && mysqlValue != null) {
                         fail(description, "Oracle does not have a value for " + key + " but MySQL has " + mysqlValue);
+                        failures = true
                     } else if (mysqlValue == null && oracleValue != null) {
                         fail(description, "MySQL does not have a value for " + key + " but Oracle has " + oracleValue);
+                        failures = true
                     } else {
                         if (!oracleValue.toString().equals(mysqlValue.toString())) {
                             fail(description, "Oracle and MySQL have different values for " + key + "; Oracle = " + oracleValue + ", MySQL = " + mysqlValue);
+                            failures = true
                         }
                     }
-                    log.info("Test passes for " + key + ": " + oracleValue + " = " + mysqlValue);
                 }
             }
         }
-        log.info("Test successful.");
+        if (!failures) {
+            log.info("Test successful.");
+        }
+        else {
+            log.info("Test failed.");
+        }
     }
 
-    protected void fail(String description, String message) {
+    protected void assertSetsMatch(String description, String columnName, String oracleQuery, String mysqlQuery) throws Exception {
+        log.info("Testing: " + description);
+        boolean failures = false;
+        List<Map<String, Object>> oracleResults = (List<Map<String, Object>>) selectOracle(oracleQuery, new MapListHandler());
+        List<Map<String, Object>> mysqlResults = (List<Map<String, Object>>) selectMysql(mysqlQuery, new MapListHandler());
+        if (oracleResults.size() != mysqlResults.size()) {
+            Set<String> oraclePats = new HashSet<>();
+            for (Map<String, Object> oracleRow : oracleResults) {
+                oraclePats.add(oracleRow.get(columnName).toString());
+            }
+            Set<String> mysqlPats = new HashSet<>();
+            for (Map<String, Object> mysqlRow : mysqlResults) {
+                mysqlPats.add(mysqlRow.get(columnName).toString());
+            }
+            Set<String> oracleNotMysql = new HashSet<>(oraclePats);
+            oracleNotMysql.removeAll(mysqlPats);
+            for (String o : oracleNotMysql) {
+                fail(description, "Value found in Oracle and not MySQL for " + columnName + ": " + o)
+                failures = true
+            }
+            Set<String> mysqlNotOracle = new HashSet<>(mysqlPats);
+            mysqlNotOracle.removeAll(oraclePats);
+            for (String o : mysqlNotOracle) {
+                fail(description, "Value found in MySQL and not Oracle for " + columnName + ": " + o)
+                failures = true
+            }
+        }
+        if (!failures) {
+            log.info("Test successful.");
+        }
+        else {
+            log.info("Test failed.");
+        }
+    }
+
+    protected void fail(String warningType, String warningDetails) {
+        warningType = warningType.replace("'", "");
+        warningDetails = warningDetails.replace("'", "");
+        log.info("Validation Error: " + warningType + ": " + warningDetails)
         executeMysql("Log validation failure", '''
             insert  into hivmigration_data_warnings (
                     warning_type, warning_details
             )
             values (
-                \'validation_error\', \'''' + description + ": " + message + '''\'
+                \'''' + warningType + '''\', \'''' + warningDetails + '''\'
             );
         ''');
     }
