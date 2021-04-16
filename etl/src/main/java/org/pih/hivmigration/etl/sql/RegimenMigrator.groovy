@@ -678,6 +678,7 @@ class RegimenMigrator extends SqlMigrator {
                 @unknown_provider, 1, date_format(curdate(), '%Y-%m-%d %T'), 0
             from 
                 hivmigration_drug_orders d
+            where d.concept_id is not null
             ; 
             
         ''')
