@@ -423,6 +423,7 @@ class RegimenMigrator extends SqlMigrator {
             CALL populate_drug('Diazepam - 10 milligram Ampulle', '3ccedb64-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Didanosine - 200 milligram Tablet', '3cd44248-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Digoxine - .25 milligram Tablet', '', 'e44e484e-90ec-41ca-aec1-e3190d7be626'); -- Digoxin, 250 microgram tablet
+            CALL populate_drug('Dolutegravir 5mg - 5 milligram Tablet', '', '6058eb5c-c7bb-445b-9a9a-14e73e8ab5a9'); -- Dolutegravir (DTG), 5 mg tablet
             CALL populate_drug('Dolutegravir - 50 milligram Tablet', '', '78fab02a-dfbe-11e9-8a34-2a2ae2dbcce4'); -- Dolutegravir (DTG), 50 mg tablet
             CALL populate_drug('Doxycycline - 100 milligram Tablet', '', '8aad2a23-2977-4b5b-a30a-4a9142ce774b'); -- Doxycycline, 100mg tablet
             CALL populate_drug('DRVr 300mg - 300 milligram Tablet', '162796AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', '');
@@ -678,7 +679,6 @@ class RegimenMigrator extends SqlMigrator {
                 @unknown_provider, 1, date_format(curdate(), '%Y-%m-%d %T'), 0
             from 
                 hivmigration_drug_orders d
-            where d.concept_id is not null
             ; 
             
         ''')
@@ -694,7 +694,6 @@ class RegimenMigrator extends SqlMigrator {
                 d.order_id, d.drug_id, d.drug_non_coded, 'org.openmrs.FreeTextDosingInstructions', d.dosing_instructions, d.as_needed
             from 
                 hivmigration_drug_orders d
-            where d.concept_id is not null
             ; 
             
         ''')
