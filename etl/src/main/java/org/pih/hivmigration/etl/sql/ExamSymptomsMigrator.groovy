@@ -4,7 +4,7 @@ class ExamSymptomsMigrator extends ObsMigrator{
 
     @Override
     void migrate() {
-        
+
         executeMysql("Create table for mapping HIV_EXAM_SYMPTOMS to OpenMRS Symptoms", '''
             create table hivmigration_symptoms_map (                            
               hiv_symptom VARCHAR(24) PRIMARY KEY,
@@ -47,7 +47,7 @@ class ExamSymptomsMigrator extends ObsMigrator{
               symptom_date DATE,
               duration int,
               duration_unit VARCHAR(8),
-              symptom_comment VARCHAR(264)                                             
+              symptom_comment VARCHAR(500)                                             
             );
         ''')
 
@@ -213,7 +213,7 @@ class ExamSymptomsMigrator extends ObsMigrator{
         ''')
 
       migrate_tmp_obs()
-        
+
     }
 
     @Override
