@@ -14,7 +14,7 @@ class FullExamSymptomsMigrator extends SqlMigrator{
               symptom_date DATE,
               duration int,
               duration_unit VARCHAR(8),
-              symptom_comment VARCHAR(264)                                             
+              symptom_comment VARCHAR(500)                                             
             );
         ''')
 
