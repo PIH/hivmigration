@@ -425,6 +425,7 @@ class RegimenMigrator extends SqlMigrator {
             CALL populate_drug('Digoxine - .25 milligram Tablet', '', 'e44e484e-90ec-41ca-aec1-e3190d7be626'); -- Digoxin, 250 microgram tablet
             CALL populate_drug('Dolutegravir 5mg - 5 milligram Tablet', '', '6058eb5c-c7bb-445b-9a9a-14e73e8ab5a9'); -- Dolutegravir (DTG), 5 mg tablet
             CALL populate_drug('Dolutegravir - 50 milligram Tablet', '', '78fab02a-dfbe-11e9-8a34-2a2ae2dbcce4'); -- Dolutegravir (DTG), 50 mg tablet
+            CALL populate_drug('Dolutegravir 10 mg - 10 milligram Tablet', '', '8c35a0cd-9e2a-40eb-aa57-f589c25f17bf'); -- Dolutegravir (DTG), 10mg dispersible tablet
             CALL populate_drug('Doxycycline - 100 milligram Tablet', '', '8aad2a23-2977-4b5b-a30a-4a9142ce774b'); -- Doxycycline, 100mg tablet
             CALL populate_drug('DRVr 300mg - 300 milligram Tablet', '162796AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', '');
             CALL populate_drug('DTG/3TC/TDF 50/300/300 mg - 650 milligram Tablet', '', '78faac2e-dfbe-11e9-8a34-2a2ae2dbcce4'); -- Dolutegravir (DTG) 50mg + Lamivudine (3TC) 300mg + Tenofovir disoproxil fumarate (TDF) 300mg, tablet
