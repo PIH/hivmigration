@@ -73,7 +73,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 source_encounter_id, 
                 concept_uuid)
             SELECT 
-                obs_id,                
+                MIN(obs_id),                
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'Radiology report construct') as concept_uuid
             from hivmigration_exam_lab_results  
@@ -87,7 +87,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 concept_uuid,
                 value_coded_uuid)
             SELECT 
-                obs_id,                
+                MIN(obs_id),                
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'Radiology procedure performed') as concept_uuid,
                 concept_uuid_from_mapping('CIEL', '165152') as value_coded_uuid               
@@ -102,7 +102,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 concept_uuid,
                 value_text)
             SELECT 
-                obs_id,                
+                MIN(obs_id),                
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', 'Radiology report comments') as concept_uuid,
                 group_concat(concat_ws(': ', lab_test, result, test_date) order by lab_test separator '; ' ) as value_text                 
@@ -117,7 +117,7 @@ class ExamLabResultsMigrator extends ObsMigrator {
                 concept_uuid,
                 value_datetime)
             SELECT 
-                obs_id,                
+                MIN(obs_id),                
                 source_encounter_id,
                 concept_uuid_from_mapping('PIH', '12847') as concept_uuid, -- Date of test
                 max(test_date) as value_datetime                 
