@@ -220,6 +220,7 @@ class MedpickupsMigrator extends ObsMigrator {
             SET @medication_category_uuid = '3cdbc4b4-26fe-102b-80cb-0017a47871b2';
             SET @arv1_category_uuid = 'd8252da3-eac3-417e-9f84-b747f07c1c09';
             SET @arv2_category_uuid = '3ce85288-26fe-102b-80cb-0017a47871b2';
+            SET @inh_category_uuid = '3cd27a8a-26fe-102b-80cb-0017a47871b2';
             SET @prophylaxis_category_uuid = '8b801f21-16a9-42cf-9869-9f491395765b';
                         
             INSERT INTO tmp_obs
@@ -228,6 +229,7 @@ class MedpickupsMigrator extends ObsMigrator {
                     case source_medication_category 
                         WHEN 'arv_1' then @arv1_category_uuid
                         WHEN 'arv_2' then @arv1_category_uuid
+                        WHEN 'inh_1' then @inh_category_uuid
                         ELSE @prophylaxis_category_uuid
                     end source_medication_category   
                     , source_patient_id
