@@ -228,7 +228,7 @@ class MedpickupsMigrator extends ObsMigrator {
             SELECT obs_id, 
                     case source_medication_category 
                         WHEN 'arv_1' then @arv1_category_uuid
-                        WHEN 'arv_2' then @arv1_category_uuid
+                        WHEN 'arv_2' then @arv2_category_uuid
                         WHEN 'inh_1' then @inh_category_uuid
                         ELSE @prophylaxis_category_uuid
                     end source_medication_category   
