@@ -16,13 +16,10 @@ class VoidDuplicateEncountersMigrator extends SqlMigrator {
     @Override
     void migrate() {
 
-        executeMysql("Voiding duplicate encounters", '''
-
-            select encounter_type_id into @drugdoc from encounter_type where uuid = '0b242b71-5b60-11eb-8f5a-0242ac110002' ;
-            
-            -- load a temp table with all pairs of encounters of the same patient, date and encounter type 
-            drop temporary table if exists dup_pairs;
-            create temporary table dup_pairs 
+        executeMysql("Load a temp table with all pairs of encounters of the same patient, date and encounter type ", '''
+            SET @drugdoc = (SELECT encounter_type_id FROM encounter_type WHERE uuid='0b242b71-5b60-11eb-8f5a-0242ac110002'); 
+            drop table if exists hivmigration_dup_pairs;
+            create table hivmigration_dup_pairs 
                 select e.encounter_id as encounter_id_1, e2.encounter_id as encounter_id_2
                 from encounter e
                 inner join encounter e2 on e2.voided = 0 
@@ -33,10 +30,11 @@ class VoidDuplicateEncountersMigrator extends SqlMigrator {
                 where e.voided = 0 
                 and e.encounter_type not in (@drugdoc) 
             ;
-            
-            -- create a temp table with the obs of encounter_id_1
-            drop temporary table if exists e1_obs;
-            CREATE TEMPORARY TABLE e1_obs
+        ''');
+
+        executeMysql("create a temp table with the obs of encounter_id_1", '''
+            drop table if exists hivmigration_temp_e1_obs;
+            CREATE TABLE hivmigration_temp_e1_obs
             (
                 encounter_id_1 int(11),
                 encounter_id_2 int(11),
@@ -49,19 +47,18 @@ class VoidDuplicateEncountersMigrator extends SqlMigrator {
                 value_text text,    
                 dup int(1)
             );
-            
-            insert into e1_obs (encounter_id_1, encounter_id_2, obs_id,concept_id, value_coded, value_drug,value_datetime,value_numeric,value_text)
+            insert into hivmigration_temp_e1_obs (encounter_id_1, encounter_id_2, obs_id,concept_id, value_coded, value_drug,value_datetime,value_numeric,value_text)
                 select d.encounter_id_1, d.encounter_id_2, obs_id,concept_id, value_coded, value_drug,value_datetime,value_numeric,value_text
-                from dup_pairs d
+                from hivmigration_dup_pairs d
                 inner join obs o on o.encounter_id  = d.encounter_id_1
                 and o.voided = 0
             ;
-            
-            CREATE INDEX e1_obs_i1 ON e1_obs (encounter_id_1);
-            CREATE INDEX e1_obs_i2 ON e1_obs (concept_id);
-            
-            -- flag those obs that are contained in encounter_id_2
-            update e1_obs o1
+            CREATE INDEX hivmigration_temp_e1_obs_i1 ON hivmigration_temp_e1_obs (encounter_id_1);
+            CREATE INDEX hivmigration_temp_e1_obs_i2 ON hivmigration_temp_e1_obs (concept_id);
+        ''');
+
+        executeMysql("flag those obs that are contained in encounter_id_2", '''
+            update hivmigration_temp_e1_obs o1
             set dup = 1 
             where EXISTS (
                 select 1 from obs o2
@@ -74,82 +71,100 @@ class VoidDuplicateEncountersMigrator extends SqlMigrator {
                 -- and (o1.value_drug = o2.value_drug or (o1.value_drug is null and o2.value_drug  is null))
                 and (o1.value_datetime= o2.value_datetime or (o1.value_datetime is null and o2.value_datetime  is null))
             );
-            
-            -- load a table with only encounters containing ONLY duplicate obs
-            drop temporary table if exists dup_obs;
-            create temporary table dup_obs
+        ''');
+
+        executeMysql("load a table with only encounters containing ONLY duplicate obs", '''
+            drop table if exists hivmigration_dup_obs;
+            create table hivmigration_dup_obs
                 select d.encounter_id_1 as encounter_id_1,
                 d.encounter_id_2 as encounter_id_2
-                from dup_pairs d
+                from hivmigration_dup_pairs d
                 inner join encounter e on e.encounter_id  = d.encounter_id_1
                 where not exists (
-                    select 1 from e1_obs e1
+                    select 1 from hivmigration_temp_e1_obs e1
                     where e1.encounter_id_1 = d.encounter_id_1
                     and e1.encounter_id_2 = d.encounter_id_2
                     and e1.dup is null
                 )
                 order by 1,2
             ;
-            
-            -- replicating dup_obs table for use in next query
-            drop temporary table if exists dup_obs_2;
-            create temporary table dup_obs_2
-                select * from dup_obs;
-            
-            CREATE INDEX dup_obs_e1 ON dup_obs (encounter_id_1);
-            CREATE INDEX dup_obs_e2 ON dup_obs (encounter_id_2);
-            CREATE INDEX dup_obs2_e1 ON dup_obs_2 (encounter_id_1);
-            CREATE INDEX dup_obs2_e2 ON dup_obs_2 (encounter_id_2);
+        ''');
 
-            -- load a temp table with those encounters that are exact duplicates of each other
-            drop temporary table if exists exact_dups;
-            create temporary table exact_dups
-                select * from dup_obs d1
+        executeMysql("replicating hivmigration_dup_obs table for use in next query", '''
+            drop table if exists hivmigration_dup_obs_2;
+            create table hivmigration_dup_obs_2
+                select * from hivmigration_dup_obs;
+            
+            CREATE INDEX hivmigration_dup_obs_e1 ON hivmigration_dup_obs (encounter_id_1);
+            CREATE INDEX hivmigration_dup_obs_e2 ON hivmigration_dup_obs (encounter_id_2);
+            CREATE INDEX hivmigration_dup_obs2_e1 ON hivmigration_dup_obs_2 (encounter_id_1);
+            CREATE INDEX hivmigration_dup_obs2_e2 ON hivmigration_dup_obs_2 (encounter_id_2);
+
+        ''');
+
+        executeMysql("load a temp table with those encounters that are exact duplicates of each other", '''
+            drop table if exists hivmigration_exact_dups;
+            create table hivmigration_exact_dups
+                select * from hivmigration_dup_obs d1
                 where exists (
-                    select 1 from dup_obs_2 d2
+                    select 1 from hivmigration_dup_obs_2 d2
                     where d1.encounter_id_1 = d2.encounter_id_2
                     and d1.encounter_id_2 = d2.encounter_id_1
                 )
             ;
-            
-            CREATE INDEX exact_dups_e1 ON exact_dups (encounter_id_1);
-            
-            -- inserting into the final temp table with encounters to delete out of the set of exact duplicates
-            -- note these are deduplicated here so both duplicates won't be voided  
-            drop temporary table if exists enc_to_delete;
-            create temporary table enc_to_delete
+            CREATE INDEX hivmigration_exact_dups_e1 ON hivmigration_exact_dups (encounter_id_1);
+        ''');
+
+        executeMysql("inserting into the final temp table with encounters to delete out of the set of exact duplicates", '''
+            drop table if exists hivmigration_enc_to_delete;
+            create table hivmigration_enc_to_delete
                 select distinct if(encounter_id_1 < encounter_id_2, encounter_id_1,encounter_id_2) as encounter_id
-                from exact_dups
+                from hivmigration_exact_dups
             ;
-            
-            -- insert into final encounters to delete those encounters that are NOT exact duplicates
-            -- (i.e. those that are a subset of another encounter)
-            insert into enc_to_delete (encounter_id)
-            select encounter_id_1 from dup_obs d1
+            insert into hivmigration_enc_to_delete (encounter_id)
+            select encounter_id_1 from hivmigration_dup_obs d1
             where not exists (
-                select 1 from dup_obs_2 d2 where d1.encounter_id_1 = d2.encounter_id_2 and d1.encounter_id_2 = d2.encounter_id_1
-            )
-            ;
-            
-            -- void based on that final list
-            
+                select 1 from hivmigration_dup_obs_2 d2 where d1.encounter_id_1 = d2.encounter_id_2 and d1.encounter_id_2 = d2.encounter_id_1
+            );
+        ''');
+
+        executeMysql("void encounters based on that final list", '''
             update encounter e 
-            inner join enc_to_delete ed on ed.encounter_id = e.encounter_id 
+            inner join hivmigration_enc_to_delete ed on ed.encounter_id = e.encounter_id 
             set e.voided = 1, e.void_reason = 'duplicate encounters due to system error'
             ;
+        ''');
 
+        executeMysql("void obs based on that final list", '''
             update obs o 
-            inner join enc_to_delete ed on ed.encounter_id = o.encounter_id 
-            set o.voided = 1, o.void_reason = 'duplicate encounters due to system error'
-            ;
-            
+            inner join hivmigration_enc_to_delete ed on ed.encounter_id = o.encounter_id 
+            set o.voided = 1, o.void_reason = 'duplicate encounters due to system error';
         ''')
-
     }
 
     @Override
     void revert() {
-        // nothing to do
+        executeMysql("unvoid obs based on that final list", '''
+            update obs o
+            inner join hivmigration_enc_to_delete ed on ed.encounter_id = o.encounter_id
+            set o.voided = 0, o.void_reason = null
+            where o.voided = 1 and o.void_reason = 'duplicate encounters due to system error'; 
+        ''')
+
+        executeMysql("unvoid encounters based on that final list", '''
+            update encounter e 
+            inner join hivmigration_enc_to_delete ed on ed.encounter_id = e.encounter_id 
+            set e.voided = 0, e.void_reason = null
+            where e.voided = 1 and e.void_reason = 'duplicate encounters due to system error'
+        ''')
+
+        executeMysql("drop table if exists hivmigration_enc_to_delete;")
+        executeMysql("drop table if exists hivmigration_exact_dups;")
+        executeMysql("drop table if exists hivmigration_dup_obs_2;")
+        executeMysql("drop table if exists hivmigration_dup_obs;")
+        executeMysql("drop table if exists hivmigration_temp_e1_obs;")
+        executeMysql("drop table if exists hivmigration_dup_pairs;")
+
     }
 
 }
