@@ -171,7 +171,6 @@ public class Migrator {
                 migrate(new AccompagnateurMigrator(), -1);
                 migrate(new SocioEconomicAssistanceMigrator(), -1);
                 migrate(new VisitMigrator(), limit);
-                migrate(new DataWarningsMigrator(), limit);
                 if (devFeatures) {
                     migrate(new SampleDataMigrator(), -1);
                     migrate(new DeIdentifyMigrator(), -1);
