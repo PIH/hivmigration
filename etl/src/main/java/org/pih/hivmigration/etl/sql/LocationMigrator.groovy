@@ -19,7 +19,7 @@ class LocationMigrator extends SqlMigrator {
             
             # Hôpital Bon Sauveur de Cange
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
-            select 4, location_id from location where uuid = '328f68e4-0370-102d-b0e3-001ec94a0cc';
+            select 4, location_id from location where uuid = '328f68e4-0370-102d-b0e3-001ec94a0cc1';
             
             # Hôpital Notre-Dame de la Nativité de Belladère
             insert into hivmigration_health_center(hiv_emr_id, openmrs_id)
