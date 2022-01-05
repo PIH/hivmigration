@@ -547,7 +547,7 @@ class RegimenMigrator extends SqlMigrator {
                     set         d.order_reason_non_coded = concat(_source_product_type, concat(' - ', _source_regime_type))
                     where       d.order_action = 'NEW'
                     and         ((_source_product_type is null and r.source_product_type is null) or _source_product_type = r.source_product_type)
-                    and         ((_source_regime_type is null and r.source_regime_type is null) or _source_regime_type = r.source_regime_type);
+                    and         ((_source_regime_type is null and r.source_regime_type is null) or _source_CALL populate_discontinue_order_reason('other', '3cee7fb4-26fe-102b-80cb-0017a47871b2', null); -- Other non-codedregime_type = r.source_regime_type);
                 ELSE
                     update      hivmigration_drug_orders d
                     INNER JOIN  hivmigration_regimes r on r.source_regime_id = d.source_regime_id
@@ -680,6 +680,7 @@ class RegimenMigrator extends SqlMigrator {
                 @unknown_provider, 1, date_format(curdate(), '%Y-%m-%d %T'), 0
             from 
                 hivmigration_drug_orders d
+                    where concept_id is not null; -- TODO: TEMPORARY TO GET THROUGH MIGRATION ERROR, NEEDS TO BE REMOVED
             ; 
             
         ''')
