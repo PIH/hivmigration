@@ -55,6 +55,7 @@ class VoidDuplicateEncountersMigrator extends SqlMigrator {
             ;
             CREATE INDEX hivmigration_temp_e1_obs_i1 ON hivmigration_temp_e1_obs (encounter_id_1);
             CREATE INDEX hivmigration_temp_e1_obs_i2 ON hivmigration_temp_e1_obs (concept_id);
+            CREATE INDEX hivmigration_temp_e1_obs_i3 ON hivmigration_temp_e1_obs (encounter_id_2);
         ''');
 
         executeMysql("flag those obs that are contained in encounter_id_2", '''
@@ -68,7 +69,6 @@ class VoidDuplicateEncountersMigrator extends SqlMigrator {
                 and (o1.value_coded = o2.value_coded or (o1.value_coded is null and o2.value_coded  is null))
                 and (o1.value_text = o2.value_text or (o1.value_text is null and o2.value_text  is null))
                 and (o1.value_numeric = o2.value_numeric or (o1.value_numeric is null and o2.value_numeric  is null))
-                -- and (o1.value_drug = o2.value_drug or (o1.value_drug is null and o2.value_drug  is null))
                 and (o1.value_datetime= o2.value_datetime or (o1.value_datetime is null and o2.value_datetime  is null))
             );
         ''');
