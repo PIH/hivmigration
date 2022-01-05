@@ -681,8 +681,7 @@ class RegimenMigrator extends SqlMigrator {
             from 
                 hivmigration_drug_orders d
                     where concept_id is not null; -- TODO: TEMPORARY TO GET THROUGH MIGRATION ERROR, NEEDS TO BE REMOVED
-            ; 
-            
+           
         ''')
     }
 
