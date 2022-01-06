@@ -439,6 +439,7 @@ class RegimenMigrator extends SqlMigrator {
             CALL populate_drug('Erthromycine - 250 milligram Tablet', '3ccf0b34-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('Ethambutol - 400 milligram Tablet', '', 'bd159878-7a33-405b-ad0b-6d6ddbf99ddd'); -- Ethambutol (E), 400mg tablet
             CALL populate_drug('Ethambutol - 1 unspecified Other', '3cd3e910-26fe-102b-80cb-0017a47871b2', '');
+            CALL populate_drug('Ethambutol+Isoniazide 400/150 mg - 550 milligram Tablet', '', '0f3b5757-30ab-46cd-8e59-02cb88ae3e1f');  -- Ethambutol (E) 400mg + Isoniazide (H) 150mg, tablet
             CALL populate_drug('Ethionamide - 250 milligram Tablet', '', '78fab5ac-dfbe-11e9-8a34-2a2ae2dbcce4'); -- Ethionamide, 250mg tablet
             CALL populate_drug('Ethionamide - 1 unspecified Other', '3cda2b7c-26fe-102b-80cb-0017a47871b2', '');
             CALL populate_drug('ETV 100mg - 100 milligram Tablet', '', '29c9dd27-25f2-45c6-9708-93fe142a46ba'); -- Etravirine (ETV), 100mg tablet
@@ -680,7 +681,6 @@ class RegimenMigrator extends SqlMigrator {
                 @unknown_provider, 1, date_format(curdate(), '%Y-%m-%d %T'), 0
             from 
                 hivmigration_drug_orders d
-                    where concept_id is not null -- TODO: TEMPORARY TO GET THROUGH MIGRATION ERROR, NEEDS TO BE REMOVED
             ;
         ''')
     }
@@ -695,7 +695,6 @@ class RegimenMigrator extends SqlMigrator {
                 d.order_id, d.drug_id, d.drug_non_coded, 'org.openmrs.FreeTextDosingInstructions', d.dosing_instructions, d.as_needed
             from 
                 hivmigration_drug_orders d
-                     where concept_id is not null -- TODO: TEMPORARY TO GET THROUGH MIGRATION ERROR, NEEDS TO BE REMOVED
             ; 
             
         ''')
