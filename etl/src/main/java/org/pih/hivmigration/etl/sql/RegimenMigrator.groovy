@@ -695,7 +695,7 @@ class RegimenMigrator extends SqlMigrator {
                 d.order_id, d.drug_id, d.drug_non_coded, 'org.openmrs.FreeTextDosingInstructions', d.dosing_instructions, d.as_needed
             from 
                 hivmigration_drug_orders d
-                     where concept_id is not null; -- TODO: TEMPORARY TO GET THROUGH MIGRATION ERROR, NEEDS TO BE REMOVED
+                     where concept_id is not null -- TODO: TEMPORARY TO GET THROUGH MIGRATION ERROR, NEEDS TO BE REMOVED
             ; 
             
         ''')
