@@ -477,8 +477,8 @@ class ExamExtraMigrator extends ObsMigrator {
             SELECT 
                 obs_id,                 
                 source_encounter_id, 
-                concept_uuid_from_mapping('CIEL', '160563') as concept_uuid,
-                concept_uuid_from_mapping('CIEL', '160036') as value_coded_uuid
+                concept_uuid_from_mapping('PIH', '13712') as concept_uuid,
+                concept_uuid_from_mapping('PIH', '6965') as value_coded_uuid
             FROM hivmigration_transfer_in_from 
             WHERE transfer_p = 't';
             
