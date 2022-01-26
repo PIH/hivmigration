@@ -85,7 +85,7 @@ class PcrTestsMigrator extends SqlMigrator {
         executeMysql("Create PCR results obs",'''
 
             -- Add Date of Test Results
-            SET @date_of_test_results = (concept_from_mapping('PIH', 'DATE OF LABORATORY TEST'));
+            SET @date_of_test_results = (concept_from_mapping('PIH', 'Date of test results'));
             
             INSERT INTO obs (
                     person_id, 
