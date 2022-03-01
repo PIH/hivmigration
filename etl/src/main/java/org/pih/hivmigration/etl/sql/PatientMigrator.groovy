@@ -29,6 +29,8 @@ class PatientMigrator extends SqlMigrator {
                 outcome varchar(255),
                 outcome_date date,
                 zone varchar(32),
+                starting_health_center int,
+                health_center int,
                 KEY `source_patient_id_idx` (`source_patient_id`),
                 UNIQUE KEY `person_uuid_idx` (`person_uuid`)
             );
@@ -64,8 +66,8 @@ class PatientMigrator extends SqlMigrator {
         // load patients into staging table
         loadFromOracleToMySql('''
                     insert into hivmigration_patients(source_patient_id,pih_id, nif_id, national_id, first_name, first_name2, last_name, nickname, gender, birthdate,
-                        birthdate_estimated, phone_number, birth_place, accompagnateur_name, patient_created_by, patient_created_date, outcome, outcome_date, zone)
-                    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        birthdate_estimated, phone_number, birth_place, accompagnateur_name, patient_created_by, patient_created_date, outcome, outcome_date, zone, starting_health_center, health_center)
+                    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             ''',
             '''
                 select
@@ -87,10 +89,21 @@ class PatientMigrator extends SqlMigrator {
                     d.PATIENT_CREATED_DATE,
                     d.TREATMENT_STATUS as outcome,
                     d.TREATMENT_STATUS_DATE as outcome_date,
-                    d.zone as zone
+                    d.zone as zone,
+                    d.starting_health_center,
+                    d.health_center
                 from HIV_DEMOGRAPHICS_REAL d
                 order by  d.PATIENT_ID
             ''');
+
+        executeMysql("Remove bad health center entries", '''
+            UPDATE hivmigration_patients
+            SET health_center = IF (health_center = 0 OR health_center = 42, NULL, health_center),
+                starting_health_center = IF (starting_health_center = 0 OR starting_health_center = 42, NULL, starting_health_center)
+            ;
+            UPDATE hivmigration_patients SET health_center = starting_health_center where health_center is null;
+            UPDATE hivmigration_patients SET starting_health_center = health_center where starting_health_center is null;
+        ''')
 
         // load patient addresses into staging table
         // TODO do we need to use nvarchar?

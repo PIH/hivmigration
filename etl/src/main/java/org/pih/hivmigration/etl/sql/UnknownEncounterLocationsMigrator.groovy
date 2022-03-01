@@ -39,9 +39,6 @@ class UnknownEncounterLocationsMigrator extends SqlMigrator {
                     tmp_current_program_location_to_encounter;
         ''');
 
-
-
-
         executeMysql("Update any remaining encounters with unknown location with program location when previous enrollment found prior to encounter date",
         '''
             set @unknown_location = (select location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f');
@@ -92,7 +89,6 @@ class UnknownEncounterLocationsMigrator extends SqlMigrator {
                     tmp_most_recent_previous_program_location_to_encounter;
         ''');
 
-
         executeMysql("Update any remaining encounters with unknown location with program location when subsequent enrollment found after encounter date",
         '''
             set @unknown_location = (select location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f');
@@ -139,6 +135,36 @@ class UnknownEncounterLocationsMigrator extends SqlMigrator {
                     DATE(encounter_datetime) as encounter_date, 0 as flag_for_review, 
                     'Encounter location changed from Unknown to location of Most Recent Subsequent Program Enrollment' as warning_type
                from tmp_most_recent_subsequent_program_location_to_encounter;
+        ''');
+
+        executeMysql("Update any remaining encounters with unknown location with overall patient location, if never enrolled", '''
+            set @unknown_location = (select location_id from location where uuid='8d6c993e-c2cc-11de-8d13-0010c6dffd0f');
+        
+            # create temporary table of encounters affected
+            drop table if exists tmp_overall_location_to_encounter;
+            create temporary table tmp_overall_location_to_encounter (encounter_id int, location_id int);
+        
+            insert into tmp_overall_location_to_encounter (encounter_id, location_id)
+            select      e.encounter_id, hc.openmrs_id
+            from        encounter e 
+            inner join  hivmigration_patients p on e.patient_id = p.person_id
+            inner join  hivmigration_health_center hc on p.health_center = hc.hiv_emr_id
+            where       e.location_id = @unknown_location
+            ;
+            
+            update encounter e, tmp_overall_location_to_encounter tmp
+            set e.location_id = tmp.location_id
+            where e.encounter_id = tmp.encounter_id
+            ;
+    
+            # log a data warning
+            insert into hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, warning_details, encounter_date, flag_for_review, warning_type)
+                select      e.patient_id, e.encounter_id,  CONCAT('Updated to location :', e.location_id) as warning_details,
+                            DATE(encounter_datetime) as encounter_date, 0 as flag_for_review, 
+                            'Encounter location changed from Unknown to overall Health Center' as warning_type
+                from        encounter e
+                inner join  tmp_overall_location_to_encounter t on e.encounter_id = t.encounter_id
+            ;
         ''');
 
         executeMysql("Update any unknown visit locations that we now can resolve with the additional encounter information",
