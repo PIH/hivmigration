@@ -54,7 +54,7 @@ class UserMigrator extends SqlMigrator {
             update hivmigration_users set person_uuid = uuid();
             update hivmigration_users set username = left(email, locate('@', email) - 1);
             update hivmigration_users set username = replace(username, '`', '') where username like '`%';
-            update hivmigration_users set email = replace(email, '`', '') where email like '`%';
+            update hivmigration_users set email = null where email like '`%';
             update hivmigration_users set username = concat(username, '-', source_user_id) where username in (select username from users);
         ''')
         executeMysql('''
@@ -77,7 +77,8 @@ class UserMigrator extends SqlMigrator {
                 date_created, 
                 uuid, 
                 password, 
-                salt, 
+                salt,
+                email, 
                 retired, 
                 retired_by, 
                 date_retired, 
@@ -90,7 +91,8 @@ class UserMigrator extends SqlMigrator {
                 now(), 
                 user_uuid, 
                 password, 
-                salt, 
+                salt,
+                email, 
                 1, 
                 1,
                 now(),
@@ -100,10 +102,6 @@ class UserMigrator extends SqlMigrator {
               UPDATE        hivmigration_users hu
               INNER JOIN    users u on u.uuid = hu.user_uuid
               SET           hu.user_id = u.user_id;
-
-              INSERT INTO user_property (user_id, property, property_value) 
-                SELECT  user_id, 'notificationAddress', email
-                FROM    hivmigration_users;
 
               UPDATE        users u
               INNER JOIN    hivmigration_users hu on hu.user_id = u.user_id
