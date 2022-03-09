@@ -54,7 +54,7 @@ class UserMigrator extends SqlMigrator {
             update hivmigration_users set person_uuid = uuid();
             update hivmigration_users set username = left(email, locate('@', email) - 1);
             update hivmigration_users set username = replace(username, '`', '') where username like '`%';
-            update hivmigration_users set email = replace(email, '`', '') where email like '`%';
+            update hivmigration_users set email = null where email like '`%';
             update hivmigration_users set username = concat(username, '-', source_user_id) where username in (select username from users);
         ''')
         executeMysql('''
