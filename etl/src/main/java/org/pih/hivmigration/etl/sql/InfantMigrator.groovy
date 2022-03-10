@@ -211,7 +211,7 @@ class InfantMigrator extends ObsMigrator {
                 person_id,
                 IFNULL(hhc.openmrs_id, 1) as location_id,
                 (SELECT form_id FROM form WHERE uuid = '6F6E6FA0-1E99-41A3-9391-E5CB8A127C11') as form_id,
-                IFNULL(birthdate, now()) as encounter_datetime,
+                IFNULL(IFNULL(birthdate, vital_status_date), now()) as encounter_datetime,
                 1,
                 now() as date_created,
                 0,
@@ -241,7 +241,7 @@ class InfantMigrator extends ObsMigrator {
                 person_id,
                 ifnull(hhc.openmrs_id, 1) as location_id,
                 @infant_doc_form_id as form_id,
-                IFNULL(birthdate, now()) as encounter_datetime,
+                IFNULL(IFNULL(birthdate, vital_status_date), now()) as encounter_datetime,
                 1,
                 now() as date_created,
                 0,
@@ -249,6 +249,21 @@ class InfantMigrator extends ObsMigrator {
             from hivmigration_infants i
             left join hivmigration_health_center hhc on i.health_center = hhc.hiv_emr_id
             where i.hiv_status is not null or i.non_emr_mother is not null;
+        ''')
+
+        // log derived encounter dates that are null, in the future, or older than 30 years
+        executeMysql("Log abnormal encounter date values", '''
+                INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, encounter_date, field_name, field_value, warning_type, flag_for_review)       
+                SELECT e.patient_id as patient_id,
+                       e.encounter_id as encounter_id,
+                       e.encounter_datetime as encounter_date,
+                       'encounter_date' as field_name,
+                       e.encounter_datetime as field_value,
+                       'Abnormal encounter date value' as warning_type,
+                       TRUE as flag_for_review
+                from encounter e
+                inner join hivmigration_infants i on e.patient_id = i.person_id
+                where (e.encounter_datetime > now() or e.encounter_datetime < (SELECT DATE_SUB(now(), INTERVAL 30 YEAR)));
         ''')
 
         create_tmp_obs_table()
