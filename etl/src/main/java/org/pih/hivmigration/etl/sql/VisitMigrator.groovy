@@ -34,7 +34,7 @@ class VisitMigrator extends SqlMigrator {
                 ON e.patient_id = v.patient_id
                     AND Date(e.encounter_datetime) = Date(v.date_started)
             SET    e.visit_id = v.visit_id
-            WHERE encounter_type  not in (@registration_et, @drug_order_et, @hiv_infant_doc_enc_type)
+            WHERE encounter_type  not in (@registration_et, @drug_order_et)
               AND e.visit_id IS NULL;
         ''')
 
