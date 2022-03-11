@@ -278,6 +278,22 @@ class MedpickupsMigrator extends ObsMigrator {
         ''')
 
         migrate_tmp_obs()
+
+        executeMysql("Log warning about missing dispensing drugs", '''
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type, flag_for_review)
+            SELECT
+                hp.person_id,
+                he.encounter_id,
+                'hiv_dispensing_meds',
+                m.source_product_name,
+                'No mapping to an OpenMRS concept or drug.  Not migrating.',
+                TRUE
+            FROM hivmigration_dispensing_meds m
+            INNER JOIN hivmigration_encounters he ON m.source_encounter_id = he.source_encounter_id
+            INNER JOIN hivmigration_patients hp ON m.source_patient_id = hp.source_patient_id
+            WHERE m.source_product_name not in (select hiv_med_name from hivmigration_openmrs_drugs)
+            ;'''
+        )
     }
 
     @Override
