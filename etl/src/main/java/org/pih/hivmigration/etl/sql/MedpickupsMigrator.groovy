@@ -38,6 +38,7 @@ class MedpickupsMigrator extends ObsMigrator {
                 ('Dapsone 100 mg','Dapsone, 100mg tablet','1156a9ca-14f3-4c57-9ed2-7154e82447c7','3cccd95e-26fe-102b-80cb-0017a47871b2'),
                 ('DAR/ETV 300/100 mg','Darunavir (DRV) 300mg + Etravirine (ETV) 100mg, tablet','0fc3d5c1-fd39-4899-b5c0-b094e28ff359','7239d569-00ba-4a53-84de-f8754c4ca8dd'),
                 ('DTG 50 mg','Dolutegravir (DTG), 50 mg tablet','78fab02a-dfbe-11e9-8a34-2a2ae2dbcce4','165085AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
+                ('DTG Ped','Dolutegravir (DTG), 10mg dispersible tablet','8c35a0cd-9e2a-40eb-aa57-f589c25f17bf','165085AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('DTG/3TC/TDF 50/300/300 mg','Dolutegravir (DTG) 50mg + Lamivudine (3TC) 300mg + Tenofovir disoproxil fumarate (TDF) 300mg, tablet','78faac2e-dfbe-11e9-8a34-2a2ae2dbcce4','165086AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'),
                 ('EFV 200 mg','Efavirenz (EFV), 200mg tablet','78f97b9c-dfbe-11e9-8a34-2a2ae2dbcce4','3cd25622-26fe-102b-80cb-0017a47871b2'),
                 ('EFV 600 mg','Efavirenz (EFV), 600mg tablet','78f96210-dfbe-11e9-8a34-2a2ae2dbcce4','3cd25622-26fe-102b-80cb-0017a47871b2'),
@@ -292,6 +293,22 @@ class MedpickupsMigrator extends ObsMigrator {
             INNER JOIN hivmigration_encounters he ON m.source_encounter_id = he.source_encounter_id
             INNER JOIN hivmigration_patients hp ON m.source_patient_id = hp.source_patient_id
             WHERE m.source_product_name not in (select hiv_med_name from hivmigration_openmrs_drugs)
+            ;'''
+        )
+
+        executeMysql("Log warning about DTG Ped", '''
+            INSERT INTO hivmigration_data_warnings (openmrs_patient_id, openmrs_encounter_id, field_name, field_value, warning_type, flag_for_review)
+            SELECT
+                hp.person_id,
+                he.encounter_id,
+                'hiv_dispensing_meds',
+                m.source_product_name,
+                'All DTG Ped Meds migrated to 10mg tablet. Check regimen if this should be 5mg tablet',
+                TRUE
+            FROM hivmigration_dispensing_meds m
+            INNER JOIN hivmigration_encounters he ON m.source_encounter_id = he.source_encounter_id
+            INNER JOIN hivmigration_patients hp ON m.source_patient_id = hp.source_patient_id
+            WHERE m.source_product_name = 'DTG Ped'
             ;'''
         )
     }
