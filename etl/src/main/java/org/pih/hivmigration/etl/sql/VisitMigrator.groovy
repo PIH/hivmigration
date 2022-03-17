@@ -10,25 +10,27 @@ class VisitMigrator extends SqlMigrator {
             SET @registration_et = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Enregistrement de patient');             
             SET @drug_order_et = (SELECT encounter_type_id FROM encounter_type WHERE uuid = '0b242b71-5b60-11eb-8f5a-0242ac110002'); 
             set @comment_et = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c30d6e06-0f00-460a-8f81-3c39a1853b56');
-            SET @unknown_location_id = 1;
             
             INSERT INTO visit
-            (patient_id,   visit_type_id,  date_started,   date_stopped,   location_id,   creator,   date_created, voided, uuid)
-            SELECT  e.patient_id, @visit_type_id, e.date_started, e.date_stopped, e.location_id, e.creator, now(),     0, uuid()
+            (patient_id, visit_type_id, date_started, date_stopped, creator, date_created, voided, uuid)
+            SELECT  e.patient_id, @visit_type_id, e.date_started, e.date_stopped, e.creator, now(), 0, uuid()
             FROM
                 (
                     SELECT patient_id,
                            Min(encounter_datetime) AS date_started,  -- encounter_datetime is always midnight
                            Addtime(Max(encounter_datetime), '23:59:59') AS date_stopped,
-                           Max(location_id) as location_id,  -- Avoid using 'Unknown Location' if there is another location available
                            creator
                     FROM   encounter
                     WHERE  encounter_type not in (@registration_et, @drug_order_et, @comment_et) AND visit_id IS NULL
-                    GROUP  BY patient_id,
-                              Date(encounter_datetime)
-                              -- TODO: Group by location as well? see: https://pihemr.atlassian.net/browse/UHM-4834
+                    GROUP  BY patient_id, Date(encounter_datetime)
+                              
                 ) AS e;
+        ''')
 
+        executeMysql("Associate encounters with visit on the same date if otherwise is not associated with a visit", '''
+            SET @registration_et = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Enregistrement de patient');             
+            SET @drug_order_et = (SELECT encounter_type_id FROM encounter_type WHERE uuid = '0b242b71-5b60-11eb-8f5a-0242ac110002'); 
+            set @comment_et = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c30d6e06-0f00-460a-8f81-3c39a1853b56');
             UPDATE encounter e
                 INNER JOIN visit v
                 ON e.patient_id = v.patient_id
@@ -38,7 +40,22 @@ class VisitMigrator extends SqlMigrator {
               AND e.visit_id IS NULL;
         ''')
 
-        executeMysql("If a encounter location is \"Unknown\" and it's Visit Location is *not* \"Unknown\", update encounter with that location", ''' 
+        executeMysql("Set visit location to the most frequently occurring encounter location in the visit, excluding unknown location", '''
+            SET @unknown_location_id = 1;
+            UPDATE visit v
+            SET    v.location_id = 
+                   ( select e.location_id from encounter e where e.visit_id = v.visit_id and e.location_id != @unknown_location_id group by e.location_id order by count(*) desc, e.location_id desc limit 1)
+            WHERE  v.location_id is null
+            ;
+        ''')
+
+        executeMysql("Set visit location to Unknown Location if null", '''
+            SET @unknown_location_id = 1;
+            UPDATE visit v set v.location_id = @unknown_location_id where v.location_id is null;
+        ''')
+
+        executeMysql("If a encounter location is Unknown and it's Visit Location is *not* Unknown, update encounter with that location", ''' 
+            SET @unknown_location_id = 1;
             UPDATE encounter e
                 INNER JOIN visit v
                 ON e.visit_id = v.visit_id
