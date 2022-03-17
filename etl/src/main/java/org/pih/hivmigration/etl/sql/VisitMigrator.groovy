@@ -4,7 +4,7 @@ class VisitMigrator extends SqlMigrator {
 
     void migrate() {
 
-        executeMysql("Create visits from existing encounters and add them to the encounters", '''
+        executeMysql("Create visits from existing encounters", '''
             -- Get visit type "Clinic or Hospital Visit"
             SET @visit_type_id = (SELECT visit_type_id FROM visit_type WHERE uuid = 'f01c54cb-2225-471a-9cd5-d348552c337c');
             SET @registration_et = (SELECT encounter_type_id FROM encounter_type WHERE name = 'Enregistrement de patient');             
