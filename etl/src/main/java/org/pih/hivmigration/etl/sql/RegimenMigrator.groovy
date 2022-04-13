@@ -561,14 +561,12 @@ class RegimenMigrator extends SqlMigrator {
             DELIMITER ;
 
             CALL populate_new_order_reason('HIV', null, '138405AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Human immunodeficiency virus (HIV) disease
-            CALL populate_new_order_reason('HIV', 'accident', '1691AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Post-exposure prophylaxis
-            CALL populate_new_order_reason('HIV', 'prophylaxis', '1691AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Post-exposure prophylaxis
-            CALL populate_new_order_reason('HIV', 'prophylaxis_rape', '1691AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Post-exposure prophylaxis
-            CALL populate_new_order_reason('HIV', 'prophylaxis_sexual_exposure', '1691AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Post-exposure prophylaxis
+            CALL populate_new_order_reason('HIV', 'accident', '163768AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- HIV prophylaxis
+            CALL populate_new_order_reason('HIV', 'prophylaxis', '163768AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- HIV prophylaxis
+            CALL populate_new_order_reason('HIV', 'prophylaxis_rape', '163768AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- HIV prophylaxis
+            CALL populate_new_order_reason('HIV', 'prophylaxis_sexual_exposure', '163768AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- HIV prophylaxis
             CALL populate_new_order_reason('HIV', 'ptme', '160538AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Prevention of maternal to child transmission program
-            CALL populate_new_order_reason('OralMed', 'prophylaxis', '1691AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Post-exposure prophylaxis
-            CALL populate_new_order_reason('OralMed', 'ptme', '160538AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Prevention of maternal to child transmission program
-            CALL populate_new_order_reason('TB', 'ptme', '160538AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'); -- Prevention of maternal to child transmission program
+            CALL populate_new_order_reason('TB', 'ptme', '3ccca7cc-26fe-102b-80cb-0017a47871b2'); -- Tuberculosis
             CALL populate_new_order_reason('TB', null, '3ccca7cc-26fe-102b-80cb-0017a47871b2');  -- Tuberculosis
             
             DROP PROCEDURE IF EXISTS populate_new_order_reason;
